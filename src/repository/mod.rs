@@ -6,6 +6,7 @@ pub mod profile;
 
 use std::io::Cursor;
 use std::sync::Arc;
+use std::ops::Deref;
 
 use ipfs_api::IpfsClient;
 use failure::Error;
@@ -20,11 +21,36 @@ use types::block::Block;
 use types::content::Content;
 use types::content::Payload;
 use types::util::IPFSHash;
+use version::protocol_version;
+
 // use repository::iter::BlockIter;
 // use repository::profile::Profile;
 
 pub struct Repository {
     client: Arc<IpfsClient>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ProfileName(String);
+
+impl Deref for ProfileName {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct ProfileKey(String);
+
+impl Deref for ProfileKey {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl Repository {
@@ -201,6 +227,85 @@ impl Repository {
                     .add(Cursor::new(data))
                     .map(|res| IPFSHash::from(res.hash))
                     .map_err(Into::into)
+            })
+    }
+
+    /// The default lifetime for name publishing (profile announcements)
+    ///
+    /// 10 minutes
+    pub fn profile_announce_default_lifetime() -> &'static str {
+        "10m"
+    }
+
+    /// The default TTL for name publishing (profile announcements)
+    ///
+    /// 10 minutes
+    pub fn profile_announce_default_ttl() -> &'static str {
+        "10m"
+    }
+
+    /// Announce a profile as current
+    ///
+    /// Profile identified by IPFS hash.
+    ///
+    /// Lifetime and TTL are _not_ set to the default in the implementation of this function, but
+    /// the IPFS defaults apply (set by the IPFS daemon)
+    ///
+    pub fn announce_profile<'a>(&'a self,
+                                key: ProfileKey,
+                                state: &IPFSHash,
+                                lifetime: Option<String>,
+                                ttl: Option<String>)
+        -> impl Future<Item = (), Error = Error>
+    {
+        let name   = format!("/ipfs/{}", state);
+        let client = self.client.clone();
+
+        self.resolve_content_profile(state)
+            .and_then(|_| {
+                client.name_publish(&name, false, lifetime.as_ref(), ttl.as_ref(), Some(&key))
+                    .map_err(From::from)
+                    .map(|_| ())
+            })
+    }
+
+    pub fn new_profile<'a, N>(&'a self,
+                              keyname: N,
+                              profile: &Content,
+                              lifetime: Option<&str>,
+                              ttl: Option<&str>)
+        -> impl Future<Item = (ProfileName, ProfileKey), Error = Error>
+        where N: AsRef<str>
+    {
+        use ipfs_api::KeyType;
+
+        if !is_match!(profile.payload(), Payload::Profile { .. }) {
+            return ::futures::future::err(err_msg(format!("Not a Profile: {:?}", profile)))
+        }
+
+        let client = self.client.clone();
+        client
+            .key_gen(keyname.as_ref(), KeyType::Rsa, 4096)
+            .map(|kp| (kp.name, kp.id))
+            .and_then(|(key_name, key_id)| { // put the content into IPFS
+                self.put_content(profile)
+                    .map(|content_hash| (content_hash, key_name, key_id))
+            })
+            .and_then(|(content_hash, key_name, key_id)| { // put the content into a new block
+                let block = Block::new(protocol_version(),
+                                       vec![], // no parents for new profile
+                                       content_hash);
+
+                self.put_block(&block)
+                    .map(|block_hash| (block_hash, key_name, key_id))
+            })
+            .and_then(|(block_hash, key_name, key_id)| {
+                let path = format!("/ipfs/{}", block_hash);
+                client
+                    .name_publish(&path, false, lifetime, ttl, Some(&key_name))
+                    .map(|_publish_response| {
+                        (key_name, key_id)
+                    })
             })
     }
 
