@@ -21,6 +21,7 @@ mod configuration;
 mod repository;
 mod state;
 mod types;
+mod version;
 
 use std::collections::BTreeMap;
 use std::str::FromStr;
