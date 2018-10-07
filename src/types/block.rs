@@ -1,7 +1,7 @@
 use types::util::IPFSHash;
 use types::util::Version;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
     /// The version of the API in use
     #[serde(rename = "v")]

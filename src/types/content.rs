@@ -5,7 +5,7 @@ use types::util::IPNSHash;
 use types::util::MimeType;
 use types::util::Timestamp;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Content {
 
     //
@@ -64,7 +64,7 @@ impl Content {
 /// For example, the payload might be a `Payload::Post`, Alice has posted new kitten pictures!
 /// Or a `Payload::ProfileUpdate` which contains information about Alice herself
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "payload_type")]
 pub enum Payload {
 
@@ -180,7 +180,7 @@ pub enum Payload {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Userdata {
     #[serde(rename = "mimetype")]
     mimetype: MimeType,
