@@ -25,6 +25,7 @@ mod version;
 
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use std::ops::Deref;
 
 use chrono::NaiveDateTime;
 use futures::future::Future;
@@ -742,6 +743,41 @@ fn main() {
                 Block::new(version, parents, content)
             };
         }
+
+        ("create-profile", Some(mtch)) => {
+            debug!("Calling: create-profile");
+            let (config, repo) = boot();
+
+            let name      = mtch.value_of("name").map(String::from).unwrap(); // safe by clap
+            let keyname   = format!("distrox-{}", name);
+            let timestamp = Timestamp::from(::chrono::offset::Local::now().naive_local());
+            let payload   = Payload::Profile {
+                names:   vec![name],
+                picture: None,
+                more:    BTreeMap::new(),
+            };
+            let profile   = Content::new(vec![], Some(timestamp), payload);
+
+            hyper::rt::run({
+                // use ipfs defaults for lifetime and ttl
+                repo.new_profile(keyname, profile, None, None)
+                   .map_err(|e| {
+                       error!("Error running: {:?}", e);
+                       print_error_details(e);
+                       exit(1)
+                   })
+                    .map(|(profile_name, profile_key)| {
+                        println!("{}, {}", profile_name.deref(), profile_key.deref());
+                    })
+            });
+        },
+
+        //("post", Some(mtch)) => {
+        //    debug!("Calling: post");
+        //    let (config, repo) = boot();
+
+        //    unimplemented!()
+        //},
 
         (other, _mtch) => {
             error!("Unknown command: {}", other);

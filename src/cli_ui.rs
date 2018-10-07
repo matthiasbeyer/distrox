@@ -376,6 +376,33 @@ pub fn build_ui<'a>() -> App<'a, 'a> {
                          .help("")
                          )
                     )
+
+        // High-level commands
+
+        .subcommand(SubCommand::with_name("create-profile")
+                    .about("Create a new profile")
+                    .version("0.1.0")
+                    .arg(Arg::with_name("name")
+                         .index(1)
+                         .required(true)
+                         .takes_value(true)
+                         .multiple(false)
+                         .help("The name of the profile. Also the name of the IPFS Key used for this profile.")
+                         )
+                    )
+
+        .subcommand(SubCommand::with_name("post")
+                    .about("Write a new post")
+                    .version("0.1.0")
+                    .arg(Arg::with_name("editor")
+                         .long("editor")
+                         .required(false)
+                         .takes_value(true)
+                         .multiple(false)
+                         .help("Set the editor")
+                         )
+                    )
+
 }
 
 

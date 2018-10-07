@@ -263,33 +263,41 @@ impl Repository {
 
         self.resolve_content_profile(state)
             .and_then(|_| {
-                client.name_publish(&name, false, lifetime.as_ref(), ttl.as_ref(), Some(&key))
+                client.name_publish(&name,
+                                    false,
+                                    lifetime.as_ref().map(String::deref),
+                                    ttl.as_ref().map(String::deref),
+                                    Some(&key))
                     .map_err(From::from)
                     .map(|_| ())
             })
     }
 
-    pub fn new_profile<'a, N>(&'a self,
-                              keyname: N,
-                              profile: &Content,
-                              lifetime: Option<&str>,
-                              ttl: Option<&str>)
+    pub fn new_profile<'a>(&'a self,
+                           keyname: String,
+                           profile: Content,
+                           lifetime: Option<String>,
+                           ttl: Option<String>)
         -> impl Future<Item = (ProfileName, ProfileKey), Error = Error>
-        where N: AsRef<str>
     {
         use ipfs_api::KeyType;
 
         if !is_match!(profile.payload(), Payload::Profile { .. }) {
-            return ::futures::future::err(err_msg(format!("Not a Profile: {:?}", profile)))
+            let out = ::futures::future::err(err_msg(format!("Not a Profile: {:?}", profile)));
+            return ::futures::future::Either::B(out)
         }
 
         let client = self.client.clone();
-        client
-            .key_gen(keyname.as_ref(), KeyType::Rsa, 4096)
+
+        let result = client
+            .key_gen(&keyname, KeyType::Rsa, 4096)
+            .map_err(Error::from)
             .map(|kp| (kp.name, kp.id))
             .and_then(|(key_name, key_id)| { // put the content into IPFS
-                self.put_content(profile)
+                let prof = profile;
+                self.put_content(&prof)
                     .map(|content_hash| (content_hash, key_name, key_id))
+                    .map_err(Error::from)
             })
             .and_then(|(content_hash, key_name, key_id)| { // put the content into a new block
                 let block = Block::new(protocol_version(),
@@ -298,15 +306,23 @@ impl Repository {
 
                 self.put_block(&block)
                     .map(|block_hash| (block_hash, key_name, key_id))
+                    .map_err(Error::from)
             })
             .and_then(|(block_hash, key_name, key_id)| {
                 let path = format!("/ipfs/{}", block_hash);
                 client
-                    .name_publish(&path, false, lifetime, ttl, Some(&key_name))
+                    .name_publish(&path,
+                                  false,
+                                  lifetime.as_ref().map(String::deref),
+                                  ttl.as_ref().map(String::deref),
+                                  Some(&key_name))
                     .map(|_publish_response| {
-                        (key_name, key_id)
+                        (ProfileName(key_name), ProfileKey(key_id))
                     })
-            })
+                    .map_err(Error::from)
+            });
+
+        ::futures::future::Either::A(result)
     }
 
 }
