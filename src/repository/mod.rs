@@ -16,11 +16,13 @@ use futures::stream::Stream;
 use serde_json::from_str as serde_json_from_str;
 use serde_json::to_string as serde_json_to_str;
 use serde::Serialize;
+use chrono::NaiveDateTime;
 
 use types::block::Block;
 use types::content::Content;
 use types::content::Payload;
 use types::util::IPFSHash;
+use types::util::IPNSHash;
 use version::protocol_version;
 
 // use repository::iter::BlockIter;
@@ -32,7 +34,7 @@ pub struct Repository {
     client: Arc<IpfsClient>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProfileName(String);
 
 impl Deref for ProfileName {
@@ -44,7 +46,7 @@ impl Deref for ProfileName {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProfileKey(String);
 
 impl Deref for ProfileKey {
@@ -86,6 +88,13 @@ impl Repository {
     {
         debug!("Resolving block: {}", hash);
         ::repository::client::resolve_block(self.client.clone(), hash)
+    }
+
+    pub fn resolve_latest_block(&self, hash: &IPNSHash)
+        -> impl Future<Item = Block, Error = Error>
+    {
+        debug!("Resolving latest block: {}", hash);
+        ::repository::client::resolve_latest_block(self.client.clone(), hash)
     }
 
     /// Gets a types::Content from a hash or fails
@@ -230,6 +239,27 @@ impl Repository {
         let result = ::repository::client::new_profile(client, keyname, profile, lifetime, ttl);
 
         ::futures::future::Either::A(result)
+    }
+
+    pub fn new_text_post<'a>(&'a self,
+                        publish_key_id: ProfileKey,
+                        latest_block: IPFSHash,
+                        text: String,
+                        time: Option<NaiveDateTime>)
+        -> impl Future<Item = (), Error = Error>
+    {
+        debug!("New text post under {:?}, after block {:?}", publish_key_id, latest_block);
+        ::repository::client::new_text_post(self.client.clone(),
+                                            publish_key_id,
+                                            latest_block,
+                                            text,
+                                            time)
+    }
+
+    pub fn get_key_id_from_key_name<'a>(&'a self, name: ProfileName)
+        -> impl Future<Item = ProfileKey, Error = Error>
+    {
+        ::repository::client::get_key_id_from_key_name(self.client.clone(), name)
     }
 
 }

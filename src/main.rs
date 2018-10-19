@@ -786,6 +786,9 @@ fn main() {
         //("post", Some(mtch)) => {
         //    debug!("Calling: post");
         //    let (config, repo) = boot();
+        // let key          = repo.get_key_id_from_key_name(publish_key.clone());
+        // let profile_hash = IPNSHash::from(key.deref().clone());
+        // let lastest      = repo.resolve_latest_block(profile_hash);
 
         //    unimplemented!()
         //},

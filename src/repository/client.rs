@@ -10,11 +10,14 @@ use futures::future::Future;
 use futures::stream::Stream;
 use serde_json::from_str as serde_json_from_str;
 use serde_json::to_string as serde_json_to_str;
+use chrono::NaiveDateTime;
 
 use types::block::Block;
 use types::content::Content;
 use types::content::Payload;
 use types::util::IPFSHash;
+use types::util::IPNSHash;
+use types::util::Timestamp;
 use repository::{ProfileName, ProfileKey};
 use version::protocol_version;
 
@@ -41,6 +44,34 @@ pub fn resolve_block(client: Arc<IpfsClient>, hash: &IPFSHash)
             String::from_utf8(block.into_bytes().to_vec())
                 .map_err(Error::from)
                 .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
+        })
+}
+
+pub fn get_key_id_from_key_name(client: Arc<IpfsClient>, name: ProfileName)
+    -> impl Future<Item = ProfileKey, Error = Error>
+{
+    client.key_list()
+        .map_err(Error::from)
+        .and_then(|list| {
+            list.keys
+                .into_iter()
+                .filter(|pair| pair.name == *name.deref())
+                .next()
+                .map(|pair| ProfileKey(pair.id))
+                .ok_or_else(|| err_msg("No Key"))
+        })
+}
+
+pub fn resolve_latest_block(client: Arc<IpfsClient>, hash: &IPNSHash)
+    -> impl Future<Item = Block, Error = Error>
+{
+    client
+        .clone()
+        .name_resolve(Some(hash), false, false)
+        .map_err(Error::from)
+        .and_then(|resp| {
+            let hash = IPFSHash::from(resp.path);
+            resolve_block(client, &hash)
         })
 }
 
@@ -212,3 +243,47 @@ pub fn new_profile(client: Arc<IpfsClient>,
                 .map_err(Error::from)
         })
 }
+
+pub fn new_text_post(client: Arc<IpfsClient>,
+                     publish_key_id: ProfileKey,
+                     latest_block: IPFSHash,
+                     text: String,
+                     time: Option<NaiveDateTime>)
+    -> impl Future<Item = (), Error = Error>
+{
+    resolve_block(client.clone(), &latest_block) // get devices from latest block
+        .and_then(|block| {
+            resolve_content(client.clone(), block.content())
+        })
+        .and_then(move |content| {
+            put_plain(client.clone(), text.into_bytes())
+                .and_then(move |content_hash| {
+                    let post = Payload::Post {
+                        content_format: ::mime::TEXT_PLAIN.into(),
+                        content: content_hash,
+                        reply_to: None,
+
+                        comments_will_be_propagated: None,
+                        comments_propagated_until: None,
+                    };
+
+                    let devices     = content.devices();
+                    let ts          = time.map(Timestamp::from);
+                    let content_obj = Content::new(devices.to_vec(), ts, post);
+
+                    put_content(client.clone(), &content_obj)
+                })
+        })
+        .and_then(move |content_obj_hash| {
+            let block = Block::new(protocol_version(), vec![latest_block], content_obj_hash);
+            put_block(client.clone(), &block)
+        })
+        .and_then(move |block_hash| {
+            announce_profile(client.clone(),
+                             publish_key_id,
+                             &block_hash,
+                             None, // IPFS default
+                             None) // IPFS default
+        })
+}
+
