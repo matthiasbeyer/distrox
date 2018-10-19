@@ -58,6 +58,7 @@ impl Deref for ProfileKey {
 impl Repository {
 
     pub fn new(host: &str, port: u16) -> Result<Repository, Error> {
+        debug!("Creating new Repository object: {}:{}", host, port);
         IpfsClient::new(host, port)
             .map(|c| Repository { client: Arc::new(c) })
             .map_err(Into::into)
@@ -75,6 +76,7 @@ impl Repository {
     pub fn resolve_plain(&self, hash: &IPFSHash)
         -> impl Future<Item = Vec<u8>, Error = Error>
     {
+        debug!("Resolving plain: {}", hash);
         ::repository::client::resolve_plain(self.client.clone(), hash)
     }
 
@@ -82,6 +84,7 @@ impl Repository {
     pub fn resolve_block(&self, hash: &IPFSHash)
         -> impl Future<Item = Block, Error = Error>
     {
+        debug!("Resolving block: {}", hash);
         ::repository::client::resolve_block(self.client.clone(), hash)
     }
 
@@ -89,6 +92,7 @@ impl Repository {
     pub fn resolve_content(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
+        debug!("Resolving content: {}", hash);
         ::repository::client::resolve_content(self.client.clone(), hash)
     }
 
@@ -97,6 +101,7 @@ impl Repository {
     pub fn resolve_content_none(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
+        debug!("Resolving content (none): {}", hash);
         ::repository::client::resolve_content_none(self.client.clone(), hash)
     }
 
@@ -105,6 +110,7 @@ impl Repository {
     pub fn resolve_content_post(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
+        debug!("Resolving content (post): {}", hash);
         ::repository::client::resolve_content_post(self.client.clone(), hash)
     }
 
@@ -113,6 +119,7 @@ impl Repository {
     pub fn resolve_content_attached_post_comments(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
+        debug!("Resolving content (attached post comments): {}", hash);
         ::repository::client::resolve_content_attached_post_comments(self.client.clone(), hash)
     }
 
@@ -121,6 +128,7 @@ impl Repository {
     pub fn resolve_content_profile(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
+        debug!("Resolving content (profile): {}", hash);
         ::repository::client::resolve_content_profile(self.client.clone(), hash)
     }
 
@@ -132,6 +140,7 @@ impl Repository {
     pub fn put_plain(&self, data: Vec<u8>)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
+        debug!("Putting plain");
         ::repository::client::put_plain(self.client.clone(), data)
     }
 
@@ -139,6 +148,7 @@ impl Repository {
         -> impl Future<Item = IPFSHash, Error = Error>
             where S: Serialize
     {
+        debug!("Putting serializable object");
         let client = self.client.clone();
         let data   = serde_json_to_str(&s);
 
@@ -155,12 +165,14 @@ impl Repository {
     pub fn put_block<'a>(&'a self, block: &'a Block)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
+        debug!("Putting block: {:?}", block);
         ::repository::client::put_block(self.client.clone(), block)
     }
 
     pub fn put_content<'a>(&'a self, content: &'a Content)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
+        debug!("Putting content: {:?}", content);
         ::repository::client::put_content(self.client.clone(), content)
     }
 
@@ -192,6 +204,8 @@ impl Repository {
                                 ttl: Option<String>)
         -> impl Future<Item = (), Error = Error>
     {
+        debug!("Announcing profile: key: {key:?}, state: {state:?}, lifetime: {lifetime:?}, ttl: {ttl:?}",
+               key = key, state = state, lifetime = lifetime, ttl = ttl);
         ::repository::client::announce_profile(self.client.clone(), key, state, lifetime, ttl)
     }
 
@@ -203,6 +217,9 @@ impl Repository {
         -> impl Future<Item = (ProfileName, ProfileKey), Error = Error>
     {
         use ipfs_api::KeyType;
+
+        debug!("Creating new profile: key: {key:?}, profile: {profile:?}, lifetime: {lifetime:?}, ttl: {ttl:?}",
+               key = keyname, profile = profile, lifetime = lifetime, ttl = ttl);
 
         if !is_match!(profile.payload(), Payload::Profile { .. }) {
             let out = ::futures::future::err(err_msg(format!("Not a Profile: {:?}", profile)));

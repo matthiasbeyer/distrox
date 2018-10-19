@@ -36,6 +36,8 @@ pub fn resolve_block(client: Arc<IpfsClient>, hash: &IPFSHash)
         .concat2()
         .map_err(Error::from)
         .and_then(|block| {
+            debug!("Got Block data, building Block object");
+
             String::from_utf8(block.into_bytes().to_vec())
                 .map_err(Error::from)
                 .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
@@ -50,6 +52,8 @@ pub fn resolve_content(client: Arc<IpfsClient>, hash: &IPFSHash)
         .concat2()
         .map_err(Error::from)
         .and_then(|content| {
+            debug!("Got Content data, building Content object");
+
             String::from_utf8(content.into_bytes().to_vec())
                 .map_err(Error::from)
                 .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
@@ -60,6 +64,7 @@ pub fn resolve_content_none(client: Arc<IpfsClient>, hash: &IPFSHash)
     -> impl Future<Item = Content, Error = Error>
 {
     resolve_content(client, hash).and_then(|content| {
+        debug!("Got Content object, checking whether it is None");
         match content.payload() {
             &Payload::None  => Ok(content),
             _               => Err(err_msg("Content is not None")),
@@ -72,6 +77,7 @@ pub fn resolve_content_post(client: Arc<IpfsClient>, hash: &IPFSHash)
 {
     resolve_content(client, hash)
         .and_then(|content| {
+            debug!("Got Content object, checking whether it is Post");
             match content.payload() {
                 &Payload::Post {..} => Ok(content),
                 _                   => Err(err_msg("Content is not a Post")),
@@ -84,6 +90,7 @@ pub fn resolve_content_attached_post_comments(client: Arc<IpfsClient>, hash: &IP
 {
     resolve_content(client, hash)
         .and_then(|content| {
+            debug!("Got Content object, checking whether it is AttachedPostComments");
             match content.payload() {
                 &Payload::AttachedPostComments {..} => Ok(content),
                 _                                   => Err(err_msg("Content is not AttachedPostComments")),
@@ -96,6 +103,7 @@ pub fn resolve_content_profile(client: Arc<IpfsClient>, hash: &IPFSHash)
 {
     resolve_content(client, hash)
         .and_then(|content| {
+            debug!("Got Content object, checking whether it is Profile");
             match content.payload() {
                 &Payload::Profile {..} => Ok(content),
                 _                      => Err(err_msg("Content is not a Profile")),
@@ -114,6 +122,7 @@ pub fn announce_profile(client: Arc<IpfsClient>,
 
     resolve_content_profile(client.clone(), state)
         .and_then(move |_| {
+            debug!("Publishing profile.");
             client.name_publish(&name,
                                 false,
                                 lifetime.as_ref().map(String::deref),
