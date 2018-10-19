@@ -742,6 +742,17 @@ fn main() {
 
                 Block::new(version, parents, content)
             };
+
+            hyper::rt::run({
+                repo
+                   .put_block(&block)
+                   .map_err(|e| {
+                       error!("Error running: {:?}", e);
+                       print_error_details(e);
+                       exit(1)
+                   })
+                   .map(|hash| println!("{}", hash))
+            });
         }
 
         ("create-profile", Some(mtch)) => {
