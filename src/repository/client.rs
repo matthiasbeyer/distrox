@@ -149,27 +149,16 @@ pub fn put_block(client: Arc<IpfsClient>, block: &Block)
 
     ::futures::future::result(data)
         .map_err(Into::into)
-        .and_then(move |data| {
-            client
-                .add(Cursor::new(data))
-                .map(|res| IPFSHash::from(res.hash))
-                .map_err(Into::into)
-        })
+        .and_then(move |data| put_plain(client, data.into_bytes()))
 }
 
 pub fn put_content(client: Arc<IpfsClient>, content: &Content)
     -> impl Future<Item = IPFSHash, Error = Error>
 {
     let data = serde_json_to_str(content);
-
     ::futures::future::result(data)
         .map_err(Into::into)
-        .and_then(move |data| {
-            client
-                .add(Cursor::new(data))
-                .map(|res| IPFSHash::from(res.hash))
-                .map_err(Into::into)
-        })
+        .and_then(move |data| put_plain(client, data.into_bytes()))
 }
 
 pub fn new_profile(client: Arc<IpfsClient>,
