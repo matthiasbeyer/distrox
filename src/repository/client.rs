@@ -177,7 +177,9 @@ pub fn new_profile(client: Arc<IpfsClient>,
         .map_err(Error::from)
         .map(|kp| (kp.name, kp.id))
         .and_then(move |(key_name, key_id)| { // put the content into IPFS
-            let prof = profile;
+            let mut prof = profile;
+            prof.push_device(IPNSHash::from(key_id));
+
             put_content(client1, &prof)
                 .map(|content_hash| (content_hash, key_name, key_id))
                 .map_err(Error::from)

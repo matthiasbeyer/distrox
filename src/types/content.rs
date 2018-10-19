@@ -54,6 +54,10 @@ impl Content {
         &self.payload
     }
 
+    pub(crate) fn push_device(&mut self, dev: IPNSHash) {
+        self.devices.push(dev);
+    }
+
 }
 
 /// The Payload type represents the Payload of a Content object
