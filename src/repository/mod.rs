@@ -26,6 +26,8 @@ use version::protocol_version;
 // use repository::iter::BlockIter;
 // use repository::profile::Profile;
 
+mod client;
+
 pub struct Repository {
     client: Arc<IpfsClient>,
 }
@@ -73,41 +75,21 @@ impl Repository {
     pub fn resolve_plain(&self, hash: &IPFSHash)
         -> impl Future<Item = Vec<u8>, Error = Error>
     {
-        self.client
-            .cat(hash)
-            .concat2()
-            .map_err(Error::from)
-            .map(|blob| blob.into_bytes().to_vec())
+        ::repository::client::resolve_plain(self.client.clone(), hash)
     }
 
     /// Gets a types::Block from a hash or fails
     pub fn resolve_block(&self, hash: &IPFSHash)
         -> impl Future<Item = Block, Error = Error>
     {
-        self.client
-            .cat(hash)
-            .concat2()
-            .map_err(Error::from)
-            .and_then(|block| {
-                String::from_utf8(block.into_bytes().to_vec())
-                    .map_err(Error::from)
-                    .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
-            })
+        ::repository::client::resolve_block(self.client.clone(), hash)
     }
 
     /// Gets a types::Content from a hash or fails
     pub fn resolve_content(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
-        self.client
-            .cat(hash)
-            .concat2()
-            .map_err(Error::from)
-            .and_then(|content| {
-                String::from_utf8(content.into_bytes().to_vec())
-                    .map_err(Error::from)
-                    .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
-            })
+        ::repository::client::resolve_content(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is None
@@ -115,13 +97,7 @@ impl Repository {
     pub fn resolve_content_none(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
-        self.resolve_content(hash)
-            .and_then(|content| {
-                match content.payload() {
-                    &Payload::None  => Ok(content),
-                    _               => Err(err_msg("Content is not None")),
-                }
-            })
+        ::repository::client::resolve_content_none(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is Post
@@ -129,13 +105,7 @@ impl Repository {
     pub fn resolve_content_post(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
-        self.resolve_content(hash)
-            .and_then(|content| {
-                match content.payload() {
-                    &Payload::Post {..} => Ok(content),
-                    _                   => Err(err_msg("Content is not a Post")),
-                }
-            })
+        ::repository::client::resolve_content_post(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is AttachedPostComments
@@ -143,13 +113,7 @@ impl Repository {
     pub fn resolve_content_attached_post_comments(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
-        self.resolve_content(hash)
-            .and_then(|content| {
-                match content.payload() {
-                    &Payload::AttachedPostComments {..} => Ok(content),
-                    _                                   => Err(err_msg("Content is not AttachedPostComments")),
-                }
-            })
+        ::repository::client::resolve_content_attached_post_comments(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is Profile
@@ -157,13 +121,7 @@ impl Repository {
     pub fn resolve_content_profile(&self, hash: &IPFSHash)
         -> impl Future<Item = Content, Error = Error>
     {
-        self.resolve_content(hash)
-            .and_then(|content| {
-                match content.payload() {
-                    &Payload::Profile {..} => Ok(content),
-                    _                      => Err(err_msg("Content is not a Profile")),
-                }
-            })
+        ::repository::client::resolve_content_profile(self.client.clone(), hash)
     }
 
 
@@ -174,11 +132,7 @@ impl Repository {
     pub fn put_plain(&self, data: Vec<u8>)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        self.client
-            .clone()
-            .add(Cursor::new(data))
-            .map(|res| IPFSHash::from(res.hash))
-            .map_err(Into::into)
+        ::repository::client::put_plain(self.client.clone(), data)
     }
 
     fn put_serialized<'a, S>(&'a self, s: &'a S)
@@ -201,33 +155,13 @@ impl Repository {
     pub fn put_block<'a>(&'a self, block: &'a Block)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        let client = self.client.clone();
-        let data   = serde_json_to_str(block);
-
-        ::futures::future::result(data)
-            .map_err(Into::into)
-            .and_then(move |data| {
-                client
-                    .add(Cursor::new(data))
-                    .map(|res| IPFSHash::from(res.hash))
-                    .map_err(Into::into)
-            })
+        ::repository::client::put_block(self.client.clone(), block)
     }
 
     pub fn put_content<'a>(&'a self, content: &'a Content)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        let client = self.client.clone();
-        let data   = serde_json_to_str(content);
-
-        ::futures::future::result(data)
-            .map_err(Into::into)
-            .and_then(move |data| {
-                client
-                    .add(Cursor::new(data))
-                    .map(|res| IPFSHash::from(res.hash))
-                    .map_err(Into::into)
-            })
+        ::repository::client::put_content(self.client.clone(), content)
     }
 
     /// The default lifetime for name publishing (profile announcements)
@@ -258,19 +192,7 @@ impl Repository {
                                 ttl: Option<String>)
         -> impl Future<Item = (), Error = Error>
     {
-        let name   = format!("/ipfs/{}", state);
-        let client = self.client.clone();
-
-        self.resolve_content_profile(state)
-            .and_then(|_| {
-                client.name_publish(&name,
-                                    false,
-                                    lifetime.as_ref().map(String::deref),
-                                    ttl.as_ref().map(String::deref),
-                                    Some(&key))
-                    .map_err(From::from)
-                    .map(|_| ())
-            })
+        ::repository::client::announce_profile(self.client.clone(), key, state, lifetime, ttl)
     }
 
     pub fn new_profile<'a>(&'a self,
@@ -288,39 +210,7 @@ impl Repository {
         }
 
         let client = self.client.clone();
-
-        let result = client
-            .key_gen(&keyname, KeyType::Rsa, 4096)
-            .map_err(Error::from)
-            .map(|kp| (kp.name, kp.id))
-            .and_then(|(key_name, key_id)| { // put the content into IPFS
-                let prof = profile;
-                self.put_content(&prof)
-                    .map(|content_hash| (content_hash, key_name, key_id))
-                    .map_err(Error::from)
-            })
-            .and_then(|(content_hash, key_name, key_id)| { // put the content into a new block
-                let block = Block::new(protocol_version(),
-                                       vec![], // no parents for new profile
-                                       content_hash);
-
-                self.put_block(&block)
-                    .map(|block_hash| (block_hash, key_name, key_id))
-                    .map_err(Error::from)
-            })
-            .and_then(|(block_hash, key_name, key_id)| {
-                let path = format!("/ipfs/{}", block_hash);
-                client
-                    .name_publish(&path,
-                                  false,
-                                  lifetime.as_ref().map(String::deref),
-                                  ttl.as_ref().map(String::deref),
-                                  Some(&key_name))
-                    .map(|_publish_response| {
-                        (ProfileName(key_name), ProfileKey(key_id))
-                    })
-                    .map_err(Error::from)
-            });
+        let result = ::repository::client::new_profile(client, keyname, profile, lifetime, ttl);
 
         ::futures::future::Either::A(result)
     }
