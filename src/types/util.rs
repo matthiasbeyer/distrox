@@ -33,7 +33,7 @@ impl ::std::fmt::Display for Timestamp {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq, Clone)]
 pub struct IPFSHash(String);
 
 impl From<String> for IPFSHash {
@@ -62,7 +62,7 @@ impl ::std::fmt::Display for IPFSHash {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq)]
+#[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq, Clone)]
 pub struct IPNSHash(String);
 
 impl From<String> for IPNSHash {
