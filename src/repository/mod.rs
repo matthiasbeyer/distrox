@@ -243,7 +243,7 @@ impl Repository {
                         latest_block: IPFSHash,
                         text: String,
                         time: Option<NaiveDateTime>)
-        -> impl Future<Item = (), Error = Error>
+        -> impl Future<Item = IPFSHash, Error = Error>
     {
         debug!("New text post under {:?}, after block {:?}", publish_key_id, latest_block);
         ::repository::client::new_text_post(self.client.clone(),

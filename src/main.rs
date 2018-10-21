@@ -813,6 +813,9 @@ fn main() {
                     .and_then(move |(key_id, ipfs_hash)| {
                         repo.new_text_post(key_id, ipfs_hash, text, Some(time))
                     })
+                    .map(|hash| {
+                        println!("{}", hash);
+                    })
                     .map_err(|e| {
                         error!("Error running: {:?}", e);
                         print_error_details(e);

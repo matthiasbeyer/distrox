@@ -255,7 +255,7 @@ pub fn new_text_post(client: Arc<IpfsClient>,
                      latest_block: IPFSHash,
                      text: String,
                      time: Option<NaiveDateTime>)
-    -> impl Future<Item = (), Error = Error>
+    -> impl Future<Item = IPFSHash, Error = Error>
 {
     let client1 = client.clone();
     let client2 = client.clone();
@@ -289,13 +289,6 @@ pub fn new_text_post(client: Arc<IpfsClient>,
         .and_then(move |content_obj_hash| {
             let block = Block::new(protocol_version(), vec![latest_block], content_obj_hash);
             put_block(client4, &block)
-        })
-        .and_then(move |block_hash| {
-            ::repository::client::announce_block(client5,
-                                                 publish_key_id,
-                                                 &block_hash,
-                                                 None, // IPFS default
-                                                 None) // IPFS default
         })
 }
 
