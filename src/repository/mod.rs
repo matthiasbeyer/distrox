@@ -259,10 +259,10 @@ impl Repository {
         ::repository::client::get_key_id_from_key_name(self.client.clone(), name)
     }
 
-    pub fn deref_ipfs_hash<'a>(&'a self, hash: &IPNSHash)
+    pub fn deref_ipns_hash<'a>(&'a self, hash: &IPNSHash)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        ::repository::client::deref_ipfs_hash(self.client.clone(), hash)
+        ::repository::client::deref_ipns_hash(self.client.clone(), hash)
     }
 
 }

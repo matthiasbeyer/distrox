@@ -21,7 +21,7 @@ use types::util::Timestamp;
 use repository::{ProfileName, ProfileKey};
 use version::protocol_version;
 
-pub fn deref_ipfs_hash(client: Arc<IpfsClient>,
+pub fn deref_ipns_hash(client: Arc<IpfsClient>,
                      hash: &IPNSHash)
     -> impl Future<Item = IPFSHash, Error = Error>
 {
@@ -75,7 +75,7 @@ pub fn get_key_id_from_key_name(client: Arc<IpfsClient>, name: ProfileName)
 pub fn resolve_latest_block(client: Arc<IpfsClient>, hash: &IPNSHash)
     -> impl Future<Item = Block, Error = Error>
 {
-    deref_ipfs_hash(client.clone(), hash)
+    deref_ipns_hash(client.clone(), hash)
         .map_err(Error::from)
         .and_then(|ipfs_hash| resolve_block(client, &ipfs_hash))
 }

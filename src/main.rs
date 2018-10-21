@@ -808,7 +808,7 @@ fn main() {
                     .get_key_id_from_key_name(publish_key_name.clone())
                     .and_then(move |key_id| {
                         let key_id = key_id.into();
-                        repo2.deref_ipfs_hash(&key_id).map(|ipfs_hash| (key_id, ipfs_hash))
+                        repo2.deref_ipns_hash(&key_id).map(|ipfs_hash| (key_id, ipfs_hash))
                     })
                     .and_then(move |(key_id, ipfs_hash)| {
                         repo.new_text_post(key_id, ipfs_hash, text, Some(time))
