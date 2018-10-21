@@ -45,17 +45,14 @@ impl Deref for ProfileName {
     }
 }
 
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ProfileKey(String);
-
-impl Deref for ProfileKey {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl From<String> for ProfileName {
+    fn from(s: String) -> Self {
+        ProfileName(s)
     }
 }
+
+pub type ProfileKey = IPNSHash;
+
 
 impl Repository {
 
@@ -260,6 +257,12 @@ impl Repository {
         -> impl Future<Item = ProfileKey, Error = Error>
     {
         ::repository::client::get_key_id_from_key_name(self.client.clone(), name)
+    }
+
+    pub fn deref_ipfs_hash<'a>(&'a self, hash: &IPNSHash)
+        -> impl Future<Item = IPFSHash, Error = Error>
+    {
+        ::repository::client::deref_ipfs_hash(self.client.clone(), hash)
     }
 
 }

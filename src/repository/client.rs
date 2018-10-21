@@ -21,6 +21,16 @@ use types::util::Timestamp;
 use repository::{ProfileName, ProfileKey};
 use version::protocol_version;
 
+pub fn deref_ipfs_hash(client: Arc<IpfsClient>,
+                     hash: &IPNSHash)
+    -> impl Future<Item = IPFSHash, Error = Error>
+{
+    client
+        .name_resolve(Some(hash.deref()), false, false)
+        .map_err(Error::from)
+        .map(|resp| IPFSHash::from(resp.path))
+}
+
 pub fn resolve_plain(client: Arc<IpfsClient>, hash: &IPFSHash)
     -> impl Future<Item = Vec<u8>, Error = Error>
 {
@@ -52,12 +62,12 @@ pub fn get_key_id_from_key_name(client: Arc<IpfsClient>, name: ProfileName)
 {
     client.key_list()
         .map_err(Error::from)
-        .and_then(|list| {
+        .and_then(move |list| {
             list.keys
                 .into_iter()
                 .filter(|pair| pair.name == *name.deref())
                 .next()
-                .map(|pair| ProfileKey(pair.id))
+                .map(|pair| ProfileKey::from(pair.id))
                 .ok_or_else(|| err_msg("No Key"))
         })
 }
@@ -65,14 +75,9 @@ pub fn get_key_id_from_key_name(client: Arc<IpfsClient>, name: ProfileName)
 pub fn resolve_latest_block(client: Arc<IpfsClient>, hash: &IPNSHash)
     -> impl Future<Item = Block, Error = Error>
 {
-    client
-        .clone()
-        .name_resolve(Some(hash), false, false)
+    deref_ipfs_hash(client.clone(), hash)
         .map_err(Error::from)
-        .and_then(|resp| {
-            let hash = IPFSHash::from(resp.path);
-            resolve_block(client, &hash)
-        })
+        .and_then(|ipfs_hash| resolve_block(client, &ipfs_hash))
 }
 
 pub fn resolve_content(client: Arc<IpfsClient>, hash: &IPFSHash)
@@ -209,10 +214,10 @@ pub fn new_profile(client: Arc<IpfsClient>,
         .map(|kp| (kp.name, kp.id))
         .and_then(move |(key_name, key_id)| { // put the content into IPFS
             let mut prof = profile;
-            prof.push_device(IPNSHash::from(key_id));
+            prof.push_device(IPNSHash::from(key_id.clone()));
 
             put_content(client1, &prof)
-                .map(|content_hash| (content_hash, key_name, key_id))
+                .map(move |content_hash| (content_hash, key_name, key_id))
                 .map_err(Error::from)
         })
         .map(|(content_hash, key_name, key_id)| {
@@ -238,7 +243,7 @@ pub fn new_profile(client: Arc<IpfsClient>,
                               ttl.as_ref().map(String::deref),
                               Some(&key_name))
                 .map(|_publish_response| {
-                    (ProfileName(key_name), ProfileKey(key_id))
+                    (ProfileName(key_name), ProfileKey::from(key_id))
                 })
                 .map_err(Error::from)
         })
@@ -251,12 +256,18 @@ pub fn new_text_post(client: Arc<IpfsClient>,
                      time: Option<NaiveDateTime>)
     -> impl Future<Item = (), Error = Error>
 {
+    let client1 = client.clone();
+    let client2 = client.clone();
+    let client3 = client.clone();
+    let client4 = client.clone();
+    let client5 = client.clone();
+
     resolve_block(client.clone(), &latest_block) // get devices from latest block
         .and_then(|block| {
-            resolve_content(client.clone(), block.content())
+            resolve_content(client1, block.content())
         })
         .and_then(move |content| {
-            put_plain(client.clone(), text.into_bytes())
+            put_plain(client2, text.into_bytes())
                 .and_then(move |content_hash| {
                     let post = Payload::Post {
                         content_format: ::mime::TEXT_PLAIN.into(),
@@ -271,19 +282,20 @@ pub fn new_text_post(client: Arc<IpfsClient>,
                     let ts          = time.map(Timestamp::from);
                     let content_obj = Content::new(devices.to_vec(), ts, post);
 
-                    put_content(client.clone(), &content_obj)
+                    put_content(client3, &content_obj)
                 })
         })
         .and_then(move |content_obj_hash| {
             let block = Block::new(protocol_version(), vec![latest_block], content_obj_hash);
-            put_block(client.clone(), &block)
+            put_block(client4, &block)
         })
         .and_then(move |block_hash| {
-            announce_profile(client.clone(),
+            announce_profile(client5,
                              publish_key_id,
                              &block_hash,
                              None, // IPFS default
                              None) // IPFS default
         })
 }
+
 

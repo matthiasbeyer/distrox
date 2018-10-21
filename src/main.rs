@@ -26,6 +26,7 @@ mod version;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use chrono::NaiveDateTime;
 use futures::future::Future;
@@ -783,15 +784,42 @@ fn main() {
             });
         },
 
-        //("post", Some(mtch)) => {
-        //    debug!("Calling: post");
-        //    let (config, repo) = boot();
-        // let key          = repo.get_key_id_from_key_name(publish_key.clone());
-        // let profile_hash = IPNSHash::from(key.deref().clone());
-        // let lastest      = repo.resolve_latest_block(profile_hash);
+        ("post", Some(mtch)) => {
+            use repository::ProfileName;
 
-        //    unimplemented!()
-        //},
+            debug!("Calling: post");
+            let (config, repo) = boot();
+            let repo = Arc::new(repo);
+            let publish_key_name = mtch
+                .value_of("profile_name")
+                .map(String::from)
+                .map(ProfileName::from)
+                .unwrap(); // safe by clap
+            let text = mtch
+                .value_of("text")
+                .map(String::from)
+                .unwrap(); // safe by clap
+            let time = ::chrono::offset::Local::now().naive_local();
+
+            let repo2 = repo.clone();
+
+            hyper::rt::run({
+                repo.clone()
+                    .get_key_id_from_key_name(publish_key_name.clone())
+                    .and_then(move |key_id| {
+                        let key_id = key_id.into();
+                        repo2.deref_ipfs_hash(&key_id).map(|ipfs_hash| (key_id, ipfs_hash))
+                    })
+                    .and_then(move |(key_id, ipfs_hash)| {
+                        repo.new_text_post(key_id, ipfs_hash, text, Some(time))
+                    })
+                    .map_err(|e| {
+                        error!("Error running: {:?}", e);
+                        print_error_details(e);
+                        exit(1)
+                    })
+            });
+        },
 
         (other, _mtch) => {
             error!("Unknown command: {}", other);
