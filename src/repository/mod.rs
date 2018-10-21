@@ -196,14 +196,14 @@ impl Repository {
         "10m"
     }
 
-    /// Announce a profile as current
+    /// Announce a block as current
     ///
-    /// Profile identified by IPFS hash.
+    /// Block identified by IPFS hash.
     ///
     /// Lifetime and TTL are _not_ set to the default in the implementation of this function, but
     /// the IPFS defaults apply (set by the IPFS daemon)
     ///
-    pub fn announce_profile<'a>(&'a self,
+    pub fn announce_block<'a>(&'a self,
                                 key: ProfileKey,
                                 state: &IPFSHash,
                                 lifetime: Option<String>,
@@ -212,7 +212,7 @@ impl Repository {
     {
         debug!("Announcing profile: key: {key:?}, state: {state:?}, lifetime: {lifetime:?}, ttl: {ttl:?}",
                key = key, state = state, lifetime = lifetime, ttl = ttl);
-        ::repository::client::announce_profile(self.client.clone(), key, state, lifetime, ttl)
+        ::repository::client::announce_block(self.client.clone(), key, state, lifetime, ttl)
     }
 
     pub fn new_profile<'a>(&'a self,

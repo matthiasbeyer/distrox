@@ -410,6 +410,25 @@ pub fn build_ui<'a>() -> App<'a, 'a> {
                          )
                     )
 
+        .subcommand(SubCommand::with_name("publish")
+                    .about("Publish a block as latest block")
+                    .version("0.1.0")
+                    .arg(Arg::with_name("profile_name")
+                         .index(1)
+                         .required(true)
+                         .takes_value(true)
+                         .multiple(false)
+                         .help("Name of the Profile (IPFS Key)")
+                         )
+                    .arg(Arg::with_name("blockhash")
+                         .index(2)
+                         .required(true)
+                         .takes_value(true)
+                         .multiple(false)
+                         .help("Block to publish")
+                         )
+                    )
+
 }
 
 

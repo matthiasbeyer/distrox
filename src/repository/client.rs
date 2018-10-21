@@ -147,18 +147,18 @@ pub fn resolve_content_profile(client: Arc<IpfsClient>, hash: &IPFSHash)
         })
 }
 
-pub fn announce_profile(client: Arc<IpfsClient>,
-                        key: ProfileKey,
-                        state: &IPFSHash,
-                        lifetime: Option<String>,
-                        ttl: Option<String>)
+pub fn announce_block(client: Arc<IpfsClient>,
+                      key: ProfileKey,
+                      state: &IPFSHash,
+                      lifetime: Option<String>,
+                      ttl: Option<String>)
     -> impl Future<Item = (), Error = Error>
 {
     let name   = format!("/ipfs/{}", state);
 
-    resolve_content_profile(client.clone(), state)
+    resolve_block(client.clone(), state)
         .and_then(move |_| {
-            debug!("Publishing profile.");
+            debug!("Publishing block.");
             client.name_publish(&name,
                                 false,
                                 lifetime.as_ref().map(String::deref),
@@ -168,6 +168,7 @@ pub fn announce_profile(client: Arc<IpfsClient>,
                 .map(|_| ())
         })
 }
+
 
 pub fn put_plain(client: Arc<IpfsClient>, data: Vec<u8>)
     -> impl Future<Item = IPFSHash, Error = Error>
@@ -290,11 +291,11 @@ pub fn new_text_post(client: Arc<IpfsClient>,
             put_block(client4, &block)
         })
         .and_then(move |block_hash| {
-            announce_profile(client5,
-                             publish_key_id,
-                             &block_hash,
-                             None, // IPFS default
-                             None) // IPFS default
+            ::repository::client::announce_block(client5,
+                                                 publish_key_id,
+                                                 &block_hash,
+                                                 None, // IPFS default
+                                                 None) // IPFS default
         })
 }
 

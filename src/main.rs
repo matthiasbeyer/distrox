@@ -821,6 +821,39 @@ fn main() {
             });
         },
 
+        ("publish", Some(mtch)) => {
+            use repository::ProfileName;
+
+            debug!("Calling: publish");
+            let (config, repo) = boot();
+            let repo = Arc::new(repo);
+            let publish_key_name = mtch
+                .value_of("profile_name")
+                .map(String::from)
+                .map(ProfileName::from)
+                .unwrap(); // safe by clap
+            let blockhash = mtch
+                .value_of("blockhash")
+                .map(String::from)
+                .map(IPFSHash::from)
+                .unwrap(); // safe by clap
+
+            let repo2 = repo.clone();
+
+            hyper::rt::run({
+                repo.clone()
+                    .get_key_id_from_key_name(publish_key_name)
+                    .and_then(move |publish_key_id| {
+                        repo.announce_block(publish_key_id, &blockhash, None, None)
+                    })
+                    .map_err(|e| {
+                        error!("Error running: {:?}", e);
+                        print_error_details(e);
+                        exit(1)
+                    })
+            });
+        },
+
         (other, _mtch) => {
             error!("Unknown command: {}", other);
             exit(1)
