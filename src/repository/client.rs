@@ -11,6 +11,7 @@ use futures::stream::Stream;
 use serde_json::from_str as serde_json_from_str;
 use serde_json::to_string as serde_json_to_str;
 use chrono::NaiveDateTime;
+use itertools::Itertools;
 
 use types::block::Block;
 use types::content::Content;
@@ -252,23 +253,33 @@ pub fn new_profile(client: Arc<IpfsClient>,
 
 pub fn new_text_post(client: Arc<IpfsClient>,
                      publish_key_id: ProfileKey,
-                     latest_block: IPFSHash,
+                     parent_blocks: Vec<IPFSHash>,
                      text: String,
                      time: Option<NaiveDateTime>)
     -> impl Future<Item = IPFSHash, Error = Error>
 {
-    let client1 = client.clone();
-    let client2 = client.clone();
     let client3 = client.clone();
     let client4 = client.clone();
     let client5 = client.clone();
 
-    resolve_block(client.clone(), &latest_block) // get devices from latest block
-        .and_then(|block| {
-            resolve_content(client1, block.content())
-        })
-        .and_then(move |content| {
-            put_plain(client2, text.into_bytes())
+    let iterator = parent_blocks
+        .clone()
+        .into_iter()
+        .map(move |parent_block| {
+            let client1 = client.clone();
+            let client2 = client.clone();
+            resolve_block(client1, &parent_block)
+                .and_then(move |block| {
+                    resolve_content(client2, block.content())
+                })
+                .map(|content| content.devices().to_vec())
+        });
+
+    ::futures::future::join_all(iterator)
+        .and_then(move |devices| {
+            let devices = Iterator::flatten(devices.into_iter()).unique().collect();
+
+            put_plain(client3, text.into_bytes())
                 .and_then(move |content_hash| {
                     let post = Payload::Post {
                         content_format: ::mime::TEXT_PLAIN.into(),
@@ -279,16 +290,15 @@ pub fn new_text_post(client: Arc<IpfsClient>,
                         comments_propagated_until: None,
                     };
 
-                    let devices     = content.devices();
                     let ts          = time.map(Timestamp::from);
-                    let content_obj = Content::new(devices.to_vec(), ts, post);
+                    let content_obj = Content::new(devices, ts, post);
 
-                    put_content(client3, &content_obj)
+                    put_content(client4, &content_obj)
                 })
         })
         .and_then(move |content_obj_hash| {
-            let block = Block::new(protocol_version(), vec![latest_block], content_obj_hash);
-            put_block(client4, &block)
+            let block = Block::new(protocol_version(), parent_blocks, content_obj_hash);
+            put_block(client5, &block)
         })
 }
 

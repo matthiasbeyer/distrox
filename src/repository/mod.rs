@@ -240,15 +240,15 @@ impl Repository {
 
     pub fn new_text_post<'a>(&'a self,
                         publish_key_id: ProfileKey,
-                        latest_block: IPFSHash,
+                        parent_blocks: Vec<IPFSHash>,
                         text: String,
                         time: Option<NaiveDateTime>)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        debug!("New text post under {:?}, after block {:?}", publish_key_id, latest_block);
+        debug!("New text post under {:?}, after blocks {:?}", publish_key_id, parent_blocks);
         ::repository::client::new_text_post(self.client.clone(),
                                             publish_key_id,
-                                            latest_block,
+                                            parent_blocks,
                                             text,
                                             time)
     }

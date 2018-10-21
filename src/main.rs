@@ -11,6 +11,7 @@ extern crate toml;
 extern crate config;
 extern crate hyper;
 extern crate env_logger;
+extern crate itertools;
 
 #[macro_use] extern crate is_match;
 #[macro_use] extern crate serde_derive;
@@ -796,11 +797,12 @@ fn main() {
                 .map(ProfileName::from)
                 .unwrap(); // safe by clap
 
-            let parent_block_hash = mtch
-                .value_of("parent")
+            let parent_block_hashes = mtch
+                .values_of("parents")
+                .unwrap()  // safe by clap
                 .map(String::from)
                 .map(IPFSHash::from)
-                .unwrap(); // safe by clap
+                .collect::<Vec<_>>();
 
             let text = mtch
                 .value_of("text")
@@ -815,7 +817,7 @@ fn main() {
                 repo.clone()
                     .get_key_id_from_key_name(publish_key_name.clone())
                     .and_then(move |key_id| {
-                        repo.new_text_post(key_id, parent_block_hash, text, Some(time))
+                        repo.new_text_post(key_id, parent_block_hashes, text, Some(time))
                     })
                     .map(|hash| {
                         println!("{}", hash);
