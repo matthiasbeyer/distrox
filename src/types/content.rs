@@ -27,7 +27,7 @@ pub struct Content {
 
     /// Timestamp (UNIX timestamp) when this was created. Can be left out.
     #[serde(rename = "timestamp")]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     timestamp: Option<Timestamp>,
 
     /// The payload of the content block
@@ -94,7 +94,7 @@ pub enum Payload {
         /// If this post is a reply to another post, this field can be used to point to the
         /// replied-to post.
         #[serde(rename = "reply-to")]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default)]
         reply_to: Option<IPFSHash>,
 
         //
@@ -122,7 +122,7 @@ pub enum Payload {
         /// A value of `None` indicates no setting here, which means that the client might or might
         /// not propagate any comments.
         #[serde(rename = "comments-will-be-propagated")]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default)]
         comments_will_be_propagated: Option<bool>,
 
         /// A value which describes until what date/time comments will be propagated
@@ -130,7 +130,7 @@ pub enum Payload {
         /// This is a hint for other users whether comments will be propagated or not.
         /// A UI might not show a "Reply" button after that date.
         #[serde(rename = "comments-propagated-until")]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default)]
         comments_propagated_until: Option<Timestamp>,
     },
 
@@ -149,7 +149,7 @@ pub enum Payload {
         /// This list always represents a full list of all answers. As comments are added, old
         /// versions of this object should be ignored by clients if newer variants for the same `comments_for`-object are published.
         #[serde(rename = "refs")]
-        #[serde(skip_serializing_if = "Vec::is_empty")]
+        #[serde(default)]
         refs: Vec<IPFSHash>,
     },
 
@@ -171,7 +171,7 @@ pub enum Payload {
         /// A profile may only contain _one_ profile picture in the current version of the
         /// protocol.
         #[serde(rename = "picture")]
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default)]
         picture: Option<IPFSHash>,
 
         /// A "more" field where arbitrary data can be stored. Like "Biography", "Hobbies",
@@ -179,7 +179,7 @@ pub enum Payload {
         ///
         /// The stored data can be of any type.
         #[serde(rename = "user-defined")]
-        #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+        #[serde(default)]
         more: BTreeMap<String, Userdata>,
     },
 }

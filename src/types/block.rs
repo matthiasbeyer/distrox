@@ -11,7 +11,7 @@ pub struct Block {
     ///
     /// Multiple are required for merging.
     #[serde(rename = "parents")]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     parents: Vec<IPFSHash>,
 
     /// The content of this block, pointed to by IPFS hash.
