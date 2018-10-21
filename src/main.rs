@@ -791,14 +791,22 @@ fn main() {
             let (config, repo) = boot();
             let repo = Arc::new(repo);
             let publish_key_name = mtch
-                .value_of("profile_name")
+                .value_of("profile-name")
                 .map(String::from)
                 .map(ProfileName::from)
                 .unwrap(); // safe by clap
+
+            let parent_block_hash = mtch
+                .value_of("parent")
+                .map(String::from)
+                .map(IPFSHash::from)
+                .unwrap(); // safe by clap
+
             let text = mtch
                 .value_of("text")
                 .map(String::from)
                 .unwrap(); // safe by clap
+
             let time = ::chrono::offset::Local::now().naive_local();
 
             let repo2 = repo.clone();
@@ -807,11 +815,7 @@ fn main() {
                 repo.clone()
                     .get_key_id_from_key_name(publish_key_name.clone())
                     .and_then(move |key_id| {
-                        let key_id = key_id.into();
-                        repo2.deref_ipns_hash(&key_id).map(|ipfs_hash| (key_id, ipfs_hash))
-                    })
-                    .and_then(move |(key_id, ipfs_hash)| {
-                        repo.new_text_post(key_id, ipfs_hash, text, Some(time))
+                        repo.new_text_post(key_id, parent_block_hash, text, Some(time))
                     })
                     .map(|hash| {
                         println!("{}", hash);
