@@ -429,6 +429,18 @@ pub fn build_ui<'a>() -> App<'a, 'a> {
                          )
                     )
 
+        .subcommand(SubCommand::with_name("get-profile-state")
+                    .about("Get the latest block hash (IPFS Hash) for a profile")
+                    .version("0.1.0")
+                    .arg(Arg::with_name("profile_name")
+                         .index(1)
+                         .required(true)
+                         .takes_value(true)
+                         .multiple(false)
+                         .help("Name of the Profile (IPFS Key)")
+                         )
+                    )
+
 }
 
 

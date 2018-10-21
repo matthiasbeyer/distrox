@@ -857,6 +857,38 @@ fn main() {
             });
         },
 
+        ("get-profile-state", Some(mtch)) => {
+            use repository::ProfileName;
+
+            debug!("Calling: get-profile-state");
+            let (config, repo) = boot();
+            let repo = Arc::new(repo);
+            let publish_key_name = mtch
+                .value_of("profile_name")
+                .map(String::from)
+                .map(ProfileName::from)
+                .unwrap(); // safe by clap
+
+            let repo2 = repo.clone();
+
+            hyper::rt::run({
+                repo.clone()
+                    .get_key_id_from_key_name(publish_key_name.clone())
+                    .and_then(move |key_id| {
+                        let key_id = key_id.into();
+                        repo2.deref_ipns_hash(&key_id)
+                    })
+                    .map(|hash| {
+                        println!("{}", hash);
+                    })
+                    .map_err(|e| {
+                        error!("Error running: {:?}", e);
+                        print_error_details(e);
+                        exit(1)
+                    })
+            });
+        },
+
         (other, _mtch) => {
             error!("Unknown command: {}", other);
             exit(1)
