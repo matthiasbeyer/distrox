@@ -39,7 +39,7 @@ pub fn resolve_plain(client: Arc<IpfsClient>, hash: &IPFSHash)
         .cat(hash)
         .concat2()
         .map_err(Error::from)
-        .map(|blob| blob.into_bytes().to_vec())
+        .map(|blob| blob.to_vec())
 }
 
 pub fn resolve_block(client: Arc<IpfsClient>, hash: &IPFSHash)
@@ -52,7 +52,7 @@ pub fn resolve_block(client: Arc<IpfsClient>, hash: &IPFSHash)
         .and_then(|block| {
             debug!("Got Block data, building Block object");
 
-            String::from_utf8(block.into_bytes().to_vec())
+            String::from_utf8(block.to_vec())
                 .map_err(Error::from)
                 .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
         })
@@ -91,7 +91,7 @@ pub fn resolve_content(client: Arc<IpfsClient>, hash: &IPFSHash)
         .and_then(|content| {
             debug!("Got Content data, building Content object");
 
-            String::from_utf8(content.into_bytes().to_vec())
+            String::from_utf8(content.to_vec())
                 .map_err(Error::from)
                 .and_then(|s| serde_json_from_str(&s).map_err(Error::from))
         })
