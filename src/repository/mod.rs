@@ -13,17 +13,17 @@ use failure::Error;
 use failure::err_msg;
 use futures::future::Future;
 use futures::stream::Stream;
-use serde_json::from_str as serde_json_from_str;
+
 use serde_json::to_string as serde_json_to_str;
 use serde::Serialize;
 use chrono::NaiveDateTime;
 
-use types::block::Block;
-use types::content::Content;
-use types::content::Payload;
-use types::util::IPFSHash;
-use types::util::IPNSHash;
-use version::protocol_version;
+use crate::types::block::Block;
+use crate::types::content::Content;
+use crate::types::content::Payload;
+use crate::types::util::IPFSHash;
+use crate::types::util::IPNSHash;
+
 
 // use repository::iter::BlockIter;
 // use repository::profile::Profile;
@@ -76,7 +76,7 @@ impl Repository {
         -> impl Future<Item = Vec<u8>, Error = Error>
     {
         debug!("Resolving plain: {}", hash);
-        ::repository::client::resolve_plain(self.client.clone(), hash)
+        crate::repository::client::resolve_plain(self.client.clone(), hash)
     }
 
     /// Gets a types::Block from a hash or fails
@@ -84,14 +84,14 @@ impl Repository {
         -> impl Future<Item = Block, Error = Error>
     {
         debug!("Resolving block: {}", hash);
-        ::repository::client::resolve_block(self.client.clone(), hash)
+        crate::repository::client::resolve_block(self.client.clone(), hash)
     }
 
     pub fn resolve_latest_block(&self, hash: &IPNSHash)
         -> impl Future<Item = Block, Error = Error>
     {
         debug!("Resolving latest block: {}", hash);
-        ::repository::client::resolve_latest_block(self.client.clone(), hash)
+        crate::repository::client::resolve_latest_block(self.client.clone(), hash)
     }
 
     /// Gets a types::Content from a hash or fails
@@ -99,7 +99,7 @@ impl Repository {
         -> impl Future<Item = Content, Error = Error>
     {
         debug!("Resolving content: {}", hash);
-        ::repository::client::resolve_content(self.client.clone(), hash)
+        crate::repository::client::resolve_content(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is None
@@ -108,7 +108,7 @@ impl Repository {
         -> impl Future<Item = Content, Error = Error>
     {
         debug!("Resolving content (none): {}", hash);
-        ::repository::client::resolve_content_none(self.client.clone(), hash)
+        crate::repository::client::resolve_content_none(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is Post
@@ -117,7 +117,7 @@ impl Repository {
         -> impl Future<Item = Content, Error = Error>
     {
         debug!("Resolving content (post): {}", hash);
-        ::repository::client::resolve_content_post(self.client.clone(), hash)
+        crate::repository::client::resolve_content_post(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is AttachedPostComments
@@ -126,7 +126,7 @@ impl Repository {
         -> impl Future<Item = Content, Error = Error>
     {
         debug!("Resolving content (attached post comments): {}", hash);
-        ::repository::client::resolve_content_attached_post_comments(self.client.clone(), hash)
+        crate::repository::client::resolve_content_attached_post_comments(self.client.clone(), hash)
     }
 
     /// Helper over Self::resolve_content() which ensures that the Content payload is Profile
@@ -135,7 +135,7 @@ impl Repository {
         -> impl Future<Item = Content, Error = Error>
     {
         debug!("Resolving content (profile): {}", hash);
-        ::repository::client::resolve_content_profile(self.client.clone(), hash)
+        crate::repository::client::resolve_content_profile(self.client.clone(), hash)
     }
 
 
@@ -147,7 +147,7 @@ impl Repository {
         -> impl Future<Item = IPFSHash, Error = Error>
     {
         debug!("Putting plain");
-        ::repository::client::put_plain(self.client.clone(), data)
+        crate::repository::client::put_plain(self.client.clone(), data)
     }
 
     fn put_serialized<'a, S>(&'a self, s: &'a S)
@@ -172,14 +172,14 @@ impl Repository {
         -> impl Future<Item = IPFSHash, Error = Error>
     {
         debug!("Putting block: {:?}", block);
-        ::repository::client::put_block(self.client.clone(), block)
+        crate::repository::client::put_block(self.client.clone(), block)
     }
 
     pub fn put_content<'a>(&'a self, content: &'a Content)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
         debug!("Putting content: {:?}", content);
-        ::repository::client::put_content(self.client.clone(), content)
+        crate::repository::client::put_content(self.client.clone(), content)
     }
 
     /// The default lifetime for name publishing (profile announcements)
@@ -212,7 +212,7 @@ impl Repository {
     {
         debug!("Announcing profile: key: {key:?}, state: {state:?}, lifetime: {lifetime:?}, ttl: {ttl:?}",
                key = key, state = state, lifetime = lifetime, ttl = ttl);
-        ::repository::client::announce_block(self.client.clone(), key, state, lifetime, ttl)
+        crate::repository::client::announce_block(self.client.clone(), key, state, lifetime, ttl)
     }
 
     pub fn new_profile<'a>(&'a self,
@@ -222,7 +222,7 @@ impl Repository {
                            ttl: Option<String>)
         -> impl Future<Item = (ProfileName, ProfileKey), Error = Error>
     {
-        use ipfs_api::KeyType;
+        
 
         debug!("Creating new profile: key: {key:?}, profile: {profile:?}, lifetime: {lifetime:?}, ttl: {ttl:?}",
                key = keyname, profile = profile, lifetime = lifetime, ttl = ttl);
@@ -233,7 +233,7 @@ impl Repository {
         }
 
         let client = self.client.clone();
-        let result = ::repository::client::new_profile(client, keyname, profile, lifetime, ttl);
+        let result = crate::repository::client::new_profile(client, keyname, profile, lifetime, ttl);
 
         ::futures::future::Either::A(result)
     }
@@ -246,7 +246,7 @@ impl Repository {
         -> impl Future<Item = IPFSHash, Error = Error>
     {
         debug!("New text post under {:?}, after blocks {:?}", publish_key_id, parent_blocks);
-        ::repository::client::new_text_post(self.client.clone(),
+        crate::repository::client::new_text_post(self.client.clone(),
                                             publish_key_id,
                                             parent_blocks,
                                             text,
@@ -256,13 +256,13 @@ impl Repository {
     pub fn get_key_id_from_key_name<'a>(&'a self, name: ProfileName)
         -> impl Future<Item = ProfileKey, Error = Error>
     {
-        ::repository::client::get_key_id_from_key_name(self.client.clone(), name)
+        crate::repository::client::get_key_id_from_key_name(self.client.clone(), name)
     }
 
     pub fn deref_ipns_hash<'a>(&'a self, hash: &IPNSHash)
         -> impl Future<Item = IPFSHash, Error = Error>
     {
-        ::repository::client::deref_ipns_hash(self.client.clone(), hash)
+        crate::repository::client::deref_ipns_hash(self.client.clone(), hash)
     }
 
 }

@@ -13,14 +13,14 @@ use serde_json::to_string as serde_json_to_str;
 use chrono::NaiveDateTime;
 use itertools::Itertools;
 
-use types::block::Block;
-use types::content::Content;
-use types::content::Payload;
-use types::util::IPFSHash;
-use types::util::IPNSHash;
-use types::util::Timestamp;
-use repository::{ProfileName, ProfileKey};
-use version::protocol_version;
+use crate::types::block::Block;
+use crate::types::content::Content;
+use crate::types::content::Payload;
+use crate::types::util::IPFSHash;
+use crate::types::util::IPNSHash;
+use crate::types::util::Timestamp;
+use crate::repository::{ProfileName, ProfileKey};
+use crate::version::protocol_version;
 
 pub fn deref_ipns_hash(client: Arc<IpfsClient>,
                      hash: &IPNSHash)
@@ -252,7 +252,7 @@ pub fn new_profile(client: Arc<IpfsClient>,
 }
 
 pub fn new_text_post(client: Arc<IpfsClient>,
-                     publish_key_id: ProfileKey,
+                     _publish_key_id: ProfileKey,
                      parent_blocks: Vec<IPFSHash>,
                      text: String,
                      time: Option<NaiveDateTime>)

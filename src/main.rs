@@ -34,16 +34,16 @@ use futures::future::Future;
 use serde_json::to_string_pretty as serde_json_to_string_pretty;
 use serde_json::from_str as serde_json_from_str;
 
-use configuration::Configuration;
-use repository::Repository;
-use types::block::Block;
-use types::content::Content;
-use types::content::Payload;
-use types::util::IPFSHash;
-use types::util::IPNSHash;
-use types::util::MimeType;
-use types::util::Timestamp;
-use types::util::Version;
+use crate::configuration::Configuration;
+use crate::repository::Repository;
+use crate::types::block::Block;
+use crate::types::content::Content;
+use crate::types::content::Payload;
+use crate::types::util::IPFSHash;
+use crate::types::util::IPNSHash;
+use crate::types::util::MimeType;
+use crate::types::util::Timestamp;
+use crate::types::util::Version;
 
 use std::process::exit;
 
@@ -623,7 +623,7 @@ fn main() {
 
         ("create-attached-post-comments-blob", Some(mtch)) => {
             debug!("Calling: create-attached-post-comments-blob");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
 
             let content = {
                 let devices   = mtch.values_of("device").unwrap(); // safe by clap
@@ -671,7 +671,7 @@ fn main() {
 
         ("create-profile-blob", Some(mtch)) => {
             debug!("Calling: create-profile-blob");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
 
             let content = {
                 let devices   = mtch.values_of("device").unwrap(); // safe by clap
@@ -725,7 +725,7 @@ fn main() {
 
         ("create-block-blob", Some(mtch)) => {
             debug!("Calling: create-block-blob");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
 
             let block = {
                 let version = usize::from_str(mtch.value_of("version").unwrap()) // safe by clap
@@ -759,7 +759,7 @@ fn main() {
 
         ("create-profile", Some(mtch)) => {
             debug!("Calling: create-profile");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
 
             let name      = mtch.value_of("name").map(String::from).unwrap(); // safe by clap
             let keyname   = format!("distrox-{}", name);
@@ -786,10 +786,10 @@ fn main() {
         },
 
         ("post", Some(mtch)) => {
-            use repository::ProfileName;
+            use crate::repository::ProfileName;
 
             debug!("Calling: post");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
             let repo = Arc::new(repo);
             let publish_key_name = mtch
                 .value_of("profile-name")
@@ -811,7 +811,7 @@ fn main() {
 
             let time = ::chrono::offset::Local::now().naive_local();
 
-            let repo2 = repo.clone();
+            let _repo2 = repo.clone();
 
             hyper::rt::run({
                 repo.clone()
@@ -831,10 +831,10 @@ fn main() {
         },
 
         ("publish", Some(mtch)) => {
-            use repository::ProfileName;
+            use crate::repository::ProfileName;
 
             debug!("Calling: publish");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
             let repo = Arc::new(repo);
             let publish_key_name = mtch
                 .value_of("profile_name")
@@ -847,7 +847,7 @@ fn main() {
                 .map(IPFSHash::from)
                 .unwrap(); // safe by clap
 
-            let repo2 = repo.clone();
+            let _repo2 = repo.clone();
 
             hyper::rt::run({
                 repo.clone()
@@ -864,10 +864,10 @@ fn main() {
         },
 
         ("get-profile-state", Some(mtch)) => {
-            use repository::ProfileName;
+            use crate::repository::ProfileName;
 
             debug!("Calling: get-profile-state");
-            let (config, repo) = boot();
+            let (_config, repo) = boot();
             let repo = Arc::new(repo);
             let publish_key_name = mtch
                 .value_of("profile_name")

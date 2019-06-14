@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use types::util::IPFSHash;
-use types::util::IPNSHash;
+use crate::types::util::IPFSHash;
+use crate::types::util::IPNSHash;
 
 /// TODO: Use rustbreak for persistence layer
 #[derive(Serialize, Deserialize, Debug)]

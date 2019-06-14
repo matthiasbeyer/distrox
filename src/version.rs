@@ -1,4 +1,4 @@
-pub fn protocol_version() -> ::types::util::Version {
-    ::types::util::Version::from(1)
+pub fn protocol_version() -> crate::types::util::Version {
+    crate::types::util::Version::from(1)
 }
 

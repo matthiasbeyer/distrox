@@ -1,4 +1,4 @@
-use types::util::MimeType;
+use crate::types::util::MimeType;
 
 // use chrono::Duration;
 

@@ -1,5 +1,5 @@
-use types::util::IPFSHash;
-use types::util::Version;
+use crate::types::util::IPFSHash;
+use crate::types::util::Version;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {

@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
-use types::util::IPFSHash;
-use types::util::IPNSHash;
-use types::util::MimeType;
-use types::util::Timestamp;
+use crate::types::util::IPFSHash;
+use crate::types::util::IPNSHash;
+use crate::types::util::MimeType;
+use crate::types::util::Timestamp;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Content {

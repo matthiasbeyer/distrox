@@ -13,6 +13,8 @@ documentation = "https://docs.rs/distrox"
 repository    = "https://github.com/matthiasbeyer/distrox"
 homepage      = "http://github.com/matthiasbeyer/distrox"
 
+edition       = "2018"
+
 [dependencies]
 is-match     = "0.1"
 failure      = "0.1"

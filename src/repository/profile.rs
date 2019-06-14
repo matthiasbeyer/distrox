@@ -4,7 +4,7 @@ use std::collections::LinkedList;
 //use failure::Error;
 
 // use repository::Repository;
-use types::block::Block;
+use crate::types::block::Block;
 // use types::content::Payload;
 // use types::content::Content;
 // use types::util::IPFSHash;
