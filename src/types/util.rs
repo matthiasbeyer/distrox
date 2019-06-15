@@ -36,6 +36,12 @@ impl ::std::fmt::Display for Timestamp {
 #[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq, Clone)]
 pub struct IPFSHash(String);
 
+impl AsRef<IPFSHash> for IPFSHash {
+    fn as_ref(&self) -> &Self {
+        &self
+    }
+}
+
 impl From<String> for IPFSHash {
     fn from(s: String) -> Self {
         IPFSHash(s)

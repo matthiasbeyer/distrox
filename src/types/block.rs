@@ -37,3 +37,8 @@ impl Block {
     }
 }
 
+impl AsRef<Block> for Block {
+    fn as_ref(&self) -> &Self {
+        &self
+    }
+}

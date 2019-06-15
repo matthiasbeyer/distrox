@@ -60,6 +60,12 @@ impl Content {
 
 }
 
+impl AsRef<Content> for Content {
+    fn as_ref(&self) -> &Self {
+        &self
+    }
+}
+
 /// The Payload type represents the Payload of a Content object
 ///
 /// The Payload type contains several variants, as an update (new block) may be either just a
