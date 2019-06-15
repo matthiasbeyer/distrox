@@ -190,6 +190,40 @@ pub enum Payload {
     },
 }
 
+impl Payload {
+    /// Helper function
+    pub fn is_none(&self) -> bool {
+        match self {
+            &Payload::None => true,
+            _ => false,
+        }
+    }
+
+    /// Helper function
+    pub fn is_post(&self) -> bool {
+        match self {
+            &Payload::Post {..} => true,
+            _ => false,
+        }
+    }
+
+    /// Helper function
+    pub fn is_attached_post_comments(&self) -> bool {
+        match self {
+            &Payload::AttachedPostComments {..} => true,
+            _ => false,
+        }
+    }
+
+    /// Helper function
+    pub fn is_profile(&self) -> bool {
+        match self {
+            &Payload::Profile {..} => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Userdata {
     #[serde(rename = "mimetype")]
