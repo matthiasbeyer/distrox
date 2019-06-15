@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 extern crate ipfs_api;
 extern crate chrono;
 extern crate mime;
