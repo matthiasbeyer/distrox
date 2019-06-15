@@ -1,0 +1,69 @@
+#[derive(Clone, Debug, Hash, PartialOrd, Ord, PartialEq, Eq)]
+pub struct ProfileName(String);
+
+impl From<String> for ProfileName {
+    fn from(s: String) -> Self {
+        ProfileName(s)
+    }
+}
+
+/// A profile
+///
+/// A profile can be _any_ profile, not only the profile of the user
+#[derive(Debug)]
+pub struct Profile {
+    repository: Repository,
+}
+
+impl Profile {
+
+    /// Create a new Profile.
+    ///
+    /// One does not want this most of the time, see `load`. Use this only for creating a
+    /// completely new profile
+    pub fn new(repository: Repository) -> Result<Self, Error> {
+        unimplemented!()
+    }
+
+    /// Load a profile from the repository
+    pub fn load(repository: Repository, key: Key) -> Result<Self, Error> {
+        unimplemented!()
+    }
+
+    pub fn blocks(&self) -> impl Iterator<Item = Result<Block, Error>> {
+        use crate::repository::iter::block::BlockIterator;
+        BlockIterator::new(&self.repository)
+    }
+}
+
+
+/// The profile of the user of the application
+///
+/// Internally this wraps the `Profile` type, but it provides more functionality, for example
+/// posting new content.
+///
+#[derive(Debug)]
+pub struct UserProfile {
+    profile: Profile
+}
+
+impl UserProfile {
+
+    /// Create a new Profile.
+    ///
+    /// One does not want this most of the time, see `load`. Use this only for creating a
+    /// completely new profile
+    pub fn new(repository: Repository) -> Result<Self, Error> {
+        Ok(UserProfile {
+            profile: Profile::new(repository)?,
+        })
+    }
+
+    /// Load a profile from the repository
+    pub fn load(repository: Repository, key: Key) -> Result<Self, Error> {
+        Ok(UserProfile {
+            profile: Profile::load(repository, key)?,
+        })
+    }
+
+}
