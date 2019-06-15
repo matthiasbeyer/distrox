@@ -36,6 +36,12 @@ impl Repository {
         TypedClientFassade::new(host, port).map(Repository)
     }
 
+    pub fn get_raw_bytes<H>(&self, hash: H) -> impl Future<Item = Vec<u8>, Error = Error>
+        where H: AsRef<IPFSHash>
+    {
+        self.0.get_raw_bytes(hash)
+    }
+
     pub fn get_block<H>(&self, hash: H) -> impl Future<Item = Block, Error = Error>
         where H: AsRef<IPFSHash>
     {

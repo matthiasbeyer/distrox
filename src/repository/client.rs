@@ -65,6 +65,12 @@ impl TypedClientFassade {
         ClientFassade::new(host, port).map(TypedClientFassade)
     }
 
+    pub fn get_raw_bytes<H>(&self, hash: H) -> impl Future<Item = Vec<u8>, Error = Error>
+        where H: AsRef<IPFSHash>
+    {
+        self.0.get(hash)
+    }
+
     pub fn get<H, D>(&self, hash: H) -> impl Future<Item = D, Error = Error>
         where H: AsRef<IPFSHash>,
               D: DeserializeOwned
