@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use failure::Error;
 use futures::Future;
 use futures::stream;
@@ -17,6 +19,14 @@ pub struct BlockExt {
 impl Into<Block> for BlockExt {
     fn into(self) -> Block {
         self.block
+    }
+}
+
+impl Deref for BlockExt {
+    type Target = Block;
+
+    fn deref(&self) -> &Self::Target {
+        &self.block
     }
 }
 
