@@ -23,6 +23,7 @@ mod cli_ui;
 mod configuration;
 mod repository;
 mod state;
+mod typeext;
 mod types;
 mod version;
 
