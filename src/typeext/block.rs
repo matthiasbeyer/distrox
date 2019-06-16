@@ -4,6 +4,7 @@ use futures::stream;
 use futures::stream::Stream;
 
 use crate::types::block::Block;
+use crate::types::content::Content;
 use crate::repository::Repository;
 
 /// Wrapper for Block type which holds a reference to the repository and is thus able to provide
@@ -36,5 +37,9 @@ impl BlockExt {
                 })
             })
         })
+    }
+
+    pub fn content(&self) -> impl Future<Item = Content, Error = Error> {
+        self.repo.get_content(self.block.content().clone())
     }
 }
