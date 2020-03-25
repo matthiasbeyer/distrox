@@ -7,6 +7,7 @@ use futures::stream::Stream;
 
 use crate::types::block::Block;
 use crate::types::content::Content;
+use crate::types::util::IPFSHash;
 use crate::repository::Repository;
 
 /// Wrapper for Block type which holds a reference to the repository and is thus able to provide
@@ -35,21 +36,24 @@ impl BlockExt {
         BlockExt { block, repo }
     }
 
-    pub fn parents(&self) -> impl Stream<Item = BlockExt, Error = Error> {
-        let parents = self.block.parents().clone();
-        let repo    = self.repo.clone();
-
-        stream::unfold(parents, move |mut state| {
-            let repo = repo.clone(); // dont understand why this is necessary
-            state.pop().map(move |hash| {
-                repo.get_block(hash).map(move |block| {
-                    (BlockExt::from_block(block, repo.clone()), state)
-                })
-            })
+    pub fn parents(&self) -> impl Stream<Item = Result<BlockExt, Error>> {
+        stream::unfold((self.repo.clone(), self.block.parents().clone()), move |(repo, mut state)| {
+            async {
+                if let Some(hash) = state.pop() {
+                    match repo.get_block(hash).await {
+                        Ok(block) => {
+                            Some((Ok(BlockExt::from_block(block, repo.clone())), (repo, state)))
+                        },
+                        Err(e) => Some((Err(e), (repo, state))),
+                    }
+                } else {
+                    None
+                }
+            }
         })
     }
 
-    pub fn content(&self) -> impl Future<Item = Content, Error = Error> {
-        self.repo.get_content(self.block.content().clone())
+    pub async fn content(&self) -> Result<Content, Error> {
+        self.repo.get_content(self.block.content().clone()).await
     }
 }
