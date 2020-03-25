@@ -18,7 +18,7 @@ extern crate itertools;
 #[macro_use] extern crate is_match;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate log;
-#[macro_use] extern crate async_std;
+#[macro_use] extern crate tokio;
 
 mod cli_ui;
 mod configuration;
@@ -54,7 +54,7 @@ use crate::types::util::Version;
 
 use std::process::exit;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let _ = env_logger::init();
     debug!("Logger initialized");
