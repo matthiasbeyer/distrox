@@ -11,6 +11,17 @@ A distributed social network build on IPFS.
    comments and contributors.
 
 
+## POC/MVP should contain
+
+1. Publishing content (text or media data)
+1. Following profiles
+    1. requires investigation how to do right, because that information should
+       be stored locally, but also should be synced to other devices of the
+       profile.
+1. Merging other devices
+    1. Merging strategies must be defined and investigated
+
+
 ## License
 
 GPL-2.0 only.
