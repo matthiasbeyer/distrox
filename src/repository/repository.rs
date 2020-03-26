@@ -36,34 +36,34 @@ impl Repository {
         TypedClientFassade::new(host, port).map(Repository)
     }
 
-    pub fn get_raw_bytes<H>(&self, hash: H) -> impl Future<Item = Vec<u8>, Error = Error>
+    pub async fn get_raw_bytes<H>(&self, hash: H) -> Result<Vec<u8>, Error>
         where H: AsRef<IPFSHash>
     {
-        self.0.get_raw_bytes(hash)
+        self.0.get_raw_bytes(hash).await
     }
 
-    pub fn get_block<H>(&self, hash: H) -> impl Future<Item = Block, Error = Error>
+    pub async fn get_block<H>(&self, hash: H) -> Result<Block, Error>
         where H: AsRef<IPFSHash>
     {
-        self.0.get(hash)
+        self.0.get(hash).await
     }
 
-    pub fn put_block<B>(&self, b: B) -> impl Future<Item = IPFSHash, Error = Error>
+    pub async fn put_block<B>(&self, b: B) -> Result<IPFSHash, Error>
         where B: AsRef<Block>
     {
-        self.0.put(b.as_ref())
+        self.0.put(b.as_ref()).await
     }
 
-    pub fn get_content<H>(&self, hash: H) -> impl Future<Item = Content, Error = Error>
+    pub async fn get_content<H>(&self, hash: H) -> Result<Content, Error>
         where H: AsRef<IPFSHash>
     {
-        self.0.get(hash)
+        self.0.get(hash).await
     }
 
-    pub fn put_content<C>(&self, c: C) -> impl Future<Item = IPFSHash, Error = Error>
+    pub async fn put_content<C>(&self, c: C) -> Result<IPFSHash, Error>
         where C: AsRef<Content>
     {
-        self.0.put(c.as_ref())
+        self.0.put(c.as_ref()).await
     }
 
 }
