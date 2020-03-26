@@ -1,0 +1,37 @@
+sudo: false
+os:
+  - linux
+
+dist:
+  - bionic
+
+language: rust
+
+matrix:
+    include:
+        - language: rust
+          rust: stable
+          cache:
+            directories:
+              - /home/travis/.cargo
+          before_cache:
+            - rm -rf /home/travis/.cargo/registry
+          script:
+            - cargo build --all --all-features -j 1  || exit 1
+            - cargo test  --all --all-features -j 1  || exit 1
+        - language: rust
+          rust: beta
+          cache:
+            directories:
+              - /home/travis/.cargo
+          before_cache:
+            - rm -rf /home/travis/.cargo/registry
+          script:
+            - cargo build --all --all-features -j 1  || exit 1
+            - cargo test  --all --all-features -j 1  || exit 1
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+
