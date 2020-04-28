@@ -3,55 +3,55 @@ use crate::types::util::MimeType;
 // use chrono::Duration;
 
 /// Configuration read from a configuration file
-#[derive(Serialize, Deserialize, Debug, AddGetterVal)]
+#[derive(Serialize, Deserialize, Debug, AddGetter)]
 pub struct Configuration {
     #[serde(rename = "ipfs-api-url")]
-    #[get_val]
+    #[get]
     /// The URL of the API
     api_url: String,
 
     #[serde(rename = "ipfs-api-port")]
-    #[get_val]
+    #[get]
     /// The Port of the API
     api_port: u16,
 
     #[serde(rename = "autoserve-chains")]
-    #[get_val]
+    #[get]
     /// Whether to automatically "ipfs pin" chain objects
     autoserve_chains: bool,
 
     #[serde(rename = "autoserve-text-posts")]
-    #[get_val]
+    #[get]
     /// Whether to automatically "ipfs pin" foreign posts if their content is text
     autoserve_text_posts: bool,
 
     #[serde(rename = "serve-blocked")]
-    #[get_val]
+    #[get]
     /// Whether to serve content/chains from blocked profiles
     serve_blocked: bool,
 
     #[serde(rename = "autoserve-followed")]
-    #[get_val]
+    #[get]
     /// Whether to automatically "ipfs pin" followed profiles
     autoserve_followed: bool,
 
     #[serde(rename = "max-autoload-per-post")]
-    #[get_val]
+    #[get]
     /// Default amount of bytes which are loaded for each post
     max_autoload_per_post: usize,
 
     #[serde(rename = "autoserve-blacklist")]
-    #[get_val]
+    #[get]
     /// List of Mimetypes which should not be served
     autoserve_blacklist: Vec<MimeType>,
 
     #[serde(rename = "autoserve-whitelist")]
-    #[get_val]
+    #[get]
     /// List of Mimetypes which can be served
     autoserve_whitelist: Vec<MimeType>,
 
     // #[serde(rename = "merge-timeout")]
-    // #[get_val]
+    // #[get]
     // /// Timeout before merge should be attempted
     // merge_timeout: Duration,
     //
@@ -61,21 +61,21 @@ pub struct Configuration {
     ///
     /// If none, one will be generated and set
     #[serde(rename = "device_name")]
-    #[get_val]
+    #[get]
     device_name: Option<String>,
 
     /// Key to sign stuff that comes from this device.
     ///
     /// Create by using `ipfs key gen <name>`
     #[serde(rename = "devicekey")]
-    #[get_val]
-    device_key: String,
+    #[get]
+    device_key: Option<String>,
 
     /// Devices for the profile
     /// E.G:
     /// ["/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY"]
     #[serde(rename = "profiles")]
-    #[get_val]
+    #[get]
     devices: Vec<String>,
 }
 
