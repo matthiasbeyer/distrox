@@ -33,6 +33,12 @@ impl ::std::fmt::Display for Timestamp {
     }
 }
 
+impl Timestamp {
+    pub fn now() -> Self {
+        Timestamp::from(chrono::offset::Local::now().naive_local())
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Hash, PartialOrd, PartialEq, Ord, Eq, Clone)]
 pub struct IPFSHash(String);
 
