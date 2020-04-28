@@ -3,45 +3,55 @@ use crate::types::util::MimeType;
 // use chrono::Duration;
 
 /// Configuration read from a configuration file
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, AddGetterVal)]
 pub struct Configuration {
     #[serde(rename = "ipfs-api-url")]
+    #[get_val]
     /// The URL of the API
     api_url: String,
 
     #[serde(rename = "ipfs-api-port")]
+    #[get_val]
     /// The Port of the API
     api_port: u16,
 
     #[serde(rename = "autoserve-chains")]
+    #[get_val]
     /// Whether to automatically "ipfs pin" chain objects
     autoserve_chains: bool,
 
     #[serde(rename = "autoserve-text-posts")]
+    #[get_val]
     /// Whether to automatically "ipfs pin" foreign posts if their content is text
     autoserve_text_posts: bool,
 
     #[serde(rename = "serve-blocked")]
+    #[get_val]
     /// Whether to serve content/chains from blocked profiles
     serve_blocked: bool,
 
     #[serde(rename = "autoserve-followed")]
+    #[get_val]
     /// Whether to automatically "ipfs pin" followed profiles
     autoserve_followed: bool,
 
     #[serde(rename = "max-autoload-per-post")]
+    #[get_val]
     /// Default amount of bytes which are loaded for each post
     max_autoload_per_post: usize,
 
     #[serde(rename = "autoserve-blacklist")]
+    #[get_val]
     /// List of Mimetypes which should not be served
     autoserve_blacklist: Vec<MimeType>,
 
     #[serde(rename = "autoserve-whitelist")]
+    #[get_val]
     /// List of Mimetypes which can be served
     autoserve_whitelist: Vec<MimeType>,
 
     // #[serde(rename = "merge-timeout")]
+    // #[get_val]
     // /// Timeout before merge should be attempted
     // merge_timeout: Duration,
 }
@@ -63,40 +73,3 @@ impl Default for Configuration {
     }
 }
 
-impl Configuration {
-    pub fn api_url(&self) -> &String {
-        &self.api_url
-    }
-
-    pub fn api_port(&self) -> u16 {
-        self.api_port
-    }
-
-    pub fn autoserve_chains(&self) -> bool {
-        self.autoserve_chains
-    }
-
-    pub fn autoserve_text_posts(&self) -> bool {
-        self.autoserve_text_posts
-    }
-
-    pub fn serve_blocked(&self) -> bool {
-        self.serve_blocked
-    }
-
-    pub fn autoserve_followed(&self) -> bool {
-        self.autoserve_followed
-    }
-
-    pub fn max_autoload_per_post(&self) -> usize {
-        self.max_autoload_per_post
-    }
-
-    pub fn autoserve_blacklist(&self) -> &Vec<MimeType> {
-        &self.autoserve_blacklist
-    }
-
-    pub fn autoserve_whitelist(&self) -> &Vec<MimeType> {
-        &self.autoserve_whitelist
-    }
-}
