@@ -54,6 +54,29 @@ pub struct Configuration {
     // #[get_val]
     // /// Timeout before merge should be attempted
     // merge_timeout: Duration,
+    //
+
+    /// Name under which to provide the local device. E.G.
+    /// Some("/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY")
+    ///
+    /// If none, one will be generated and set
+    #[serde(rename = "device_name")]
+    #[get_val]
+    device_name: Option<String>,
+
+    /// Key to sign stuff that comes from this device.
+    ///
+    /// Create by using `ipfs key gen <name>`
+    #[serde(rename = "devicekey")]
+    #[get_val]
+    device_key: String,
+
+    /// Devices for the profile
+    /// E.G:
+    /// ["/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY"]
+    #[serde(rename = "profiles")]
+    #[get_val]
+    devices: Vec<String>,
 }
 
 impl Default for Configuration {
@@ -69,6 +92,9 @@ impl Default for Configuration {
             autoserve_blacklist   : Vec::new(),
             autoserve_whitelist   : Vec::new(),
             // merge_timeout         : Duration::minutes(15),
+            device_name           : None,
+            device_key            : None,
+            devices               : Vec::new(),
         }
     }
 }
