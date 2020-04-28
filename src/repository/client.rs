@@ -28,7 +28,7 @@ use crate::types::util::IPNSHash;
 ///
 /// Abstracts the procedural interface of IpfsClient calls.
 #[derive(Clone)]
-struct ClientFassade(Arc<IpfsClient>);
+pub struct ClientFassade(Arc<IpfsClient>);
 
 impl ClientFassade {
     fn new(host: &str, port: u16) -> Result<ClientFassade, Error> {
@@ -39,7 +39,7 @@ impl ClientFassade {
             .map_err(Into::into)
     }
 
-    async fn get<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
+    pub async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
         debug!("Get: {}", hash.as_ref());
         self.0
             .clone()
@@ -50,7 +50,7 @@ impl ClientFassade {
             .await
     }
 
-    async fn put(&self, data: Vec<u8>) -> Result<IPFSHash, Error> {
+    pub async fn put_raw_bytes(&self, data: Vec<u8>) -> Result<IPFSHash, Error> {
         debug!("Put: {:?}", data);
         self.0
             .clone()
@@ -60,7 +60,7 @@ impl ClientFassade {
             .map_err(Into::into)
     }
 
-    async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
+    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
         debug!("Publish: {:?} -> {:?}", key, hash);
         self.0
             .clone()
@@ -75,24 +75,26 @@ impl ClientFassade {
 #[derive(Clone)]
 pub struct TypedClientFassade(ClientFassade);
 
+impl Deref for TypedClientFassade {
+    type Target = ClientFassade;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl TypedClientFassade {
     pub fn new(host: &str, port: u16) -> Result<TypedClientFassade, Error> {
         ClientFassade::new(host, port).map(TypedClientFassade)
     }
 
-    pub async fn get_raw_bytes<H>(&self, hash: H) -> Result<Vec<u8>, Error>
-        where H: AsRef<IPFSHash>
-    {
-        self.0.get(hash).await
-    }
-
-    pub async fn get<H, D>(&self, hash: H) -> Result<D, Error>
+    pub async fn get_typed<H, D>(&self, hash: H) -> Result<D, Error>
         where H: AsRef<IPFSHash>,
               D: DeserializeOwned
     {
         self.0
             .clone()
-            .get(hash)
+            .get_raw_bytes(hash)
             .await
             .and_then(|data| {
                 debug!("Got data, building object: {:?}", data);
@@ -101,18 +103,14 @@ impl TypedClientFassade {
             })
     }
 
-    pub async fn put<S, Ser>(&self, data: &S) -> Result<IPFSHash, Error>
+    pub async fn put_typed<S, Ser>(&self, data: &S) -> Result<IPFSHash, Error>
         where S: AsRef<Ser>,
               Ser: Serialize
     {
         let client = self.0.clone();
 
         let data = serde_json_to_str(data.as_ref())?;
-        client.put(data.into_bytes()).await
-    }
-
-    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
-        self.0.publish(key, hash).await
+        client.put_raw_bytes(data.into_bytes()).await
     }
 
 }

@@ -31,43 +31,41 @@ use crate::repository::client::TypedClientFassade;
 #[derive(Clone)]
 pub struct Repository(TypedClientFassade);
 
+impl Deref for Repository {
+    type Target = TypedClientFassade;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl Repository {
     pub fn new(host: &str, port: u16) -> Result<Repository, Error> {
         TypedClientFassade::new(host, port).map(Repository)
     }
 
-    pub async fn get_raw_bytes<H>(&self, hash: H) -> Result<Vec<u8>, Error>
-        where H: AsRef<IPFSHash>
-    {
-        self.0.get_raw_bytes(hash).await
-    }
-
     pub async fn get_block<H>(&self, hash: H) -> Result<Block, Error>
         where H: AsRef<IPFSHash>
     {
-        self.0.get(hash).await
+        self.0.get_typed(hash).await
     }
 
     pub async fn put_block<B>(&self, b: B) -> Result<IPFSHash, Error>
         where B: AsRef<Block>
     {
-        self.0.put(b.as_ref()).await
+        self.0.put_typed(b.as_ref()).await
     }
 
     pub async fn get_content<H>(&self, hash: H) -> Result<Content, Error>
         where H: AsRef<IPFSHash>
     {
-        self.0.get(hash).await
+        self.0.get_typed(hash).await
     }
 
     pub async fn put_content<C>(&self, c: C) -> Result<IPFSHash, Error>
         where C: AsRef<Content>
     {
-        self.0.put(c.as_ref()).await
-    }
-
-    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
-        self.0.publish(key, hash).await
+        self.0.put_typed(c.as_ref()).await
     }
 
 }
