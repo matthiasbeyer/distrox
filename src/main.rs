@@ -21,10 +21,10 @@ extern crate itertools;
 #[macro_use] extern crate tokio;
 #[macro_use] extern crate add_getters_setters;
 
+mod app;
 mod cli_ui;
 mod configuration;
 mod repository;
-mod state;
 mod typeext;
 mod types;
 mod version;
