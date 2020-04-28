@@ -19,6 +19,7 @@ extern crate itertools;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate log;
 #[macro_use] extern crate tokio;
+#[macro_use] extern crate add_getters_setters;
 
 mod cli_ui;
 mod configuration;
