@@ -25,3 +25,19 @@ autoserve-blacklist = []
 # List of Mimetypes which can be served
 autoserve-whitelist = []
 
+# Name under which to provide the local device. E.G.
+# Some("/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY")
+#
+# If none, one will be generated and set
+# device_name = ""
+
+# Key to sign stuff that comes from this device.
+#
+# Create by using `ipfs key gen <name>`
+#device_key = ""
+
+# Devices for the profile
+# E.G:
+# ["/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY"]
+devices = []
+
