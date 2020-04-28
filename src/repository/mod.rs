@@ -1,7 +1,2 @@
-mod client;
-mod repository;
-mod profile;
-
-pub use repository::Repository;
-pub use profile::ProfileName;
-
+pub mod client;
+pub mod repository;
