@@ -18,7 +18,7 @@ impl From<usize> for Version {
 /// A Timestamp which can be parsed into a NaiveDateTime object
 /// Format: 2014-11-28T21:45:59.324310806+09:00
 /// (RFC3999)
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Timestamp(NaiveDateTime);
 
 impl From<NaiveDateTime> for Timestamp {
