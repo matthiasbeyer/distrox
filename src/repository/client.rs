@@ -59,6 +59,16 @@ impl ClientFassade {
             .map(|res| IPFSHash::from(res.hash))
             .map_err(Into::into)
     }
+
+    async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
+        debug!("Publish: {:?} -> {:?}", key, hash);
+        self.0
+            .clone()
+            .name_publish(hash, false, None, None, Some(key))
+            .await
+            .map(|res| IPNSHash::from(res.value))
+            .map_err(Into::into)
+    }
 }
 
 /// Client wrapper for working with types directly on the client
@@ -99,6 +109,10 @@ impl TypedClientFassade {
 
         let data = serde_json_to_str(data.as_ref())?;
         client.put(data.into_bytes()).await
+    }
+
+    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
+        self.0.publish(key, hash).await
     }
 
 }

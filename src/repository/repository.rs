@@ -66,5 +66,9 @@ impl Repository {
         self.0.put(c.as_ref()).await
     }
 
+    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
+        self.0.publish(key, hash).await
+    }
+
 }
 
