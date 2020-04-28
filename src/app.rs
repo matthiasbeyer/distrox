@@ -5,14 +5,14 @@ use crate::types::util::IPNSHash;
 
 pub struct App {
     repo: Repository,
-    profile: Profile,
+    device_name: String,
     publishing_key: String
 }
 
 impl App {
 
-    pub fn load(profile: Profile, publishing_key: String, host: &str, port: u16) -> Result<Self, Error> {
-        Repository::new(host, port).map(|repo| App { repo, profile, publishing_key })
+    pub fn load(device_name: String, publishing_key: String, host: &str, port: u16) -> Result<Self, Error> {
+        Repository::new(host, port).map(|repo| App { repo, device_name, publishing_key })
     }
 
     pub async fn new_profile(repo: Repository, names: Vec<String>) -> Result<Self> {
@@ -27,12 +27,7 @@ impl App {
         let head        = repository.put_content(content).await?;
         let device_name = repository.publish(&publishing_key, &head).await?;
 
-        let profile = Profile {
-            device_name,
-            devices: vec![],
-        };
-
-        Ok(App { repository, profile, publishing_key })
+        Ok(App { repository, device_name, publishing_key })
     }
 
 
