@@ -35,3 +35,4 @@ hyper        = "0.12"
 itertools    = "0.7"
 tokio        = { version = "0.2", features = ["full"] }
 add_getters_setters = "1.1"
+structopt    = "0.3"
