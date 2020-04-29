@@ -248,3 +248,32 @@ pub enum LoadedPayload {
     },
 }
 
+impl LoadedPayload {
+    pub fn is_none(&self) -> bool {
+        match self {
+            &LoadedPayload::None => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_post(&self) -> bool {
+        match self {
+            &LoadedPayload::Post { .. }=> true,
+            _ => false,
+        }
+    }
+
+    pub fn is_attached_post_comments(&self) -> bool {
+        match self {
+            &LoadedPayload::AttachedPostComments { .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_profile(&self) -> bool {
+        match self {
+            &LoadedPayload::Profile { .. } => true,
+            _ => false,
+        }
+    }
+}
