@@ -19,7 +19,7 @@ use chrono::NaiveDateTime;
 
 use crate::types::block::Block;
 use crate::types::content::Content;
-use crate::types::content::Payload;
+use crate::types::payload::Payload;
 use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 

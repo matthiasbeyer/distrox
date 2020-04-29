@@ -10,7 +10,7 @@ use crate::types::util::IPNSHash;
 use crate::types::block::Block;
 use crate::repository::repository::Repository;
 use crate::types::content::Content;
-use crate::types::content::Payload;
+use crate::types::payload::Payload;
 use crate::types::util::Timestamp;
 use crate::version::protocol_version;
 
