@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
 use failure::Error;
+use futures::Stream;
+use futures::stream;
 
 use crate::types::util::IPFSHash;
 use crate::types::util::MimeType;
@@ -68,6 +70,33 @@ impl App {
         Ok(())
     }
 
+    pub fn blocks(&self, head: IPFSHash) -> impl Stream<Item = Result<Block, Error>> {
+        stream::unfold((self.repo.clone(), vec![head]), move |(repo, mut state)| {
+            async {
+                if let Some(hash) = state.pop() {
+                    match repo
+                        .get_block(hash)
+                        .await
+                        .map(move |block| {
+                            block.parents().iter().for_each(|parent| {
+                                state.push(parent.clone())
+                            });
+
+                            (block, state)
+                        })
+                        .map(Some)
+                        .transpose()
+                    {
+                        Some(Ok((item, state))) => Some((Ok(item), (repo, state))),
+                        Some(Err(e)) => Some((Err(e), (repo, vec![]))),
+                        None => None,
+                    }
+                } else {
+                    None
+                }
+            }
+        })
+    }
 
 }
 
