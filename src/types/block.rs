@@ -69,3 +69,17 @@ pub struct LoadedBlock {
     content: LoadedContent,
 }
 
+impl LoadedBlock {
+    pub fn version(&self) -> &Version {
+        &self.version
+    }
+
+    pub fn parents(&self) -> Vec<IPFSHash> {
+        &self.parents
+    }
+
+    pub fn content(&self) -> &LoadedContent {
+        &self.content
+    }
+}
+
