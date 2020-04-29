@@ -88,3 +88,17 @@ pub struct LoadedContent {
     payload: LoadedPayload,
 }
 
+impl LoadedPayload {
+    pub fn devices(&self) -> &Vec<IPNSHash> {
+        &self.devices
+    }
+
+    pub fn timestamp(&self) -> Option<&Timestamp> {
+        self.timestamp.as_ref()
+    }
+
+    pub fn payload(&self) -> &LoadedPayload {
+        &self.payload
+    }
+}
+
