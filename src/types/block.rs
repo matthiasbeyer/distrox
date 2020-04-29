@@ -1,5 +1,11 @@
 use crate::types::util::IPFSHash;
 use crate::types::util::Version;
+use crate::types::content::Content;
+use crate::types::payload::*;
+use crate::types::content::LoadedContent;
+use crate::repository::repository::Repository;
+
+use failure::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
@@ -35,6 +41,19 @@ impl Block {
     pub fn content(&self) -> &IPFSHash {
         &self.content
     }
+
+    pub async fn load(self, r: &Repository) -> Result<LoadedBlock, Error> {
+        Ok({
+            LoadedBlock {
+                version: self.version,
+                parents: self.parents,
+                content: r.get_content(&self.content)
+                    .await?
+                    .load(r)
+                    .await?
+            }
+        })
+    }
 }
 
 impl AsRef<Block> for Block {
@@ -42,3 +61,11 @@ impl AsRef<Block> for Block {
         &self
     }
 }
+
+#[derive(Debug)]
+pub struct LoadedBlock {
+    version: Version,
+    parents: Vec<IPFSHash>,
+    content: LoadedContent,
+}
+

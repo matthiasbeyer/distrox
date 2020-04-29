@@ -1,10 +1,14 @@
 use std::collections::BTreeMap;
 
+use failure::Error;
+
 use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 use crate::types::util::MimeType;
 use crate::types::util::Timestamp;
-use crate::types::payload::*;
+use crate::types::payload::Payload;
+use crate::types::payload::LoadedPayload;
+use crate::repository::repository::Repository;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Content {
@@ -59,11 +63,28 @@ impl Content {
         self.devices.push(dev);
     }
 
+    pub async fn load(self, r: &Repository) -> Result<LoadedContent, Error> {
+        Ok({
+            LoadedContent {
+                devices: self.devices,
+                timestamp: self.timestamp,
+                payload: self.payload.load(r).await?
+            }
+        })
+    }
+
 }
 
 impl AsRef<Content> for Content {
     fn as_ref(&self) -> &Self {
         &self
     }
+}
+
+#[derive(Debug)]
+pub struct LoadedContent {
+    devices: Vec<IPNSHash>,
+    timestamp: Option<Timestamp>,
+    payload: LoadedPayload,
 }
 

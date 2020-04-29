@@ -1,9 +1,12 @@
 use std::collections::BTreeMap;
 
+use failure::Error;
+
 use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 use crate::types::util::MimeType;
 use crate::types::util::Timestamp;
+use crate::repository::repository::Repository;
 
 
 /// The Payload type represents the Payload of a Content object
@@ -162,6 +165,54 @@ impl Payload {
             _ => false,
         }
     }
+
+    pub async fn load(self, r: &Repository) -> Result<LoadedPayload, Error> {
+        match self {
+            Payload::None => Ok(LoadedPayload::None),
+            Payload::Post {
+                content_format,
+                content,
+                reply_to,
+                comments_will_be_propagated,
+                comments_propagated_until
+            } => {
+                Ok({
+                    LoadedPayload::Post {
+                        content_format,
+                        content: r.get_raw_bytes(content).await?,
+                        reply_to,
+                        comments_will_be_propagated,
+                        comments_propagated_until
+                    }
+                })
+            },
+
+            Payload::AttachedPostComments { comments_for, refs } => {
+                Ok({
+                    LoadedPayload::AttachedPostComments {
+                        comments_for,
+                        refs
+                    }
+                })
+            },
+
+            Payload::Profile { names, picture, more } => {
+                let picture = if let Some(p) = picture {
+                    Some(r.get_raw_bytes(p).await?)
+                } else {
+                    None
+                };
+
+                Ok({
+                    LoadedPayload::Profile {
+                        names,
+                        picture,
+                        more
+                    }
+                })
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -171,5 +222,29 @@ pub struct Userdata {
 
     #[serde(rename = "data")]
     data: IPFSHash,
+}
+
+#[derive(Debug)]
+pub enum LoadedPayload {
+    None,
+
+    Post {
+        content_format: MimeType,
+        content: Vec<u8>,
+        reply_to: Option<IPFSHash>,
+        comments_will_be_propagated: Option<bool>,
+        comments_propagated_until: Option<Timestamp>,
+    },
+
+    AttachedPostComments {
+        comments_for: IPFSHash,
+        refs: Vec<IPFSHash>,
+    },
+
+    Profile {
+        names: Vec<String>,
+        picture: Option<Vec<u8>>,
+        more: BTreeMap<String, Userdata>,
+    },
 }
 
