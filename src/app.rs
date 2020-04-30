@@ -98,5 +98,9 @@ impl App {
         })
     }
 
+    pub async fn blocks_of(&self, ipns: IPNSHash) -> Result<impl Stream<Item = Result<Block, Error>>, Error> {
+        self.repo.resolve(ipns).await.map(|ipfs| self.blocks(ipfs))
+    }
+
 }
 
