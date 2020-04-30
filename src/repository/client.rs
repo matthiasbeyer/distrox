@@ -69,6 +69,15 @@ impl ClientFassade {
             .map(|res| IPNSHash::from(res.value))
             .map_err(Into::into)
     }
+
+    pub async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
+        self.0
+            .clone()
+            .name_resolve(Some(&ipns), true, false)
+            .await
+            .map(|res| IPFSHash::from(res.path))
+            .map_err(Into::into)
+    }
 }
 
 /// Client wrapper for working with types directly on the client
