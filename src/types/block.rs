@@ -74,7 +74,7 @@ impl LoadedBlock {
         &self.version
     }
 
-    pub fn parents(&self) -> Vec<IPFSHash> {
+    pub fn parents(&self) -> &Vec<IPFSHash> {
         &self.parents
     }
 
