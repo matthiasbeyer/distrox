@@ -88,7 +88,7 @@ pub struct LoadedContent {
     payload: LoadedPayload,
 }
 
-impl LoadedPayload {
+impl LoadedContent {
     pub fn devices(&self) -> &Vec<IPNSHash> {
         &self.devices
     }
