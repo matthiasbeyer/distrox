@@ -5,6 +5,7 @@ use std::ops::Deref;
 use ipfs_api::IpfsClient;
 use failure::Error;
 use failure::err_msg;
+use failure::AsFail;
 use futures::future::Future;
 use futures::future::FutureExt;
 use futures::stream::Stream;
@@ -36,7 +37,7 @@ impl ClientFassade {
         IpfsClient::new(host, port)
             .map(Arc::new)
             .map(|c| ClientFassade(c))
-            .map_err(Into::into)
+            .map_err(|e| Error::from(e.as_fail()))
     }
 
     pub async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
@@ -46,7 +47,7 @@ impl ClientFassade {
             .cat(hash.as_ref())
             .map_ok(|b| b.to_vec())
             .try_concat()
-            .map(|r| r.map_err(Error::from))
+            .map(|r| r.map_err(|e| Error::from(e.as_fail())))
             .await
     }
 
@@ -57,7 +58,7 @@ impl ClientFassade {
             .add(Cursor::new(data))
             .await
             .map(|res| IPFSHash::from(res.hash))
-            .map_err(Into::into)
+            .map_err(|e| Error::from(e.as_fail()))
     }
 
     pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
@@ -67,7 +68,7 @@ impl ClientFassade {
             .name_publish(hash, false, None, None, Some(key))
             .await
             .map(|res| IPNSHash::from(res.value))
-            .map_err(Into::into)
+            .map_err(|e| Error::from(e.as_fail()))
     }
 
     pub async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
@@ -76,7 +77,7 @@ impl ClientFassade {
             .name_resolve(Some(&ipns), true, false)
             .await
             .map(|res| IPFSHash::from(res.path))
-            .map_err(Into::into)
+            .map_err(|e| Error::from(e.as_fail()))
     }
 }
 
@@ -108,7 +109,8 @@ impl TypedClientFassade {
             .and_then(|data| {
                 debug!("Got data, building object: {:?}", data);
 
-                serde_json::from_slice(&data).map_err(Error::from)
+                serde_json::from_slice(&data)
+                    .map_err(|e| Error::from(e.as_fail()))
             })
     }
 

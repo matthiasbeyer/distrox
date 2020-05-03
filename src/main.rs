@@ -16,6 +16,8 @@ extern crate itertools;
 extern crate xdg;
 extern crate handlebars;
 extern crate web_view;
+extern crate actix_rt;
+extern crate actix_web;
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate is_match;
@@ -63,7 +65,7 @@ use crate::types::util::Version;
 
 use std::process::exit;
 
-#[tokio::main]
+#[actix_rt::main]
 async fn main() -> Result<()> {
     let cli = cli()?;
     let _ = env_logger::init();
@@ -89,16 +91,14 @@ async fn main() -> Result<()> {
             let api_url     = config.get_api_url().clone();
             let api_port    = config.get_api_port().clone();
 
-            tokio::spawn(async move {
-                App::load(name, key, &api_url, api_port)
-            })
+            App::load(name, key, &api_url, api_port)
         } else {
             // ask user for name(s)
             // boot repository
             // load App object
             unimplemented!()
         }
-    }.await?;
+    };
 
     let html_content = include_str!("../assets/index.html");
 
