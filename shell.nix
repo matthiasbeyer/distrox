@@ -18,10 +18,21 @@ let
     dbus
     libtool
   ];
+
+  gtk = with pkgs; [
+    glib
+    pango
+    gdk-pixbuf
+    atk
+    gtk3
+
+    libsoup
+    webkitgtk
+  ];
 in
 
 pkgs.mkShell rec {
-    buildInputs     = env ++ dependencies;
+    buildInputs     = env ++ dependencies ++ gtk;
     LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
 }
 
