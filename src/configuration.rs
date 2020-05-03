@@ -67,14 +67,14 @@ pub struct Configuration {
     /// Key to sign stuff that comes from this device.
     ///
     /// Create by using `ipfs key gen <name>`
-    #[serde(rename = "devicekey")]
+    #[serde(rename = "device_key")]
     #[get]
     device_key: Option<String>,
 
     /// Devices for the profile
     /// E.G:
     /// ["/ipfs/QmVrLsEDn27sScp3k23sgZNefVTjSAL3wpgW1iWPi4MgoY"]
-    #[serde(rename = "profiles")]
+    #[serde(rename = "devices")]
     #[get]
     devices: Vec<String>,
 }
