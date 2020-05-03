@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
 
     let config_file_name = PathBuf::from("distrox.toml");
     let config: Configuration = {
-        let configfile = xdg::BaseDirectories::with_prefix("myapp")?
+        let configfile = xdg::BaseDirectories::with_prefix("distrox")?
             .find_config_file(&config_file_name)
             .ok_or_else(|| err_msg("No configuration found"))?;
 
