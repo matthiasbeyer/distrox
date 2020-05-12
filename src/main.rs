@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
 
     let html_content = include_str!("../assets/index.html");
 
-    web_view::builder()
+    let mut view = web_view::builder()
         .title("My Project")
         .content(web_view::Content::Html(html_content))
         .resizable(true)
@@ -110,8 +110,10 @@ async fn main() -> Result<()> {
         .user_data(())
         .invoke_handler(|_webview, _arg| Ok(()))
         .build()
-        .map_err(Error::from)?
-        .run()
-        .map_err(Error::from)
+        .map_err(Error::from)?;
+
+    view.inject_css(include_str!("../assets/style.css"))?;
+
+    view.run().map_err(Error::from)
 }
 
