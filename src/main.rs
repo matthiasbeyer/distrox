@@ -14,6 +14,8 @@ extern crate hyper;
 extern crate env_logger;
 extern crate itertools;
 extern crate xdg;
+extern crate handlebars;
+extern crate web_view;
 
 #[macro_use] extern crate failure;
 #[macro_use] extern crate is_match;
@@ -43,6 +45,7 @@ use futures::future::TryFutureExt;
 use serde_json::to_string_pretty as serde_json_to_string_pretty;
 use serde_json::from_str as serde_json_from_str;
 use failure::Fallible as Result;
+use failure::Error;
 use failure::err_msg;
 
 use crate::app::App;
@@ -97,8 +100,18 @@ async fn main() -> Result<()> {
         }
     }.await?;
 
-    drop(config);
+    let html_content = include_str!("../assets/index.html");
 
-    Ok(())
+    web_view::builder()
+        .title("My Project")
+        .content(web_view::Content::Html(html_content))
+        .resizable(true)
+        .debug(true)
+        .user_data(())
+        .invoke_handler(|_webview, _arg| Ok(()))
+        .build()
+        .map_err(Error::from)?
+        .run()
+        .map_err(Error::from)
 }
 
