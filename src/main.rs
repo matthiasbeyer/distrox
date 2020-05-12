@@ -46,9 +46,9 @@ use futures::future::FutureExt;
 use futures::future::TryFutureExt;
 use serde_json::to_string_pretty as serde_json_to_string_pretty;
 use serde_json::from_str as serde_json_from_str;
-use failure::Fallible as Result;
-use failure::Error;
-use failure::err_msg;
+use anyhow::Result;
+use anyhow::Error;
+use actix_web::{web, HttpResponse, Responder};
 
 use crate::app::App;
 use crate::cli::cli;
@@ -65,10 +65,10 @@ use crate::types::util::Version;
 
 use std::process::exit;
 
-#[actix_rt::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let cli = cli()?;
     let _ = env_logger::init();
+    let port = port_check::free_local_port().expect("Could not find free port");
     debug!("Logger initialized");
 
     let config_file_name = PathBuf::from("distrox.toml");
@@ -100,20 +100,34 @@ async fn main() -> Result<()> {
         }
     };
 
-    let html_content = include_str!("../assets/index.html");
+    let adr = format!("127.0.0.1:{}", port);
+    let webview_content = web_view::Content::Url(adr.clone());
 
-    let mut view = web_view::builder()
+    actix_rt::spawn(async move {
+        actix_web::HttpServer::new(|| {
+            actix_web::App::new()
+                .service(actix_web::web::resource("/{name}/{id}/index.html").to(index))
+        })
+        .bind(adr.clone())
+        .expect(&format!("Could not bind to address {}", adr))
+        .run()
+        .await;
+    });
+
+    web_view::builder()
         .title("My Project")
-        .content(web_view::Content::Html(html_content))
+        .content(webview_content)
         .resizable(true)
         .debug(true)
         .user_data(())
         .invoke_handler(|_webview, _arg| Ok(()))
         .build()
-        .map_err(Error::from)?;
+        .map_err(Error::from)?
+        .run()
+        .map_err(Error::from)
+}
 
-    view.inject_css(include_str!("../assets/style.css"))?;
-
-    view.run().map_err(Error::from)
+async fn index() -> impl Responder {
+   HttpResponse::Ok()
 }
 
