@@ -2,3 +2,24 @@ body {
     background-color: black;
 }
 
+#sidebar_left {
+    background-color: grey;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 10%;
+    min-width: 15em;
+    float: left;
+}
+
+#sidebar_right {
+    background-color: grey;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 10%;
+    min-width: 15em;
+    float: right;
+}
