@@ -3,8 +3,7 @@ use std::sync::Arc;
 use std::ops::Deref;
 
 use ipfs_api::IpfsClient;
-use failure::Error;
-use failure::err_msg;
+use anyhow::Error;
 use futures::future::Future;
 use futures::stream::Stream;
 

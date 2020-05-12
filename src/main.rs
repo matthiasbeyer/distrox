@@ -18,8 +18,9 @@ extern crate handlebars;
 extern crate web_view;
 extern crate actix_rt;
 extern crate actix_web;
+extern crate failure;
 
-#[macro_use] extern crate failure;
+#[macro_use] extern crate anyhow;
 #[macro_use] extern crate is_match;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate log;
@@ -75,7 +76,7 @@ fn main() -> Result<()> {
     let config: Configuration = {
         let configfile = xdg::BaseDirectories::with_prefix("distrox")?
             .find_config_file(&config_file_name)
-            .ok_or_else(|| err_msg("No configuration found"))?;
+            .ok_or_else(|| anyhow!("No configuration found"))?;
 
         let configstr = ::std::fs::read_to_string(&configfile)?;
         ::toml::from_str(&configstr)?

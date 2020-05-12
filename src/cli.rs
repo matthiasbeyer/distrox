@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use structopt::StructOpt;
-use failure::Error;
+use anyhow::Error;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "example", about = "An example of StructOpt usage.")]

@@ -3,14 +3,13 @@ use std::sync::Arc;
 use std::ops::Deref;
 
 use ipfs_api::IpfsClient;
-use failure::Error;
-use failure::err_msg;
-use failure::AsFail;
+use anyhow::Error;
 use futures::future::Future;
 use futures::future::FutureExt;
 use futures::stream::Stream;
 use futures::stream::StreamExt;
 use futures::stream::TryStreamExt;
+use failure::Fail;
 
 use serde_json::from_str as serde_json_from_str;
 use serde_json::to_string as serde_json_to_str;
@@ -37,7 +36,7 @@ impl ClientFassade {
         IpfsClient::new(host, port)
             .map(Arc::new)
             .map(|c| ClientFassade(c))
-            .map_err(|e| Error::from(e.as_fail()))
+            .map_err(|e| Error::from(e.compat()))
     }
 
     pub async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
@@ -47,7 +46,7 @@ impl ClientFassade {
             .cat(hash.as_ref())
             .map_ok(|b| b.to_vec())
             .try_concat()
-            .map(|r| r.map_err(|e| Error::from(e.as_fail())))
+            .map(|r| r.map_err(|e| anyhow!("UNIMPLEMENTED!()")))
             .await
     }
 
@@ -58,7 +57,7 @@ impl ClientFassade {
             .add(Cursor::new(data))
             .await
             .map(|res| IPFSHash::from(res.hash))
-            .map_err(|e| Error::from(e.as_fail()))
+            .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
 
     pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
@@ -68,7 +67,7 @@ impl ClientFassade {
             .name_publish(hash, false, None, None, Some(key))
             .await
             .map(|res| IPNSHash::from(res.value))
-            .map_err(|e| Error::from(e.as_fail()))
+            .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
 
     pub async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
@@ -77,7 +76,7 @@ impl ClientFassade {
             .name_resolve(Some(&ipns), true, false)
             .await
             .map(|res| IPFSHash::from(res.path))
-            .map_err(|e| Error::from(e.as_fail()))
+            .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
 }
 
@@ -109,8 +108,7 @@ impl TypedClientFassade {
             .and_then(|data| {
                 debug!("Got data, building object: {:?}", data);
 
-                serde_json::from_slice(&data)
-                    .map_err(|e| Error::from(e.as_fail()))
+                serde_json::from_slice(&data).map_err(|e| Error::from(e.compat()))
             })
     }
 

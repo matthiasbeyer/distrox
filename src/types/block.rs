@@ -5,7 +5,7 @@ use crate::types::payload::*;
 use crate::types::content::LoadedContent;
 use crate::repository::repository::Repository;
 
-use failure::Error;
+use anyhow::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {

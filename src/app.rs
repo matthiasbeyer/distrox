@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use failure::Error;
+use anyhow::Error;
 use futures::Stream;
 use futures::stream;
 

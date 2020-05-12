@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use failure::Error;
+use anyhow::Error;
 
 use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
