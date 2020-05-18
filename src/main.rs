@@ -75,7 +75,6 @@ fn start_server(cli: &CLI) -> bool {
 async fn main() -> Result<()> {
     let cli = cli()?;
     let _ = env_logger::init();
-    let port = port_check::free_local_port().expect("Could not find free port");
     debug!("Logger initialized");
 
     let config_file_name = PathBuf::from("distrox.toml");
@@ -88,6 +87,7 @@ async fn main() -> Result<()> {
         ::toml::from_str(&configstr)?
     };
 
+    let port = cli.port().unwrap_or_else(|| *config.get_app_port());
     let adr = format!("127.0.0.1:{}", port);
 
     if start_server(&cli) {

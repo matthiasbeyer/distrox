@@ -12,6 +12,9 @@ pub struct CLI {
     #[structopt(short, long)]
     trace: bool,
 
+    #[structopt(short, long)]
+    port: Option<u16>,
+
     #[structopt(parse(from_os_str))]
     configfile: Option<PathBuf>,
 
@@ -22,6 +25,10 @@ pub struct CLI {
 impl CLI {
     pub fn cmd(&self) -> Option<&Command> {
         self.cmd.as_ref()
+    }
+
+    pub fn port(&self) -> Option<u16> {
+        self.port.as_ref().map(|p| *p)
     }
 }
 

@@ -15,6 +15,11 @@ pub struct Configuration {
     /// The Port of the API
     api_port: u16,
 
+    #[serde(rename = "app-port")]
+    #[get]
+    /// The Port of the App itself
+    app_port: u16,
+
     #[serde(rename = "autoserve-chains")]
     #[get]
     /// Whether to automatically "ipfs pin" chain objects
@@ -84,6 +89,7 @@ impl Default for Configuration {
         Configuration {
             api_url               : String::from("127.0.0.1"),
             api_port              : 5001,
+            app_port              : 5002,
             autoserve_chains      : true,
             autoserve_text_posts  : true,
             serve_blocked         : false,

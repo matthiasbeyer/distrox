@@ -41,6 +41,5 @@ web-view     = "0.6"
 handlebars   = "3"
 actix-rt     = "1"
 actix-web    = "2"
-port_check   = "0.1"
 failure      = "0.1"
 pidlock      = { git = "https://github.com/matthiasbeyer/pidlock", branch = "my-master" }

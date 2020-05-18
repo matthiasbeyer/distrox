@@ -4,6 +4,9 @@ ipfs-api-url = "127.0.0.1"
 # The API Port
 ipfs-api-port = 5001
 
+# The Port for the app itself
+app-port = 5002
+
 # Whether to automatically "ipfs pin" chain objects
 autoserve-chains = true
 
