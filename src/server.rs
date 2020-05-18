@@ -1,9 +1,12 @@
 use std::path::PathBuf;
 
-use actix_web::{web, HttpResponse, Responder};
 use anyhow::Error;
 use anyhow::Result;
 use pidlock::{Pidlock, PidlockState};
+use actix_web::HttpResponse;
+use actix_web::Responder;
+use actix_web::http::StatusCode;
+use actix_web::body::Body;
 
 use crate::cli::*;
 use crate::types::util::*;
@@ -42,11 +45,13 @@ pub async fn run_server(mut server_lock: Pidlock, adr: String) -> Result<()> {
 
 async fn index() -> impl Responder {
     debug!("serve index");
-    format!("{pre}{style}{index}{post}",
+    let s = format!("{pre}{style}{index}{post}",
         pre   = include_str!("../assets/index_pre.html"),
         style = include_str!("../assets/style.css"),
         index = include_str!("../assets/index.html"),
         post  = include_str!("../assets/index_post.html"),
-    )
+    );
+
+    HttpResponse::build(StatusCode::OK).body(Body::from_slice(s.as_bytes()))
 }
 
