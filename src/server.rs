@@ -8,7 +8,9 @@ use actix_web::Responder;
 use actix_web::http::StatusCode;
 use actix_web::body::Body;
 
+use crate::app::App;
 use crate::cli::*;
+use crate::configuration::Configuration;
 use crate::types::util::*;
 
 pub fn mk_lock() -> Pidlock {
@@ -24,7 +26,26 @@ pub fn is_running(server_lock: &Pidlock) -> bool {
 }
 
 
-pub async fn run_server(mut server_lock: Pidlock, adr: String) -> Result<()> {
+pub async fn run_server(config: Configuration, mut server_lock: Pidlock, adr: String) -> Result<()> {
+    let app = {
+        let device_name = config.get_device_name();
+        let device_key  = config.get_device_key();
+
+        if let (Some(name), Some(key)) = (device_name, device_key) {
+            let name        = IPNSHash::from(name.clone());
+            let key         = key.clone();
+            let api_url     = config.get_api_url().clone();
+            let api_port    = config.get_api_port().clone();
+
+            App::load(name, key, &api_url, api_port)
+        } else {
+            // ask user for name(s)
+            // boot repository
+            // load App object
+            unimplemented!()
+        }
+    }?;
+
     info!("Starting server");
     let _ = server_lock.acquire().map_err(|_| anyhow!("Error while getting the PID lock"))?;
 

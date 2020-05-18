@@ -5,32 +5,10 @@ use anyhow::Result;
 use web_view::WVResult;
 use web_view::WebView;
 
-use crate::app::App;
 use crate::cli::*;
-use crate::configuration::Configuration;
 use crate::types::util::*;
 
-pub fn run_gui(config: Configuration, adr: String) -> Result<()> {
-    // GUI
-    let app = {
-        let device_name = config.get_device_name();
-        let device_key  = config.get_device_key();
-
-        if let (Some(name), Some(key)) = (device_name, device_key) {
-            let name        = IPNSHash::from(name.clone());
-            let key         = key.clone();
-            let api_url     = config.get_api_url().clone();
-            let api_port    = config.get_api_port().clone();
-
-            App::load(name, key, &api_url, api_port)
-        } else {
-            // ask user for name(s)
-            // boot repository
-            // load App object
-            unimplemented!()
-        }
-    };
-
+pub fn run_gui(adr: String) -> Result<()> {
     let webview_content = web_view::Content::Url(format!("http://{}", adr));
 
     web_view::builder()

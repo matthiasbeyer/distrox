@@ -93,18 +93,18 @@ async fn main() -> Result<()> {
     let start_server    = crate::server::do_start(&cli);
 
     match (server_running, start_server) {
-        (true, false) => crate::gui::run_gui(config, adr),
+        (true, false) => crate::gui::run_gui(adr),
         (false, false) => {
             // fork()
             info!("Spawning server thread...");
             let path = std::env::current_exe()?;
             let mut child = std::process::Command::new(path).arg("server").spawn()?;
-            let r = crate::gui::run_gui(config, adr);
+            let r = crate::gui::run_gui(adr);
             child.kill()?;
             r
         },
 
-        (false, true) => crate::server::run_server(server_lock, adr).await,
+        (false, true) => crate::server::run_server(config, server_lock, adr).await,
 
         (true, true) => {
             info!("Server is already running. Doing nothing.");
