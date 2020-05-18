@@ -19,6 +19,7 @@ extern crate web_view;
 extern crate actix_rt;
 extern crate actix_web;
 extern crate failure;
+extern crate pidlock;
 
 #[macro_use] extern crate anyhow;
 #[macro_use] extern crate is_match;
@@ -90,6 +91,13 @@ async fn main() -> Result<()> {
     let adr = format!("127.0.0.1:{}", port);
 
     if start_server(&cli) {
+        let mut lock = pidlock::Pidlock::new("/tmp/distrox_server.pid");
+        if *lock.state() == pidlock::PidlockState::Acquired {
+            // We assume that the server is already running
+            return Ok(())
+        }
+
+        let _ = lock.acquire().map_err(|_| anyhow!("Error while getting the PID lock"))?;
         actix_web::HttpServer::new(|| {
             actix_web::App::new()
                 .service(actix_web::web::resource("/{name}/{id}/index.html").to(index))
@@ -99,7 +107,7 @@ async fn main() -> Result<()> {
         .run()
         .await;
 
-        Ok(())
+        lock.release().map_err(|_| anyhow!("Error while releasing the PID lock"))
     } else {
         let app = {
             let device_name = config.get_device_name();
