@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use actix_web::{web, HttpResponse, Responder};
 use anyhow::Error;
 use anyhow::Result;
@@ -15,7 +17,7 @@ pub fn do_start(cli: &CLI) -> bool {
 }
 
 pub fn is_running(server_lock: &Pidlock) -> bool {
-    *server_lock.state() == PidlockState::Acquired
+    PathBuf::from("/tmp/distrox_server.pid").exists()
 }
 
 
@@ -26,7 +28,7 @@ pub async fn run_server(mut server_lock: Pidlock, adr: String) -> Result<()> {
     info!("Got PID lock for server");
     actix_web::HttpServer::new(|| {
         actix_web::App::new()
-            .service(actix_web::web::resource("/{name}/{id}/index.html").to(index))
+            .route("*", actix_web::web::get().to(index))
     })
     .bind(adr.clone())
     .expect(&format!("Could not bind to address {}", adr))
@@ -39,6 +41,12 @@ pub async fn run_server(mut server_lock: Pidlock, adr: String) -> Result<()> {
 }
 
 async fn index() -> impl Responder {
-   HttpResponse::Ok()
+    debug!("serve index");
+    format!("{pre}{style}{index}{post}",
+        pre   = include_str!("../assets/index_pre.html"),
+        style = include_str!("../assets/style.css"),
+        index = include_str!("../assets/index.html"),
+        post  = include_str!("../assets/index_post.html"),
+    )
 }
 

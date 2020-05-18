@@ -1,5 +1,9 @@
+use std::fmt::Debug;
+
 use anyhow::Error;
 use anyhow::Result;
+use web_view::WVResult;
+use web_view::WebView;
 
 use crate::app::App;
 use crate::cli::*;
@@ -27,7 +31,7 @@ pub fn run_gui(config: Configuration, adr: String) -> Result<()> {
         }
     };
 
-    let webview_content = web_view::Content::Url(adr.clone());
+    let webview_content = web_view::Content::Url(format!("http://{}", adr));
 
     web_view::builder()
         .title("My Project")
@@ -35,10 +39,15 @@ pub fn run_gui(config: Configuration, adr: String) -> Result<()> {
         .resizable(true)
         .debug(true)
         .user_data(())
-        .invoke_handler(|_webview, _arg| Ok(()))
+        .invoke_handler(invoke_handler)
         .build()
         .map_err(Error::from)?
         .run()
         .map_err(Error::from)
+}
+
+fn invoke_handler<T: Debug>(webview: &mut WebView<T>, s: &str) -> WVResult {
+    debug!("invoke-handler: {:?}, {:?}", webview, s);
+    Ok(())
 }
 
