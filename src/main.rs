@@ -96,6 +96,7 @@ async fn main() -> Result<()> {
         (true, false) => crate::gui::run_gui(config, adr),
         (false, false) => {
             // fork()
+            info!("Spawning server thread...");
             let path = std::env::current_exe()?;
             let mut child = std::process::Command::new(path).arg("server").spawn()?;
             let r = crate::gui::run_gui(config, adr);
