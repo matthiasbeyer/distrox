@@ -14,6 +14,21 @@ pub struct CLI {
 
     #[structopt(parse(from_os_str))]
     configfile: Option<PathBuf>,
+
+    #[structopt(subcommand)]
+    cmd: Option<Command>
+}
+
+impl CLI {
+    pub fn cmd(&self) -> Option<&Command> {
+        self.cmd.as_ref()
+    }
+}
+
+#[derive(Debug, PartialEq, StructOpt)]
+#[structopt(about = "Start the server part (running in foreground")]
+pub enum Command {
+    Server,
 }
 
 pub fn cli() -> Result<CLI, Error> {

@@ -52,7 +52,7 @@ use anyhow::Error;
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::app::App;
-use crate::cli::cli;
+use crate::cli::*;
 use crate::configuration::Configuration;
 use crate::repository::repository::Repository;
 use crate::types::block::Block;
@@ -66,7 +66,12 @@ use crate::types::util::Version;
 
 use std::process::exit;
 
-fn main() -> Result<()> {
+fn start_server(cli: &CLI) -> bool {
+    cli.cmd().map(|cmd| Command::Server == *cmd).unwrap_or(false)
+}
+
+#[actix_rt::main]
+async fn main() -> Result<()> {
     let cli = cli()?;
     let _ = env_logger::init();
     let port = port_check::free_local_port().expect("Could not find free port");
@@ -82,29 +87,9 @@ fn main() -> Result<()> {
         ::toml::from_str(&configstr)?
     };
 
-    let app = {
-        let device_name = config.get_device_name();
-        let device_key  = config.get_device_key();
-
-        if let (Some(name), Some(key)) = (device_name, device_key) {
-            let name        = IPNSHash::from(name.clone());
-            let key         = key.clone();
-            let api_url     = config.get_api_url().clone();
-            let api_port    = config.get_api_port().clone();
-
-            App::load(name, key, &api_url, api_port)
-        } else {
-            // ask user for name(s)
-            // boot repository
-            // load App object
-            unimplemented!()
-        }
-    };
-
     let adr = format!("127.0.0.1:{}", port);
-    let webview_content = web_view::Content::Url(adr.clone());
 
-    actix_rt::spawn(async move {
+    if start_server(&cli) {
         actix_web::HttpServer::new(|| {
             actix_web::App::new()
                 .service(actix_web::web::resource("/{name}/{id}/index.html").to(index))
@@ -113,19 +98,42 @@ fn main() -> Result<()> {
         .expect(&format!("Could not bind to address {}", adr))
         .run()
         .await;
-    });
 
-    web_view::builder()
-        .title("My Project")
-        .content(webview_content)
-        .resizable(true)
-        .debug(true)
-        .user_data(())
-        .invoke_handler(|_webview, _arg| Ok(()))
-        .build()
-        .map_err(Error::from)?
-        .run()
-        .map_err(Error::from)
+        Ok(())
+    } else {
+        let app = {
+            let device_name = config.get_device_name();
+            let device_key  = config.get_device_key();
+
+            if let (Some(name), Some(key)) = (device_name, device_key) {
+                let name        = IPNSHash::from(name.clone());
+                let key         = key.clone();
+                let api_url     = config.get_api_url().clone();
+                let api_port    = config.get_api_port().clone();
+
+                App::load(name, key, &api_url, api_port)
+            } else {
+                // ask user for name(s)
+                // boot repository
+                // load App object
+                unimplemented!()
+            }
+        };
+
+        let webview_content = web_view::Content::Url(adr.clone());
+
+        web_view::builder()
+            .title("My Project")
+            .content(webview_content)
+            .resizable(true)
+            .debug(true)
+            .user_data(())
+            .invoke_handler(|_webview, _arg| Ok(()))
+            .build()
+            .map_err(Error::from)?
+            .run()
+            .map_err(Error::from)
+    }
 }
 
 async fn index() -> impl Responder {
