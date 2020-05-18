@@ -4,6 +4,7 @@ use std::ops::Deref;
 use std::result::Result as RResult;
 
 use ipfs_api::IpfsClient;
+use ipfs_api::TryFromUri;
 use anyhow::Error;
 use futures::future::Future;
 use futures::future::FutureExt;
@@ -40,7 +41,7 @@ impl std::fmt::Debug for ClientFassade {
 impl ClientFassade {
     fn new(host: &str, port: u16) -> Result<ClientFassade, Error> {
         debug!("Creating new ClientFassade object: {}:{}", host, port);
-        IpfsClient::new(host, port)
+        IpfsClient::from_str(&format!("{}:{}", host, port))
             .map(Arc::new)
             .map(|c| ClientFassade(c))
             .map_err(|e| Error::from(e.compat()))
