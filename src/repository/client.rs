@@ -1,6 +1,7 @@
 use std::io::Cursor;
 use std::sync::Arc;
 use std::ops::Deref;
+use std::result::Result as RResult;
 
 use ipfs_api::IpfsClient;
 use anyhow::Error;
@@ -29,6 +30,12 @@ use crate::types::util::IPNSHash;
 /// Abstracts the procedural interface of IpfsClient calls.
 #[derive(Clone)]
 pub struct ClientFassade(Arc<IpfsClient>);
+
+impl std::fmt::Debug for ClientFassade {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> RResult<(), std::fmt::Error> {
+        write!(f, "ClientFassade")
+    }
+}
 
 impl ClientFassade {
     fn new(host: &str, port: u16) -> Result<ClientFassade, Error> {
@@ -81,7 +88,7 @@ impl ClientFassade {
 }
 
 /// Client wrapper for working with types directly on the client
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TypedClientFassade(ClientFassade);
 
 impl Deref for TypedClientFassade {

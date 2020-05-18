@@ -14,6 +14,7 @@ use crate::types::payload::Payload;
 use crate::types::util::Timestamp;
 use crate::version::protocol_version;
 
+#[derive(Debug, Clone)]
 pub struct App {
     repo: Repository,
     device_name: IPNSHash,

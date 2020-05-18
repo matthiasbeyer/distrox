@@ -27,7 +27,7 @@ use crate::repository::client::TypedClientFassade;
 ///
 /// Should not be used too extensively, but rather through the "Profile" type, which represents the
 /// profile of a user.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Repository(TypedClientFassade);
 
 impl Deref for Repository {
