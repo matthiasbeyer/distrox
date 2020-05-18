@@ -4,7 +4,7 @@ use structopt::StructOpt;
 use anyhow::Error;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "example", about = "An example of StructOpt usage.")]
+#[structopt(name = "distrox", about = "Distrox - The distributed social network")]
 pub struct CLI {
     #[structopt(short, long)]
     debug: bool,
