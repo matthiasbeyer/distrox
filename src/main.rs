@@ -94,10 +94,14 @@ async fn main() -> Result<()> {
         let mut lock = pidlock::Pidlock::new("/tmp/distrox_server.pid");
         if *lock.state() == pidlock::PidlockState::Acquired {
             // We assume that the server is already running
+            info!("Assuming that the server is already running. Doing nothing.");
             return Ok(())
         }
 
+        info!("Starting server");
         let _ = lock.acquire().map_err(|_| anyhow!("Error while getting the PID lock"))?;
+
+        info!("Got PID lock for server");
         actix_web::HttpServer::new(|| {
             actix_web::App::new()
                 .service(actix_web::web::resource("/{name}/{id}/index.html").to(index))
@@ -107,6 +111,8 @@ async fn main() -> Result<()> {
         .run()
         .await;
 
+        info!("Server shutdown");
+        info!("Releasing PID lock for server");
         lock.release().map_err(|_| anyhow!("Error while releasing the PID lock"))
     } else {
         let app = {
