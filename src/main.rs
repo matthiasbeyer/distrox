@@ -51,6 +51,7 @@ use serde_json::from_str as serde_json_from_str;
 use anyhow::Result;
 use anyhow::Error;
 use actix_web::{web, HttpResponse, Responder};
+use env_logger::Env;
 
 use crate::app::App;
 use crate::cli::*;
@@ -74,7 +75,7 @@ fn start_server(cli: &CLI) -> bool {
 #[actix_rt::main]
 async fn main() -> Result<()> {
     let cli = cli()?;
-    let _ = env_logger::init();
+    let _ = env_logger::from_env(Env::default().default_filter_or("info")).init();
     debug!("Logger initialized");
 
     let config_file_name = PathBuf::from("distrox.toml");

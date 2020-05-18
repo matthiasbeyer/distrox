@@ -28,7 +28,7 @@ chrono       = { version = "0.4", features = ["serde"] }
 uuid         = { version = "0.7", features = ["serde", "v4"] }
 clap         = "2"
 log          = "0.4"
-env_logger   = "0.5"
+env_logger   = "0.7"
 config       = "0.9"
 toml         = "0.4"
 hyper        = "0.12"
