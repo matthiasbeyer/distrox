@@ -8,7 +8,7 @@ use crate::types::util::MimeType;
 use crate::types::util::Timestamp;
 use crate::types::payload::Payload;
 use crate::types::payload::LoadedPayload;
-use crate::repository::repository::Repository;
+use crate::model::Model;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Content {
@@ -63,7 +63,7 @@ impl Content {
         self.devices.push(dev);
     }
 
-    pub async fn load(self, r: &Repository) -> Result<LoadedContent, Error> {
+    pub async fn load(self, r: &Model) -> Result<LoadedContent, Error> {
         Ok({
             LoadedContent {
                 devices: self.devices,

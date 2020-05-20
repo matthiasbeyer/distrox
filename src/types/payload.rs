@@ -6,7 +6,7 @@ use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 use crate::types::util::MimeType;
 use crate::types::util::Timestamp;
-use crate::repository::repository::Repository;
+use crate::model::Model;
 
 
 /// The Payload type represents the Payload of a Content object
@@ -166,7 +166,7 @@ impl Payload {
         }
     }
 
-    pub async fn load(self, r: &Repository) -> Result<LoadedPayload, Error> {
+    pub async fn load(self, r: &Model) -> Result<LoadedPayload, Error> {
         match self {
             Payload::None => Ok(LoadedPayload::None),
             Payload::Post {

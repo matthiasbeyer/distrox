@@ -1,23 +1,24 @@
+//! The "model" module implements the Database-layer of the application
+
 use std::io::Cursor;
-use std::sync::Arc;
 use std::ops::Deref;
 use std::result::Result as RResult;
+use std::sync::Arc;
 
-use ipfs_api::IpfsClient;
-use ipfs_api::TryFromUri;
 use anyhow::Error;
+use chrono::NaiveDateTime;
+use failure::Fail;
 use futures::future::Future;
 use futures::future::FutureExt;
 use futures::stream::Stream;
 use futures::stream::StreamExt;
 use futures::stream::TryStreamExt;
-use failure::Fail;
-
-use serde_json::from_str as serde_json_from_str;
-use serde_json::to_string as serde_json_to_str;
+use ipfs_api::IpfsClient;
+use ipfs_api::TryFromUri;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use chrono::NaiveDateTime;
+use serde_json::from_str as serde_json_from_str;
+use serde_json::to_string as serde_json_to_str;
 
 use crate::types::block::Block;
 use crate::types::content::Content;
@@ -25,29 +26,32 @@ use crate::types::payload::Payload;
 use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 
-
-/// Internal ClientFassade types
-///
-/// Abstracts the procedural interface of IpfsClient calls.
 #[derive(Clone)]
-pub struct ClientFassade(Arc<IpfsClient>);
+pub struct Model(Arc<IpfsClient>);
 
-impl std::fmt::Debug for ClientFassade {
+impl std::fmt::Debug for Model{
     fn fmt(&self, f: &mut std::fmt::Formatter) -> RResult<(), std::fmt::Error> {
-        write!(f, "ClientFassade")
+        write!(f, "Model")
     }
 }
 
-impl ClientFassade {
-    fn new(host: &str, port: u16) -> Result<ClientFassade, Error> {
-        debug!("Creating new ClientFassade object: {}:{}", host, port);
+impl Model {
+    pub fn new(host: &str, port: u16) -> Result<Model, Error> {
+        debug!("Creating new Model object: {}:{}", host, port);
         IpfsClient::from_str(&format!("{}:{}", host, port))
             .map(Arc::new)
-            .map(|c| ClientFassade(c))
+            .map(|c| Model(c))
             .map_err(|e| Error::from(e.compat()))
     }
 
-    pub async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
+
+    //
+    //
+    // Low-level interface to the ipfs-api
+    //
+    //
+
+    pub(crate) async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
         debug!("Get: {}", hash.as_ref());
         self.0
             .clone()
@@ -58,7 +62,7 @@ impl ClientFassade {
             .await
     }
 
-    pub async fn put_raw_bytes(&self, data: Vec<u8>) -> Result<IPFSHash, Error> {
+    pub(crate) async fn put_raw_bytes(&self, data: Vec<u8>) -> Result<IPFSHash, Error> {
         debug!("Put: {:?}", data);
         self.0
             .clone()
@@ -68,7 +72,7 @@ impl ClientFassade {
             .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
 
-    pub async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
+    pub(crate) async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
         debug!("Publish: {:?} -> {:?}", key, hash);
         self.0
             .clone()
@@ -78,7 +82,7 @@ impl ClientFassade {
             .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
 
-    pub async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
+    pub(crate) async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
         self.0
             .clone()
             .name_resolve(Some(&ipns), true, false)
@@ -86,32 +90,18 @@ impl ClientFassade {
             .map(|res| IPFSHash::from(res.path))
             .map_err(|e| anyhow!("UNIMPLEMENTED!()"))
     }
-}
 
-/// Client wrapper for working with types directly on the client
-#[derive(Debug, Clone)]
-pub struct TypedClientFassade(ClientFassade);
+    //
+    //
+    // Generic typed interface
+    //
+    //
 
-impl Deref for TypedClientFassade {
-    type Target = ClientFassade;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl TypedClientFassade {
-    pub fn new(host: &str, port: u16) -> Result<TypedClientFassade, Error> {
-        ClientFassade::new(host, port).map(TypedClientFassade)
-    }
-
-    pub async fn get_typed<H, D>(&self, hash: H) -> Result<D, Error>
+    pub(crate) async fn get_typed<H, D>(&self, hash: H) -> Result<D, Error>
         where H: AsRef<IPFSHash>,
               D: DeserializeOwned
     {
-        self.0
-            .clone()
-            .get_raw_bytes(hash)
+        self.get_raw_bytes(hash)
             .await
             .and_then(|data| {
                 debug!("Got data, building object: {:?}", data);
@@ -120,14 +110,42 @@ impl TypedClientFassade {
             })
     }
 
-    pub async fn put_typed<S, Ser>(&self, data: &S) -> Result<IPFSHash, Error>
+    pub(crate) async fn put_typed<S, Ser>(&self, data: &S) -> Result<IPFSHash, Error>
         where S: AsRef<Ser>,
               Ser: Serialize
     {
-        let client = self.0.clone();
-
         let data = serde_json_to_str(data.as_ref())?;
-        client.put_raw_bytes(data.into_bytes()).await
+        self.put_raw_bytes(data.into_bytes()).await
+    }
+
+    //
+    //
+    // Typed interface
+    //
+    //
+
+    pub async fn get_block<H>(&self, hash: H) -> Result<Block, Error>
+        where H: AsRef<IPFSHash>
+    {
+        self.get_typed(hash).await
+    }
+
+    pub async fn put_block<B>(&self, b: B) -> Result<IPFSHash, Error>
+        where B: AsRef<Block>
+    {
+        self.put_typed(b.as_ref()).await
+    }
+
+    pub async fn get_content<H>(&self, hash: H) -> Result<Content, Error>
+        where H: AsRef<IPFSHash>
+    {
+        self.get_typed(hash).await
+    }
+
+    pub async fn put_content<C>(&self, c: C) -> Result<IPFSHash, Error>
+        where C: AsRef<Content>
+    {
+        self.put_typed(c.as_ref()).await
     }
 
 }

@@ -8,7 +8,7 @@ use crate::types::util::IPFSHash;
 use crate::types::util::MimeType;
 use crate::types::util::IPNSHash;
 use crate::types::block::Block;
-use crate::repository::repository::Repository;
+use crate::model::Model;
 use crate::types::content::Content;
 use crate::types::payload::Payload;
 use crate::types::util::Timestamp;
@@ -16,7 +16,7 @@ use crate::version::protocol_version;
 
 #[derive(Debug, Clone)]
 pub struct App {
-    repo: Repository,
+    repo: Model,
     device_name: IPNSHash,
     publishing_key: String
 }
@@ -24,10 +24,10 @@ pub struct App {
 impl App {
 
     pub fn load(device_name: IPNSHash, publishing_key: String, host: &str, port: u16) -> Result<Self, Error> {
-        Repository::new(host, port).map(|repo| App { repo, device_name, publishing_key })
+        Model::new(host, port).map(|repo| App { repo, device_name, publishing_key })
     }
 
-    pub async fn new_profile(repo: Repository, publishing_key: &str, names: Vec<String>) -> Result<Self, Error> {
+    pub async fn new_profile(repo: Model, publishing_key: &str, names: Vec<String>) -> Result<Self, Error> {
         let payload = Payload::Profile {
             names,
             picture: None,

@@ -3,7 +3,7 @@ use crate::types::util::Version;
 use crate::types::content::Content;
 use crate::types::payload::*;
 use crate::types::content::LoadedContent;
-use crate::repository::repository::Repository;
+use crate::model::Model;
 
 use anyhow::Error;
 
@@ -42,7 +42,7 @@ impl Block {
         &self.content
     }
 
-    pub async fn load(self, r: &Repository) -> Result<LoadedBlock, Error> {
+    pub async fn load(self, r: &Model) -> Result<LoadedBlock, Error> {
         Ok({
             LoadedBlock {
                 version: self.version,
