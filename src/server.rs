@@ -8,9 +8,9 @@ use actix_web::Responder;
 use actix_web::http::StatusCode;
 use actix_web::body::Body;
 
-use crate::app::App;
 use crate::cli::*;
 use crate::configuration::Configuration;
+use crate::middleware::Middleware;
 use crate::types::util::*;
 
 pub fn mk_lock() -> Pidlock {
@@ -37,11 +37,11 @@ pub async fn run_server(config: Configuration, mut server_lock: Pidlock, adr: St
             let api_url     = config.get_api_url().clone();
             let api_port    = config.get_api_port().clone();
 
-            App::load(name, key, &api_url, api_port)
+            Middleware::load(name, key, &api_url, api_port)
         } else {
             // ask user for name(s)
             // boot repository
-            // load App object
+            // load Middleware object
             unimplemented!()
         }
     }?;

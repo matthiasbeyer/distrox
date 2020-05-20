@@ -14,17 +14,18 @@ use crate::types::payload::Payload;
 use crate::types::util::Timestamp;
 use crate::version::protocol_version;
 
+/// The "Middleware" type implements the actual application logic
 #[derive(Debug, Clone)]
-pub struct App {
+pub struct Middleware {
     repo: Repository,
     device_name: IPNSHash,
     publishing_key: String
 }
 
-impl App {
+impl Middleware {
 
     pub fn load(device_name: IPNSHash, publishing_key: String, host: &str, port: u16) -> Result<Self, Error> {
-        Repository::new(host, port).map(|repo| App { repo, device_name, publishing_key })
+        Repository::new(host, port).map(|repo| Middleware { repo, device_name, publishing_key })
     }
 
     pub async fn new_profile(repo: Repository, publishing_key: &str, names: Vec<String>) -> Result<Self, Error> {
@@ -40,7 +41,7 @@ impl App {
         let head         = repo.put_block(Block::new(protocol_version(), vec![], content_hash)).await?;
         let device_name  = repo.publish(&publishing_key, &head).await?;
 
-        Ok(App { repo, device_name, publishing_key: publishing_key.to_string() })
+        Ok(Middleware { repo, device_name, publishing_key: publishing_key.to_string() })
     }
 
     pub async fn new_post(&self,

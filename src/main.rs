@@ -29,10 +29,10 @@ extern crate pidlock;
 #[macro_use] extern crate add_getters_setters;
 #[macro_use] extern crate structopt;
 
-mod app;
 mod cli;
 mod configuration;
 mod gui;
+mod middleware;
 mod repository;
 mod server;
 mod types;
@@ -54,9 +54,9 @@ use anyhow::Result;
 use anyhow::Error;
 use env_logger::Env;
 
-use crate::app::App;
 use crate::cli::*;
 use crate::configuration::Configuration;
+use crate::middleware::Middleware;
 use crate::repository::repository::Repository;
 use crate::types::block::Block;
 use crate::types::content::Content;
