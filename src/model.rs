@@ -27,7 +27,7 @@ use crate::types::util::IPFSHash;
 use crate::types::util::IPNSHash;
 
 #[derive(Clone)]
-pub struct Model(Arc<IpfsClient>);
+pub struct Model(IpfsClient);
 
 impl std::fmt::Debug for Model{
     fn fmt(&self, f: &mut std::fmt::Formatter) -> RResult<(), std::fmt::Error> {
@@ -39,8 +39,7 @@ impl Model {
     pub fn new(host: &str, port: u16) -> Result<Model, Error> {
         debug!("Creating new Model object: {}:{}", host, port);
         IpfsClient::from_str(&format!("{}:{}", host, port))
-            .map(Arc::new)
-            .map(|c| Model(c))
+            .map(Model)
             .map_err(|e| Error::from(e.compat()))
     }
 
@@ -54,7 +53,6 @@ impl Model {
     pub(crate) async fn get_raw_bytes<H: AsRef<IPFSHash>>(&self, hash: H) -> Result<Vec<u8>, Error> {
         debug!("Get: {}", hash.as_ref());
         self.0
-            .clone()
             .cat(hash.as_ref())
             .map_ok(|b| b.to_vec())
             .try_concat()
@@ -65,7 +63,6 @@ impl Model {
     pub(crate) async fn put_raw_bytes(&self, data: Vec<u8>) -> Result<IPFSHash, Error> {
         debug!("Put: {:?}", data);
         self.0
-            .clone()
             .add(Cursor::new(data))
             .await
             .map(|res| IPFSHash::from(res.hash))
@@ -75,7 +72,6 @@ impl Model {
     pub(crate) async fn publish(&self, key: &str, hash: &str) -> Result<IPNSHash, Error> {
         debug!("Publish: {:?} -> {:?}", key, hash);
         self.0
-            .clone()
             .name_publish(hash, false, None, None, Some(key))
             .await
             .map(|res| IPNSHash::from(res.value))
@@ -84,7 +80,6 @@ impl Model {
 
     pub(crate) async fn resolve(&self, ipns: IPNSHash) -> Result<IPFSHash, Error> {
         self.0
-            .clone()
             .name_resolve(Some(&ipns), true, false)
             .await
             .map(|res| IPFSHash::from(res.path))
