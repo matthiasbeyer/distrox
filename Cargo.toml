@@ -16,30 +16,3 @@ homepage      = "http://github.com/matthiasbeyer/distrox"
 edition       = "2018"
 
 [dependencies]
-is-match     = "0.1"
-anyhow       = "1"
-futures      = "0.3"
-ipfs-api     = { version = "0.7", features = ["actix"], default-features = false }
-serde        = "1"
-serde_derive = "1"
-serde_json   = "1"
-mime         = "0.3"
-chrono       = { version = "0.4", features = ["serde"] }
-uuid         = { version = "0.7", features = ["serde", "v4"] }
-clap         = "2"
-log          = "0.4"
-env_logger   = "0.7"
-config       = "0.9"
-toml         = "0.4"
-hyper        = "0.12"
-itertools    = "0.7"
-tokio        = { version = "0.2", features = ["full"] }
-add_getters_setters = "1.1"
-xdg          = "2"
-structopt    = "0.3"
-web-view     = "0.6"
-handlebars   = "3"
-actix-rt     = "1"
-actix-web    = "2"
-failure      = "0.1"
-pidlock      = { git = "https://github.com/matthiasbeyer/pidlock", branch = "my-master" }
