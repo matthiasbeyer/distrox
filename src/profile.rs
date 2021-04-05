@@ -25,14 +25,24 @@ impl Profile {
         Ok(Profile { dag, cache })
     }
 
-    pub async fn create(node: Node) -> Result<Self> {
+    pub async fn create(node: LoadedNode) -> Result<Self> {
         let backend = IpfsEmbedBackend::new_in_memory(1000).await?;
+        Profile::create_with_backend(backend, node).await
+    }
+
+    pub async fn create_with_backend(backend: IpfsEmbedBackend, loaded_node: LoadedNode) -> Result<Self> {
+        let payload_cid = backend.write_payload(&loaded_node.payload).await?;
+
+        let node = Node::new(loaded_node.v.clone(), loaded_node.parents.clone(), payload_cid);
+
         let dag = daglib::AsyncDag::new(backend, node).await?;
-        let cache = HashMap::new();
+        let head = dag.head().clone();
+        let mut cache = HashMap::new();
+        cache.insert(head, loaded_node);
+
         Ok(Profile { dag, cache })
     }
 }
-
 
 pub struct LoadedNode {
     v: String,
