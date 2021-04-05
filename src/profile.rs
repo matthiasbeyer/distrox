@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
+use daglib::Node as _;
+use cid::Cid;
 
 use crate::backend::Id;
 use crate::backend::Node;
@@ -25,5 +27,30 @@ impl Profile {
         let dag = daglib::AsyncDag::new(backend, node).await?;
         let cache = HashMap::new();
         Ok(Profile { dag, cache })
+    }
+}
+
+
+pub struct LoadedNode {
+    v: String,
+    parents: Vec<crate::backend::Id>,
+    payload: crate::backend::Payload,
+}
+
+impl LoadedNode {
+    async fn load_from_node(backend: &IpfsEmbedBackend, cid: &Cid) -> Result<LoadedNode> {
+        let block = backend.ipfs().fetch(cid).await?;
+        let node = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Node>()?;
+
+        let block = backend.ipfs().fetch(node.payload_id()).await?;
+        let payload = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
+
+        Ok({
+            LoadedNode {
+                v: node.version().to_string(),
+                parents: node.parent_ids().clone(),
+                payload
+            }
+        })
     }
 }
