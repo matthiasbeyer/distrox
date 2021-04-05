@@ -5,6 +5,9 @@ pub struct Node {
 
     /// Parent Nodes, identified by cid
     parents: Vec<crate::backend::Id>,
+
+    /// The actual payload of the node, which is stored in another document identified by this cid
+    payload: cid::Cid,
 }
 
 impl daglib::Node for Node {
