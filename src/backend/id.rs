@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, Eq, PartialEq, libipld::DagCbor)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, libipld::DagCbor)]
 pub struct Id(cid::Cid);
 
 impl daglib::NodeId for Id { }
