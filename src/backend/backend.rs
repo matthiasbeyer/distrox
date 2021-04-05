@@ -7,6 +7,12 @@ pub struct IpfsEmbedBackend {
     ipfs: ipfs_embed::Ipfs<ipfs_embed::DefaultParams>,
 }
 
+impl IpfsEmbedBackend {
+    pub fn ipfs(&self) -> &ipfs_embed::Ipfs<ipfs_embed::DefaultParams> {
+        &self.ipfs
+    }
+}
+
 #[async_trait::async_trait]
 impl daglib::DagBackend<Id, Node> for IpfsEmbedBackend {
 
