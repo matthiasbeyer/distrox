@@ -25,4 +25,12 @@ impl Node {
     pub fn payload_id(&self) -> &cid::Cid {
         &self.payload
     }
+
+    pub fn new(version: String, parents: Vec<crate::backend::Id>, payload: cid::Cid) -> Self {
+        Node {
+            v: version,
+            parents,
+            payload
+        }
+    }
 }
