@@ -18,3 +18,11 @@ impl daglib::Node for Node {
     }
 }
 
+impl Node {
+    pub fn version(&self) -> &str {
+        &self.v
+    }
+    pub fn payload_id(&self) -> &cid::Cid {
+        &self.payload
+    }
+}
