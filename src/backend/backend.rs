@@ -26,3 +26,11 @@ impl daglib::DagBackend<Id, Node> for IpfsEmbedBackend {
     }
 }
 
+impl IpfsEmbedBackend {
+    pub async fn new_in_memory(cache_size: u64) -> Result<Self> {
+        let in_memory = None; // that's how it works...
+        let config = ipfs_embed::Config::new(in_memory, cache_size);
+
+        ipfs_embed::Ipfs::new(config).await.map(|ipfs| IpfsEmbedBackend { ipfs })
+    }
+}
