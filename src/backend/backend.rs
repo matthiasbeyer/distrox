@@ -1,15 +1,18 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 
 use crate::backend::Id;
 use crate::backend::Node;
 
+#[derive(Clone)]
 pub struct IpfsEmbedBackend {
-    ipfs: ipfs_embed::Ipfs<ipfs_embed::DefaultParams>,
+    ipfs: Arc<ipfs_embed::Ipfs<ipfs_embed::DefaultParams>>,
 }
 
 impl IpfsEmbedBackend {
-    pub fn ipfs(&self) -> &ipfs_embed::Ipfs<ipfs_embed::DefaultParams> {
-        &self.ipfs
+    pub fn ipfs(&self) -> Arc<ipfs_embed::Ipfs<ipfs_embed::DefaultParams>> {
+        self.ipfs.clone()
     }
 }
 
@@ -37,6 +40,6 @@ impl IpfsEmbedBackend {
         let in_memory = None; // that's how it works...
         let config = ipfs_embed::Config::new(in_memory, cache_size);
 
-        ipfs_embed::Ipfs::new(config).await.map(|ipfs| IpfsEmbedBackend { ipfs })
+        ipfs_embed::Ipfs::new(config).await.map(Arc::new).map(|ipfs| IpfsEmbedBackend { ipfs })
     }
 }

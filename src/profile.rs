@@ -39,11 +39,16 @@ pub struct LoadedNode {
 
 impl LoadedNode {
     async fn load_from_node(backend: &IpfsEmbedBackend, cid: &Cid) -> Result<LoadedNode> {
-        let block = backend.ipfs().fetch(cid).await?;
-        let node = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Node>()?;
+        let ipfs = backend.ipfs();
+        let node = {
+            let block = ipfs.fetch(cid).await?;
+            block.decode::<libipld::cbor::DagCborCodec, crate::backend::Node>()?
+        };
 
-        let block = backend.ipfs().fetch(node.payload_id()).await?;
-        let payload = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
+        let payload = {
+            let block = ipfs.fetch(node.payload_id()).await?;
+            block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?
+        };
 
         Ok({
             LoadedNode {
