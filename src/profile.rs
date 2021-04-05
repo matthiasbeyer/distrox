@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use daglib::Node as _;
-use cid::Cid;
+use daglib::DagBackend;
 
 use crate::backend::Id;
 use crate::backend::Node;
@@ -11,14 +12,16 @@ use crate::backend::IpfsEmbedBackend;
 pub struct Profile {
     dag: daglib::AsyncDag<Id, Node, IpfsEmbedBackend>,
 
-    cache: HashMap<cid::Cid, LoadedNode>,
+    cache: HashMap<Id, LoadedNode>,
 }
 
 impl Profile {
     pub async fn load(head: Id) -> Result<Self> {
         let backend = IpfsEmbedBackend::new_in_memory(1000).await?;
         let dag = daglib::AsyncDag::load(backend, head).await?;
-        let cache = HashMap::new();
+        let mut cache = HashMap::new();
+        let (id, node) = LoadedNode::load(dag.backend(), dag.head().clone()).await?;
+        cache.insert(id, node);
         Ok(Profile { dag, cache })
     }
 
@@ -38,24 +41,24 @@ pub struct LoadedNode {
 }
 
 impl LoadedNode {
-    async fn load_from_node(backend: &IpfsEmbedBackend, cid: &Cid) -> Result<LoadedNode> {
-        let ipfs = backend.ipfs();
-        let node = {
-            let block = ipfs.fetch(cid).await?;
-            block.decode::<libipld::cbor::DagCborCodec, crate::backend::Node>()?
-        };
+    async fn load(backend: &IpfsEmbedBackend, id: Id) -> Result<(Id, LoadedNode)> {
+        let (id, node) = backend
+            .get(id)
+            .await?
+            .ok_or_else(|| anyhow!("No node found"))?;
 
         let payload = {
+            let ipfs = backend.ipfs();
             let block = ipfs.fetch(node.payload_id()).await?;
             block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?
         };
 
-        Ok({
+        Ok((id, {
             LoadedNode {
                 v: node.version().to_string(),
                 parents: node.parent_ids().clone(),
                 payload
             }
-        })
+        }))
     }
 }
