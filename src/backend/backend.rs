@@ -43,6 +43,13 @@ impl IpfsEmbedBackend {
         ipfs_embed::Ipfs::new(config).await.map(Arc::new).map(|ipfs| IpfsEmbedBackend { ipfs })
     }
 
+    pub async fn new_with_config(cfg: ipfs_embed::Config) -> Result<Self> {
+        ipfs_embed::Ipfs::new(cfg)
+            .await
+            .map(Arc::new)
+            .map(|ipfs| IpfsEmbedBackend { ipfs })
+    }
+
     pub async fn write_payload(&self, payload: &crate::backend::Payload) -> Result<cid::Cid> {
         let block = libipld::block::Block::encode(libipld::cbor::DagCborCodec, libipld::multihash::Code::Blake3_256, &payload)?;
         self.ipfs

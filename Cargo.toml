@@ -17,15 +17,21 @@ edition       = "2018"
 
 [dependencies]
 # TODO: Replace with thiserror
-anyhow      = "1"
+anyhow           = "1"
 
-async-trait  = "0.1"
-cid          = "0.6"
-chrono       = "0.4"
-daglib       = { git = "https://git.sr.ht/~matthiasbeyer/daglib", branch = "master" }
-ipfs-embed   = "0.19"
-libipld      = "0.11"
-libipld-cbor = "0.11"
-mime         = "0.3"
-tokio        = { version = "1", features = ["full"] }
+async-trait      = "0.1"
+cid              = "0.6"
+chrono           = "0.4"
+clap-v3          = "3.0.0-beta.1"
+daglib           = { git = "https://git.sr.ht/~matthiasbeyer/daglib", branch = "master" }
+ipfs-embed       = "0.19"
+libipld          = "0.11"
+libipld-cbor     = "0.11"
+libp2p           = "0.36"
+libp2p-bitswap   = "*"
+libp2p-core      = "*"
+libp2p-gossipsub = "*"
+libp2p-ping      = "*"
+mime             = "0.3"
+tokio            = { version = "1", features = ["full"] }
 

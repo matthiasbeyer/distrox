@@ -3,6 +3,12 @@ use anyhow::Error;
 #[derive(Debug, Eq, PartialEq)]
 pub struct MimeType(mime::Mime);
 
+impl From<mime::Mime> for MimeType {
+    fn from(mime: mime::Mime) -> Self {
+        MimeType(mime)
+    }
+}
+
 impl<C: libipld::codec::Codec> libipld::codec::Encode<C> for MimeType {
     fn encode<W: std::io::Write>(&self, _c: C, w: &mut W) -> libipld::error::Result<()> {
         w.write_all(self.0.essence_str().as_bytes()).map_err(Error::from)
