@@ -59,7 +59,7 @@ impl LoadedNode {
 
         let payload = {
             let ipfs = backend.ipfs();
-            let block = ipfs.fetch(node.payload_id()).await?;
+            let block = ipfs.fetch(node.payload_id(), ipfs.peers()).await?;
             block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?
         };
 

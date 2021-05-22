@@ -20,7 +20,7 @@ impl IpfsEmbedBackend {
 impl daglib::DagBackend<Id, Node> for IpfsEmbedBackend {
 
     async fn get(&self, id: Id) -> Result<Option<(Id, Node)>> {
-        let block = self.ipfs.fetch(id.as_ref()).await?;
+        let block = self.ipfs.fetch(id.as_ref(), self.ipfs.peers()).await?;
         let node = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Node>()?;
         Ok(Some((id, node)))
     }
@@ -29,8 +29,7 @@ impl daglib::DagBackend<Id, Node> for IpfsEmbedBackend {
         let block = libipld::block::Block::encode(libipld::cbor::DagCborCodec, libipld::multihash::Code::Blake3_256, &node)?;
         let cid = Id::from(block.cid().clone());
         self.ipfs
-            .insert(&block)?
-            .await
+            .insert(&block)
             .map(|_| cid)
     }
 }
@@ -53,8 +52,7 @@ impl IpfsEmbedBackend {
     pub async fn write_payload(&self, payload: &crate::backend::Payload) -> Result<cid::Cid> {
         let block = libipld::block::Block::encode(libipld::cbor::DagCborCodec, libipld::multihash::Code::Blake3_256, &payload)?;
         self.ipfs
-            .insert(&block)?
-            .await
+            .insert(&block)
             .map(|_| block.cid().clone())
     }
 }

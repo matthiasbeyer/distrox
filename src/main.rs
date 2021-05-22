@@ -2,6 +2,11 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use daglib::DagBackend;
+use rand_os::OsRng;
+use rand_core::CryptoRng;
+use rand_core::RngCore;
+use ed25519_dalek::Keypair;
+use ed25519_dalek::Signature;
 
 extern crate clap_v3 as clap;
 
@@ -27,16 +32,22 @@ async fn main() -> Result<()> {
             gc_target_duration: std::time::Duration::from_secs(60), // 1 minute
         };
 
+        let mut csprng = OsRng{};
         let nconf = ipfs_embed::NetworkConfig {
-            node_key: libp2p_core::identity::Keypair::generate_ed25519(),
             node_name: String::from("distrox-devel"),
-            enable_mdns: false, // don't know what this is, yet
-            enable_kad: false, // don't know what this is, yet
-            allow_non_globals_in_dht: false, // don't know what this is, yet
-            psk: None, // Pre shared key for pnet.
-            ping: libp2p_ping::PingConfig::new(), // Ping config.
-            gossipsub: libp2p_gossipsub::GossipsubConfig::default(), // Gossipsub config.
-            bitswap: ipfs_embed::BitswapConfig::new(), // Bitswap config.
+            node_key: ipfs_embed::Keypair::generate(&mut csprng),
+
+            quic: ipfs_embed::TransportConfig::default(),
+            psk: None,
+            dns: None,
+            mdns: None,
+            kad: None,
+            ping: None,
+            identify: None,
+            gossipsub: None,
+            broadcast: None,
+            bitswap: None,
+
         };
 
         let ipfs_configuration = ipfs_embed::Config {
@@ -46,7 +57,9 @@ async fn main() -> Result<()> {
         crate::backend::IpfsEmbedBackend::new_with_config(ipfs_configuration).await?
     };
 
-    backend.ipfs().listen_on("/ip4/127.0.0.1/tcp/0".parse()?).await?;
+    //backend.ipfs()
+    //    .listen_on("/ip4/127.0.0.1/tcp/0".parse()?)?
+    //    .await?;
 
     match app.get_matches().subcommand() {
         ("create-profile", Some(mtch)) => {
