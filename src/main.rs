@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use anyhow::anyhow;
 use anyhow::Result;
 use daglib::DagBackend;
 use rand_os::OsRng;
@@ -101,6 +102,28 @@ async fn main() -> Result<()> {
             let id = backend.put(node).await?;
 
             println!("id = {:?}", id);
+            Ok(())
+        },
+
+        ("get", Some(mtch)) => {
+            let head = mtch
+                .value_of("head")
+                .map(cid::Cid::from_str)
+                .transpose()?
+                .map(crate::backend::Id::from)
+                .unwrap(); // Safe by clap
+
+            let (id, node) = backend
+                .get(head.clone())
+                .await?
+                .ok_or_else(|| anyhow!("Not found: {:?}", head))?;
+
+            let payload = backend.ipfs().fetch(node.payload_id(), backend.ipfs().peers()).await?;
+            let payload = payload.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
+
+            println!("id      = {:?}", id);
+            println!("node    = {:?}", node);
+            println!("payload = {:?}", payload);
             Ok(())
         },
 

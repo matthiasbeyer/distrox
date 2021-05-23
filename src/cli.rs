@@ -43,4 +43,18 @@ pub fn app<'a>() -> App<'a> {
                 .help("Post this TEXT as text/text")
             )
         )
+
+        .subcommand(App::new("get")
+            .author(crate_authors!())
+            .version(crate_version!())
+            .about("Get block")
+            .arg(Arg::with_name("head")
+                .index(1)
+                .multiple(false)
+                .takes_value(true)
+                .required(true)
+                .value_name("HEAD")
+                .help("Get HEAD block")
+            )
+        )
 }
