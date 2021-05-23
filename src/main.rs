@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use anyhow::Result;
 use daglib::DagBackend;
@@ -79,7 +80,25 @@ async fn main() -> Result<()> {
         },
 
         ("post", Some(mtch)) => {
-            unimplemented!()
+            let payload = mtch
+                .value_of("content")
+                .map(String::from)
+                .map(crate::backend::Payload::now_from_text)
+                .unwrap(); // Safe by clap
+            let parent = mtch
+                .value_of("head")
+                .map(cid::Cid::from_str)
+                .transpose()?
+                .map(crate::backend::Id::from)
+                .unwrap(); // Safe by clap
+
+            let payload_cid = backend.write_payload(&payload).await?;
+            let node = crate::backend::Node::new(crate::consts::v1(), vec![parent], payload_cid);
+
+            let id = backend.put(node).await?;
+
+            println!("id = {:?}", id);
+            Ok(())
         },
 
         (other, _) => {
