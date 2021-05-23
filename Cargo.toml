@@ -24,6 +24,7 @@ chrono           = "0.4"
 cid              = "0.6"
 clap-v3          = "3.0.0-beta.1"
 daglib           = { git = "https://git.sr.ht/~matthiasbeyer/daglib", branch = "master" }
+futures          = "0.3"
 ipfs-embed       = { version = "0.20", features = ["tokio"] }
 libipld          = "0.11"
 libipld-cbor     = "0.11"

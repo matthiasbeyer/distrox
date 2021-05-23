@@ -8,6 +8,7 @@ use rand_core::CryptoRng;
 use rand_core::RngCore;
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signature;
+use futures::stream::StreamExt;
 
 extern crate clap_v3 as clap;
 
@@ -58,9 +59,11 @@ async fn main() -> Result<()> {
         crate::backend::IpfsEmbedBackend::new_with_config(ipfs_configuration).await?
     };
 
-    //backend.ipfs()
-    //    .listen_on("/ip4/127.0.0.1/tcp/0".parse()?)?
-    //    .await?;
+    backend.ipfs()
+        .listen_on("/ip4/127.0.0.1/tcp/0".parse()?)?
+        .next()
+        .await
+        .unwrap();
 
     match app.get_matches().subcommand() {
         ("create-profile", Some(mtch)) => {
