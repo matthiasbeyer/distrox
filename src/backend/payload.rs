@@ -34,5 +34,9 @@ impl Payload {
         self.timestamp = ts;
         self
     }
+
+    pub fn content(&self) -> &Vec<u8> {
+        &self.content
+    }
 }
 

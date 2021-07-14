@@ -58,3 +58,21 @@ impl IpfsEmbedBackend {
             .map(|_| block.cid().clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::Payload;
+
+    #[tokio::test]
+    async fn test_roundtrip_payload() {
+        let backend = IpfsEmbedBackend::new_in_memory(1024).await.unwrap();
+        let cid = backend.write_payload(&Payload::now_from_text(String::from("test"))).await.unwrap();
+
+        let payload = backend.ipfs().fetch(&cid, backend.ipfs().peers()).await.unwrap();
+        let payload = payload.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>().unwrap();
+
+        assert_eq!(payload.content(), "test".as_bytes())
+
+    }
+}
