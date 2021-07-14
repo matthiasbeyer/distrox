@@ -61,6 +61,16 @@ impl IpfsEmbedBackend {
         log::trace!("Inserted. CID = {}", block.cid());
         Ok(block.cid().clone())
     }
+
+    pub async fn get_payload(&self, cid: &cid::Cid) -> Result<crate::backend::Payload> {
+        let block = self.ipfs.fetch(cid, self.ipfs.peers()).await?;
+        log::trace!("Block = {:?}", block);
+
+        let payload = block.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
+        log::trace!("Payload = {:?}", payload);
+
+        Ok(payload)
+    }
 }
 
 #[cfg(test)]
