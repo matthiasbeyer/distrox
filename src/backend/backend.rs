@@ -80,13 +80,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_roundtrip_payload() {
+        let _ = env_logger::try_init();
+
         let backend = IpfsEmbedBackend::new_in_memory(1024).await.unwrap();
-        let cid = backend.write_payload(&Payload::now_from_text(String::from("test"))).await.unwrap();
 
-        let payload = backend.ipfs().fetch(&cid, backend.ipfs().peers()).await.unwrap();
-        let payload = payload.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>().unwrap();
+        let input_payload = Payload::now_from_text(String::from("test"));
+        log::debug!("Input = {:?}", input_payload);
+        let cid = backend.write_payload(&input_payload).await.unwrap();
+        log::debug!("CID = {:?}", cid);
+        let output_payload = backend.get_payload(&cid).await.unwrap();
 
-        assert_eq!(payload.content(), "test".as_bytes())
+        assert_eq!(input_payload, output_payload);
 
     }
 }
