@@ -79,7 +79,7 @@ async fn main() -> Result<()> {
 
             let id = backend.put(node).await?;
 
-            println!("id = {:?}", id);
+            println!("id = {}", id.as_ref());
             Ok(())
         },
 
@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
 
             let id = backend.put(node).await?;
 
-            println!("id = {:?}", id);
+            println!("id = {}", id.as_ref());
             Ok(())
         },
 
@@ -121,7 +121,7 @@ async fn main() -> Result<()> {
             let payload = backend.ipfs().fetch(node.payload_id(), backend.ipfs().peers()).await?;
             let payload = payload.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
 
-            println!("id      = {:?}", id);
+            println!("id      = {}", id.as_ref());
             println!("node    = {:?}", node);
             println!("payload = {:?}", payload);
             Ok(())
