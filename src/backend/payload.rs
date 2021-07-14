@@ -17,7 +17,7 @@ impl Payload {
         let mime = MimeType::from(mime::TEXT_PLAIN_UTF_8);
         let timestamp = DateTime::from(chrono::offset::Utc::now());
 
-        Self::new(mime, timestamp).with_content(text.as_bytes().to_vec())
+        Self::new(mime, timestamp).with_content(text.into_bytes())
     }
 
     pub fn with_content(mut self, v: Vec<u8>) -> Self {
