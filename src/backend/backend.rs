@@ -52,10 +52,14 @@ impl IpfsEmbedBackend {
     }
 
     pub async fn write_payload(&self, payload: &crate::backend::Payload) -> Result<cid::Cid> {
+        log::trace!("Write payload: {:?}", payload);
         let block = libipld::block::Block::encode(libipld::cbor::DagCborCodec, libipld::multihash::Code::Blake3_256, &payload)?;
-        self.ipfs
-            .insert(&block)
-            .map(|_| block.cid().clone())
+
+        log::trace!("Block = {:?}", block);
+        let _ = self.ipfs.insert(&block)?;
+
+        log::trace!("Inserted. CID = {}", block.cid());
+        Ok(block.cid().clone())
     }
 }
 
