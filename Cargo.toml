@@ -19,6 +19,9 @@ edition       = "2018"
 # TODO: Replace with thiserror
 anyhow           = "1"
 
+env_logger       = "0.8"
+log              = "0.4"
+
 async-trait      = "0.1"
 chrono           = "0.4"
 cid              = "0.6"

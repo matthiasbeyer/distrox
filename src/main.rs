@@ -20,8 +20,10 @@ mod profile;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let _ = env_logger::try_init()?;
     let app = crate::cli::app();
 
+    log::info!("Booting backend");
     let mut backend = {
         // Testing configuration for the IPFS node in the backend.
 
@@ -59,6 +61,7 @@ async fn main() -> Result<()> {
         };
         crate::backend::IpfsEmbedBackend::new_with_config(ipfs_configuration).await?
     };
+    log::info!("Backend booted successfully");
 
     backend.ipfs()
         .listen_on("/ip4/127.0.0.1/tcp/0".parse()?)?
@@ -68,6 +71,7 @@ async fn main() -> Result<()> {
 
     match app.get_matches().subcommand() {
         ("create-profile", Some(mtch)) => {
+            log::info!("Creating profile");
             let payload = mtch
                 .value_of("content")
                 .map(String::from)
@@ -75,11 +79,14 @@ async fn main() -> Result<()> {
                 .unwrap(); // Safe by clap
 
             let payload_cid = backend.write_payload(&payload).await?;
+            log::info!("Payload written as {}", payload_cid);
             let node = crate::backend::Node::new(crate::consts::v1(), vec![], payload_cid);
 
+            log::info!("Writing node for payload");
             let id = backend.put(node).await?;
 
             println!("id = {}", id.as_ref());
+            log::info!("Creating profile finished");
             Ok(())
         },
 
@@ -113,13 +120,17 @@ async fn main() -> Result<()> {
                 .map(crate::backend::Id::from)
                 .unwrap(); // Safe by clap
 
+            log::info!("Fetching {} from backend", head.as_ref());
             let (id, node) = backend
                 .get(head.clone())
                 .await?
                 .ok_or_else(|| anyhow!("Not found: {:?}", head))?;
 
+            log::info!("Fetching payload of {} ({}) from backend", head.as_ref(), node.payload_id());
             let payload = backend.ipfs().fetch(node.payload_id(), backend.ipfs().peers()).await?;
+            log::debug!("Fetched payload, now decoding...");
             let payload = payload.decode::<libipld::cbor::DagCborCodec, crate::backend::Payload>()?;
+            log::debug!("Decoding successful");
 
             println!("id      = {}", id.as_ref());
             println!("node    = {:?}", node);
