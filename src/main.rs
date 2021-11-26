@@ -14,7 +14,10 @@ use futures::stream::StreamExt;
 extern crate clap_v3 as clap;
 
 mod cli;
+mod client;
+mod config;
 mod consts;
+mod ipfs_client;
 mod types;
 
 #[tokio::main]
