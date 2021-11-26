@@ -1,5 +1,5 @@
-use crate::backend::DateTime;
-use crate::backend::MimeType;
+use crate::types::DateTime;
+use crate::types::MimeType;
 
 #[derive(Debug, Eq, PartialEq, libipld::DagCbor)]
 pub struct Payload {

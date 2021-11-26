@@ -4,14 +4,14 @@ pub struct Node {
     v: String,
 
     /// Parent Nodes, identified by cid
-    parents: Vec<crate::backend::Id>,
+    parents: Vec<crate::types::Id>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
     payload: cid::Cid,
 }
 
 impl daglib::Node for Node {
-    type Id = crate::backend::Id;
+    type Id = crate::types::Id;
 
     fn parent_ids(&self) -> Vec<Self::Id> {
         self.parents.clone()
@@ -26,7 +26,7 @@ impl Node {
         &self.payload
     }
 
-    pub fn new(version: String, parents: Vec<crate::backend::Id>, payload: cid::Cid) -> Self {
+    pub fn new(version: String, parents: Vec<crate::types::Id>, payload: cid::Cid) -> Self {
         Node {
             v: version,
             parents,
