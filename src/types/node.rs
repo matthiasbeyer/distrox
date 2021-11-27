@@ -1,12 +1,16 @@
-#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, getset::Getters)]
 pub struct Node {
     /// Version
-    v: String,
+    #[serde(rename = "v")]
+    #[getset(get = "pub")]
+    version: String,
 
     /// Parent Nodes, identified by cid
+    #[getset(get = "pub")]
     parents: Vec<crate::cid::Cid>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
+    #[getset(get = "pub")]
     payload: crate::cid::Cid,
 }
 
@@ -19,7 +23,7 @@ impl daglib::Node for Node {
 }
 
 impl Node {
-    pub fn new(v: String, parents: Vec<crate::cid::Cid>, payload: crate::cid::Cid) -> Self {
-        Self { v, parents, payload }
+    pub fn new(version: String, parents: Vec<crate::cid::Cid>, payload: crate::cid::Cid) -> Self {
+        Self { version, parents, payload }
     }
 }

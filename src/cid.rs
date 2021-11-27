@@ -11,7 +11,6 @@ use anyhow::Result;
 #[serde(transparent)]
 pub struct Cid(String);
 
-#[cfg(test)]
 impl AsRef<str> for Cid {
     fn as_ref(&self) -> &str {
         self.0.as_ref()

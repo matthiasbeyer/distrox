@@ -3,6 +3,7 @@ use std::io::Cursor;
 use anyhow::Result;
 use futures::FutureExt;
 use futures::TryFutureExt;
+use futures::TryStreamExt;
 use ipfs_api_backend_hyper::IpfsApi;
 
 use crate::cid::Cid;
@@ -85,6 +86,35 @@ impl Client {
             .map_err(anyhow::Error::from)
             .and_then(crate::ipfs_client::backend::response::DagPutResponse::try_to_cid)
     }
+
+    pub async fn get_node(&self, cid: Cid) -> Result<Node> {
+        self.get_deserializeable::<Node>(cid).await
+    }
+
+    pub async fn get_payload(&self, cid: Cid) -> Result<Payload> {
+        self.get_deserializeable::<Payload>(cid).await
+    }
+
+    async fn get_deserializeable<D: serde::de::DeserializeOwned>(&self, cid: Cid) -> Result<D> {
+        let bytes = self.ipfs
+            .dag_get(cid.as_ref())
+            .map_ok(|chunk| chunk.to_vec())
+            .try_concat()
+            .await?;
+
+        let s = String::from_utf8(bytes)?;
+        serde_json::from_str(&s).map_err(anyhow::Error::from)
+    }
+
+    pub async fn get_content_text(&self, cid: Cid) -> Result<String> {
+        let bytes = self.ipfs
+            .cat(cid.as_ref())
+            .map_ok(|chunk| chunk.to_vec())
+            .try_concat()
+            .await?;
+
+        String::from_utf8(bytes).map_err(anyhow::Error::from)
+    }
 }
 
 fn now() -> DateTime {
@@ -126,6 +156,47 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
         assert_eq!(cid.unwrap().as_ref(), "bafyreifqa7jqsazxvl53jb6sflzbk4nkv4j7b5jos6hlzh4fq55bjbvk3m");
+    }
+
+    #[tokio::test]
+    async fn test_post_text_node_roundtrip() {
+        use chrono::TimeZone;
+
+        let _ = env_logger::try_init();
+        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let config = Config::default();
+        let client = Client::new(ipfs, config);
+
+        let datetime: crate::types::DateTime = chrono::prelude::Utc.ymd(2021, 11, 27)
+            .and_hms(12, 30, 0)
+            .into();
+
+        let text = "text-roundtrip";
+
+        let cid = client.post_text_node_with_datetime(Vec::new(), String::from(text), datetime.clone()).await;
+        assert!(cid.is_ok());
+        let cid = cid.unwrap();
+        assert_eq!(cid.as_ref(), "bafyreibenqhh2fqf33mdvm4b4k7kpymnyhuduebwdmaxraxttld7i2bbbi");
+
+        let node = client.get_node(cid).await;
+        assert!(node.is_ok());
+        let node = node.unwrap();
+
+        assert_eq!(*node.version(), crate::consts::protocol_version());
+        assert!(node.parents().is_empty());
+
+        let payload = client.get_payload(node.payload().clone()).await;
+        assert!(payload.is_ok());
+        let payload = payload.unwrap();
+
+        assert_eq!(payload.mime(), mime::TEXT_PLAIN_UTF_8.as_ref());
+        assert_eq!(payload.timestamp(), &datetime);
+
+        let content = client.get_content_text(payload.content().clone()).await;
+        assert!(content.is_ok());
+        let content = content.unwrap();
+
+        assert_eq!(content, text);
     }
 
 }

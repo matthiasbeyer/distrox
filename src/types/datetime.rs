@@ -1,6 +1,6 @@
 use anyhow::Error;
 
-#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
