@@ -38,4 +38,4 @@ libp2p-ping      = "*"
 rand_core        = { version = "0.6", features = ["getrandom"] }
 rand_os          = "0.2"
 ed25519-dalek    = "*"
-
+http             = "0.2"

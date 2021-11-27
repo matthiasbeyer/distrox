@@ -36,6 +36,7 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use ipfs_api_backend_hyper::TryFromUri;
     use crate::client::Client;
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
@@ -44,9 +45,9 @@ mod tests {
     fn test_post_text_blob() {
         let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
         let config = Config::default();
-        let client = Client::new(ifps, config);
+        let client = Client::new(ipfs, config);
 
-        let cid = Client.post_text_blob(String::from("text"));
+        let cid = client.post_text_blob(String::from("text"));
         assert!(cid.is_ok());
     }
 
