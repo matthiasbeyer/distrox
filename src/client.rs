@@ -128,6 +128,12 @@ mod tests {
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
 
+    fn mkdate(y: i32, m: u32, d: u32, hr: u32, min: u32, sec: u32) -> crate::types::DateTime {
+        use chrono::TimeZone;
+
+        chrono::prelude::Utc.ymd(y, m, d).and_hms(hr, min, sec).into()
+    }
+
     #[tokio::test]
     async fn test_post_text_blob() {
         let _ = env_logger::try_init();
@@ -142,16 +148,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_post_text_node() {
-        use chrono::TimeZone;
-
         let _ = env_logger::try_init();
         let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
-        let datetime = chrono::prelude::Utc.ymd(2021, 11, 27)
-            .and_hms(12, 30, 0)
-            .into();
+        let datetime = mkdate(2021, 11, 27, 12, 30, 0);
 
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
@@ -160,16 +162,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_post_text_node_roundtrip() {
-        use chrono::TimeZone;
-
         let _ = env_logger::try_init();
         let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
-        let datetime: crate::types::DateTime = chrono::prelude::Utc.ymd(2021, 11, 27)
-            .and_hms(12, 30, 0)
-            .into();
+        let datetime = mkdate(2021, 11, 27, 12, 30, 0);
 
         let text = "text-roundtrip";
 
