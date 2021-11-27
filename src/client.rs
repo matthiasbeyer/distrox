@@ -1,6 +1,12 @@
-use anyhow::Result;
-use cid::Cid;
+use std::io::Cursor;
 
+use anyhow::Result;
+use futures::FutureExt;
+use futures::TryFutureExt;
+use ipfs_api_backend_hyper::IpfsApi;
+
+use crate::cid::Cid;
+use crate::cid::TryToCid;
 use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 
@@ -22,15 +28,22 @@ impl Client {
             config
         }
     }
-    fn post_text_blob_impl(&self, text: String) -> Result<Cid> {
-        unimplemented!()
+
+    async fn post_text_blob_impl(&self, text: String) -> Result<Cid> {
+        let reader = Cursor::new(text);
+
+        self.ipfs
+            .add(reader)
+            .await
+            .map_err(anyhow::Error::from)
+            .and_then(crate::ipfs_client::backend::response::AddResponse::try_to_cid)
     }
 }
 
 #[cfg(test)]
 impl Client {
-    pub fn post_text_blob(&self, text: String) -> Result<Cid> {
-        self.post_text_blob_impl(text)
+    pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
+        self.post_text_blob_impl(text).await
     }
 }
 
@@ -41,14 +54,16 @@ mod tests {
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
 
-    #[test]
-    fn test_post_text_blob() {
+    #[tokio::test]
+    async fn test_post_text_blob() {
+        let _ = env_logger::try_init();
         let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
-        let cid = client.post_text_blob(String::from("text"));
+        let cid = client.post_text_blob(String::from("text")).await;
         assert!(cid.is_ok());
+        assert_eq!(cid.unwrap().as_ref(), "QmY2T5EfgLn8qWCt8eus6VX1gJuAp1nmUSdmoehgMxznAf");
     }
 
 }

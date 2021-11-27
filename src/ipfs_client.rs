@@ -1,4 +1,6 @@
-pub type IpfsClient = ipfs_api_backend_hyper::IpfsClient;
+pub use ipfs_api_backend_hyper as backend;
+pub type IpfsClient = backend::IpfsClient;
+
 
 #[cfg(test)]
 mod tests {
