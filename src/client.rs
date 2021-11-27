@@ -155,7 +155,7 @@ mod tests {
 
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
-        assert_eq!(cid.unwrap().as_ref(), "bafyreifqa7jqsazxvl53jb6sflzbk4nkv4j7b5jos6hlzh4fq55bjbvk3m");
+        assert_eq!(cid.unwrap().as_ref(), "bafyreifah3uwad7vm6o2zz3dsluscbjznmlgrgqqstk3s3djrdyvwgsulq");
     }
 
     #[tokio::test]
@@ -176,7 +176,7 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from(text), datetime.clone()).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        assert_eq!(cid.as_ref(), "bafyreibenqhh2fqf33mdvm4b4k7kpymnyhuduebwdmaxraxttld7i2bbbi");
+        assert_eq!(cid.as_ref(), "bafyreiazg25u4bbymcpebwuadr42lwvhpf7diohojeenmsf3rt42v3kbdy");
 
         let node = client.get_node(cid).await;
         assert!(node.is_ok());

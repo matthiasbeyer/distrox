@@ -10,8 +10,7 @@ pub struct Node {
     parents: Vec<crate::cid::Cid>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
-    #[getset(get = "pub")]
-    payload: crate::cid::Cid,
+    payload: crate::types::encodable_cid::EncodableCid,
 }
 
 impl daglib::Node for Node {
@@ -24,6 +23,10 @@ impl daglib::Node for Node {
 
 impl Node {
     pub fn new(version: String, parents: Vec<crate::cid::Cid>, payload: crate::cid::Cid) -> Self {
-        Self { version, parents, payload }
+        Self { version, parents, payload: payload.into() }
+    }
+
+    pub fn payload(&self) -> crate::cid::Cid {
+        self.payload.clone().into()
     }
 }

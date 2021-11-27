@@ -10,12 +10,15 @@ pub struct Payload {
     #[getset(get = "pub")]
     timestamp: DateTime,
 
-    #[getset(get = "pub")]
-    content: crate::cid::Cid,
+    content: crate::types::encodable_cid::EncodableCid,
 }
 
 impl Payload {
     pub fn new(mime: String, timestamp: DateTime, content: crate::cid::Cid) -> Self {
-        Self { mime, timestamp, content }
+        Self { mime, timestamp, content: content.into() }
+    }
+
+    pub fn content(&self) -> crate::cid::Cid {
+        self.content.clone().into()
     }
 }
