@@ -12,7 +12,7 @@ pub mod types;
 #[tokio::main]
 async fn main() -> Result<()> {
     let _ = env_logger::try_init()?;
-    let app = crate::cli::app();
+    let _ = crate::cli::app();
     Ok(())
 }
 
