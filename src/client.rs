@@ -42,7 +42,7 @@ impl Client {
             .and_then(crate::ipfs_client::backend::response::AddResponse::try_to_cid)
     }
 
-    /// Post a text block
+    /// Post a text node
     ///
     /// Pass in the parents if there are any.
     ///
@@ -52,13 +52,13 @@ impl Client {
     ///
     /// # Returns
     ///
-    /// Returns the Cid of the newly created block, or an error
-    pub async fn post_text_block(&self, parents: Vec<Cid>, text: String) -> Result<Cid> {
-        self.post_text_block_with_datetime(parents, text, now()).await
+    /// Returns the Cid of the newly created node, or an error
+    pub async fn post_text_node(&self, parents: Vec<Cid>, text: String) -> Result<Cid> {
+        self.post_text_node_with_datetime(parents, text, now()).await
     }
 
     // For testing
-    async fn post_text_block_with_datetime(&self, parents: Vec<Cid>, text: String, datetime: DateTime) -> Result<Cid> {
+    async fn post_text_node_with_datetime(&self, parents: Vec<Cid>, text: String, datetime: DateTime) -> Result<Cid> {
         let text_blob_cid = self.post_text_blob(text).await?;
 
         let payload = Payload::new(mime::TEXT_PLAIN_UTF_8.as_ref().to_string(), datetime, text_blob_cid);
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_post_text_block() {
+    async fn test_post_text_node() {
         use chrono::TimeZone;
 
         let _ = env_logger::try_init();
@@ -123,7 +123,7 @@ mod tests {
             .and_hms(12, 30, 0)
             .into();
 
-        let cid = client.post_text_block_with_datetime(Vec::new(), String::from("text"), datetime).await;
+        let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
         assert_eq!(cid.unwrap().as_ref(), "bafyreifqa7jqsazxvl53jb6sflzbk4nkv4j7b5jos6hlzh4fq55bjbvk3m");
     }
