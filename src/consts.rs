@@ -1,4 +1,4 @@
-pub fn v1() -> String {
+pub fn protocol_version() -> String {
     String::from("1")
 }
 

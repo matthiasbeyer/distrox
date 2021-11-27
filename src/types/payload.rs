@@ -10,3 +10,8 @@ pub struct Payload {
     content: crate::cid::Cid,
 }
 
+impl Payload {
+    pub fn new(mime: String, timestamp: DateTime, content: crate::cid::Cid) -> Self {
+        Self { mime, timestamp, content }
+    }
+}

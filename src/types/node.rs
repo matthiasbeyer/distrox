@@ -18,3 +18,8 @@ impl daglib::Node for Node {
     }
 }
 
+impl Node {
+    pub fn new(v: String, parents: Vec<crate::cid::Cid>, payload: crate::cid::Cid) -> Self {
+        Self { v, parents, payload }
+    }
+}
