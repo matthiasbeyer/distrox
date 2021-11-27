@@ -29,7 +29,7 @@ impl Client {
         }
     }
 
-    async fn post_text_blob_impl(&self, text: String) -> Result<Cid> {
+    pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
         let reader = Cursor::new(text);
 
         self.ipfs
@@ -37,13 +37,6 @@ impl Client {
             .await
             .map_err(anyhow::Error::from)
             .and_then(crate::ipfs_client::backend::response::AddResponse::try_to_cid)
-    }
-}
-
-#[cfg(test)]
-impl Client {
-    pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
-        self.post_text_blob_impl(text).await
     }
 }
 
