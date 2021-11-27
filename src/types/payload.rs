@@ -1,42 +1,12 @@
 use crate::types::DateTime;
-use crate::types::MimeType;
 
-#[derive(Debug, Eq, PartialEq, libipld::DagCbor)]
+#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Payload {
-    mime: MimeType,
+    // TODO: Make this a mime::Mime, but as this type does not impl Serialize/Deserialize, we
+    // cannot do this trivially yet
+    mime: String,
+
     timestamp: DateTime,
-    content: Vec<u8>,
-}
-
-impl Payload {
-    pub fn new(mime: MimeType, timestamp: DateTime) -> Self {
-        Payload { mime, timestamp, content: Vec::new() }
-    }
-
-    pub fn now_from_text(text: String) -> Payload {
-        let mime = MimeType::from(mime::TEXT_PLAIN_UTF_8);
-        let timestamp = DateTime::from(chrono::offset::Utc::now());
-
-        Self::new(mime, timestamp).with_content(text.into_bytes())
-    }
-
-    pub fn with_content(mut self, v: Vec<u8>) -> Self {
-        self.content = v;
-        self
-    }
-
-    pub fn with_mimetype(mut self, mime: MimeType) -> Self {
-        self.mime = mime;
-        self
-    }
-
-    pub fn with_timestamp(mut self, ts: DateTime) -> Self {
-        self.timestamp = ts;
-        self
-    }
-
-    pub fn content(&self) -> &Vec<u8> {
-        &self.content
-    }
+    content: crate::cid::Cid,
 }
 

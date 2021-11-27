@@ -1,37 +1,20 @@
-#[derive(Debug, Eq, PartialEq, libipld::DagCbor)]
+#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Node {
     /// Version
     v: String,
 
     /// Parent Nodes, identified by cid
-    parents: Vec<crate::types::Id>,
+    parents: Vec<crate::cid::Cid>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
-    payload: cid::Cid,
+    payload: crate::cid::Cid,
 }
 
 impl daglib::Node for Node {
-    type Id = crate::types::Id;
+    type Id = crate::cid::Cid;
 
     fn parent_ids(&self) -> Vec<Self::Id> {
         self.parents.clone()
     }
 }
 
-impl Node {
-    pub fn version(&self) -> &str {
-        &self.v
-    }
-    pub fn payload_id(&self) -> &cid::Cid {
-        &self.payload
-    }
-
-    pub fn new(version: String, parents: Vec<crate::types::Id>, payload: cid::Cid) -> Self {
-        Node {
-            v: version,
-            parents,
-            payload
-        }
-    }
-
-}

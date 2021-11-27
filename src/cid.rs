@@ -7,7 +7,8 @@ use anyhow::Result;
 ///
 /// Hence we just create our own "Cid type" and use that as long as the crate API is stringly
 /// typed.
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(transparent)]
 pub struct Cid(String);
 
 #[cfg(test)]
@@ -26,6 +27,9 @@ impl TryToCid for ipfs_api_backend_hyper::response::AddResponse {
         log::debug!("Transforming to CID => {:?}", self);
         string_to_cid(self.hash)
     }
+}
+
+impl daglib::NodeId for Cid {
 }
 
 /// Helper function that can be tested
