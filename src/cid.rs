@@ -41,7 +41,17 @@ impl daglib::NodeId for Cid {
 /// Helper function that can be tested
 ///
 /// Converts a String to a Cid
+#[cfg(not(test))]
 fn string_to_cid(s: String) -> Result<Cid> {
+    string_to_cid_impl(s)
+}
+
+#[cfg(test)]
+pub fn string_to_cid(s: String) -> Result<Cid> {
+    string_to_cid_impl(s)
+}
+
+fn string_to_cid_impl(s: String) -> Result<Cid> {
     Ok(Cid(s))
 }
 
