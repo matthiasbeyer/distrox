@@ -124,9 +124,11 @@ fn now() -> DateTime {
 #[cfg(test)]
 mod tests {
     use ipfs_api_backend_hyper::TryFromUri;
+    use crate::cid::string_to_cid;
     use crate::client::Client;
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
+    use crate::types::DateTime;
 
     fn mkdate(y: i32, m: u32, d: u32, hr: u32, min: u32, sec: u32) -> crate::types::DateTime {
         use chrono::TimeZone;
@@ -224,6 +226,74 @@ mod tests {
             assert_eq!(cid.as_ref(), expected_cid);
             prev = Some(cid);
         }
+    }
+
+    #[tokio::test]
+    async fn test_post_text_dag() {
+        let _ = env_logger::try_init();
+        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let config = Config::default();
+        let client = Client::new(ipfs, config);
+
+        async fn post_chain(client: &Client, chain_elements: &Vec<(DateTime, &str, &str)>) {
+            let mut prev: Option<crate::cid::Cid> = None;
+            for (datetime, text, expected_cid) in chain_elements {
+                let parents = if let Some(previous) = prev.as_ref() {
+                    vec![previous.clone()]
+                } else {
+                    Vec::new()
+                };
+
+                let cid = client.post_text_node_with_datetime(parents, String::from(*text), datetime.clone()).await;
+                assert!(cid.is_ok());
+                let cid = cid.unwrap();
+                assert_eq!(cid.as_ref(), *expected_cid);
+                prev = Some(cid);
+            }
+        }
+
+        // The following posts a DAG like this:
+        //
+        // * -- * -- * _
+        //              \
+        // * -- * -- * -- *
+        //              /
+        //           * -
+
+        let chain_1_elements = vec![
+            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreiddewrcj6nwfzouxhycypbuqwohb6oev62vjqdko5w7obl5qrwhwm"),
+            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreibcu6wgvh62w4gwpnnbhzoafeog4il4wzqg2zo42ogjqrlnr44pgm"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm"),
+        ];
+
+        let chain_2_elements = vec![
+            (mkdate(2021, 11, 27, 12, 32, 0), "text4", "bafyreiabwst3adcfyqpknatxcs2buut2qnh3vgawio6a5mnth7u5hf4hgy"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text5", "bafyreih6wmjdpoegs4ibz3gsoec6g56nc63bifo4e4hqub6sjsbetuikhm"),
+        ];
+
+        post_chain(&client, &chain_1_elements).await;
+        post_chain(&client, &chain_2_elements).await;
+
+        let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text6"), mkdate(2021, 11, 27, 12, 32, 0)).await;
+        assert!(cid.is_ok());
+        let cid = cid.unwrap();
+        assert_eq!(cid.as_ref(), "bafyreihrqhbsmqfkzmbsxvkvwtp4eekeri6m6afejf2wmk6gj64b2qwgsa");
+
+        let parents = vec![
+            // latest node in chain_1_elements
+            string_to_cid(String::from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm")).unwrap(),
+
+            // latest node in chain_2_elements
+            string_to_cid(String::from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjl2km")).unwrap(),
+
+            // single node "text6"
+            cid
+        ];
+
+        let cid = client.post_text_node_with_datetime(parents, String::from("text7"), mkdate(2021, 11, 27, 12, 32, 0)).await;
+        assert!(cid.is_ok());
+        let cid = cid.unwrap();
+        assert_eq!(cid.as_ref(), "bafyreibnwo6phfbi5m6lzjfiaem4xtvjpeq5nnbsicie6whlnkoakgiyua");
     }
 
 }
