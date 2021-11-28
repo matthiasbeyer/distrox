@@ -197,4 +197,33 @@ mod tests {
         assert_eq!(content, text);
     }
 
+    #[tokio::test]
+    async fn test_post_text_chain() {
+        let _ = env_logger::try_init();
+        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let config = Config::default();
+        let client = Client::new(ipfs, config);
+
+        let chain_elements = vec![
+            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreiddewrcj6nwfzouxhycypbuqwohb6oev62vjqdko5w7obl5qrwhwm"),
+            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreibcu6wgvh62w4gwpnnbhzoafeog4il4wzqg2zo42ogjqrlnr44pgm"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm"),
+        ];
+
+        let mut prev: Option<crate::cid::Cid> = None;
+        for (datetime, text, expected_cid) in chain_elements {
+            let parents = if let Some(previous) = prev.as_ref() {
+                vec![previous.clone()]
+            } else {
+                Vec::new()
+            };
+
+            let cid = client.post_text_node_with_datetime(parents, String::from(text), datetime.clone()).await;
+            assert!(cid.is_ok());
+            let cid = cid.unwrap();
+            assert_eq!(cid.as_ref(), expected_cid);
+            prev = Some(cid);
+        }
+    }
+
 }
