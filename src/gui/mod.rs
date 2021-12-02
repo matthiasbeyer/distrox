@@ -28,5 +28,17 @@ impl Application for DistroxGui {
 }
 
 pub fn run() -> Result<()> {
-    DistroxGui::run(iced::Settings::default()).map_err(anyhow::Error::from)
+    let settings = iced::Settings {
+        window: iced::window::Settings {
+            resizable: true,
+            decorations: true,
+            transparent: false,
+            always_on_top: false,
+            ..iced::window::Settings::default()
+        },
+        exit_on_close_request: true,
+        ..iced::Settings::default()
+    };
+
+    DistroxGui::run(settings).map_err(anyhow::Error::from)
 }
