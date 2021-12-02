@@ -1,16 +1,34 @@
 use anyhow::Result;
 use iced::Application;
+use ipfs_api_backend_hyper::TryFromUri;
+
+use crate::client::Client;
+use crate::config::Config;
+use crate::ipfs_client::IpfsClient;
 
 #[derive(Debug)]
 struct DistroxGui;
 
+#[derive(Debug)]
+enum Message {
+    Loaded(Result<Client>),
+}
+
 impl Application for DistroxGui {
     type Executor = iced::executor::Default; // tokio
-    type Message = ();
+    type Message = Message;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, iced::Command<Self::Message>) {
-        (DistroxGui, iced::Command::none())
+        (
+            DistroxGui,
+            iced::Command::perform(async {
+                let ipfs  = IpfsClient::from_str("http://localhost:5001")?;
+                let config = Config::default();
+                let client = Client::new(ipfs, config);
+                Ok(client)
+            }, Message::Loaded)
+        )
     }
 
     fn title(&self) -> String {
