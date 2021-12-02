@@ -18,14 +18,10 @@ let
     cmake
     curl
     gcc
-    libpsl
     openssl
     pkgconfig
     which
     zlib
-    dbus
-    libtool
-    protobuf
   ];
 in
 
