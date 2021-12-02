@@ -15,7 +15,7 @@ use crate::types::Payload;
 use crate::types::DateTime;
 
 pub struct Client {
-    ipfs: IpfsClient,
+    pub(crate) ipfs: IpfsClient,
     config: Config,
 }
 
