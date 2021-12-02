@@ -97,3 +97,43 @@ impl Profile {
     }
 
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::client::Client;
+    use crate::config::Config;
+    use crate::ipfs_client::IpfsClient;
+
+    use ipfs_api_backend_hyper::TryFromUri;
+
+    async fn mk_client() -> Client {
+        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let config = Config::default();
+        Client::new(ipfs, config)
+    }
+
+    macro_rules! run_test {
+        ($name:ident, $client:ident, $test:block) => {
+            $client.ipfs.key_rm($name).await;
+            {
+                $test
+            }
+            $client.ipfs.key_rm($name).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_create_profile() {
+        let _ = env_logger::try_init();
+        let client = mk_client().await;
+        let name = "test_create_profile";
+        run_test!(name, client,
+            {
+                let p = Profile::create(name, &client).await;
+                assert!(p.is_ok());
+            }
+        );
+    }
+
+}
