@@ -1,7 +1,5 @@
 use anyhow::Result;
 
-extern crate clap_v3 as clap;
-
 pub mod cid;
 pub mod cli;
 pub mod client;
