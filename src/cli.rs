@@ -9,7 +9,6 @@ pub fn app<'a>() -> App<'a> {
         .version(crate_version!())
         .about("Distributed social network")
 
-
         .subcommand(App::new("profile")
             .author(crate_authors!())
             .version(crate_version!())
@@ -50,5 +49,11 @@ pub fn app<'a>() -> App<'a> {
                     .about("Connect to MULTIADDR as well")
                 )
             )
+        )
+
+        .subcommand(App::new("gui")
+            .author(crate_authors!())
+            .version(crate_version!())
+            .about("Start the distrox gui")
         )
 }
