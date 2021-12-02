@@ -22,6 +22,9 @@ let
     pkgconfig
     which
     zlib
+
+    freetype
+    expat
   ];
 in
 
