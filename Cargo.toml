@@ -35,7 +35,6 @@ serde            = "1"
 serde_json       = "1"
 getset           = "0.1"
 xdg              = "2.4"
-libp2p           = "0.39.1"
 tracing          = "0.1"
 ctrlc            = "3.2"
 

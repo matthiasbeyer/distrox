@@ -10,9 +10,8 @@ use iced::Scrollable;
 use iced::TextInput;
 use iced::scrollable;
 use iced::text_input;
-use ipfs_api_backend_hyper::TryFromUri;
 
-use crate::client::Client;
+use crate::profile::Profile;
 use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 
@@ -25,7 +24,7 @@ enum Distrox {
 
 #[derive(Debug)]
 struct State {
-    client: Arc<Client>,
+    profile: Arc<Profile>,
 
     scroll: scrollable::State,
     input: text_input::State,
@@ -34,13 +33,13 @@ struct State {
 
 #[derive(Debug, Clone)]
 enum Message {
-    Loaded(Arc<Client>),
+    Loaded(Arc<Profile>),
     FailedToLoad,
 
     InputChanged(String),
     CreatePost,
 
-    PostCreated(crate::cid::Cid),
+    PostCreated(cid::Cid),
     PostCreationFailed(String),
 }
 
@@ -53,12 +52,10 @@ impl Application for Distrox {
         (
             Distrox::Loading,
             iced::Command::perform(async {
-                match IpfsClient::from_str("http://localhost:5001") {
+                match Profile::new_inmemory(Config::default()).await {
                     Err(_) => Message::FailedToLoad,
-                    Ok(ipfs) => {
-                        let config = Config::default();
-                        let client = Client::new(ipfs, config);
-                        Message::Loaded(Arc::new(client))
+                    Ok(instance) => {
+                        Message::Loaded(Arc::new(instance))
                     }
                 }
             }, |m: Message| -> Message { m })
@@ -73,9 +70,9 @@ impl Application for Distrox {
         match self {
             Distrox::Loading => {
                 match message {
-                    Message::Loaded(client) => {
+                    Message::Loaded(profile) => {
                         let state = State {
-                            client: client,
+                            profile,
                             scroll: scrollable::State::default(),
                             input: text_input::State::default(),
                             input_value: String::default(),
@@ -101,9 +98,10 @@ impl Application for Distrox {
 
                     Message::CreatePost => {
                         if !state.input_value.is_empty() {
-                            let client = state.client.clone();
+                            let profile = state.profile.clone();
+                            let input = state.input_value.clone();
                             iced::Command::perform(async move {
-                                client.post_text_blob(state.input_value.clone()).await
+                                profile.client().post_text_blob(input).await
                             },
                             |res| match res {
                                 Ok(cid) => Message::PostCreated(cid),
