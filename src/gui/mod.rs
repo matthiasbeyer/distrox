@@ -124,7 +124,17 @@ impl Application for Distrox {
     fn view(&mut self) -> iced::Element<Self::Message> {
         match self {
             Distrox::Loading => {
-                unimplemented!()
+                let text = iced_native::widget::text::Text::new("Loading");
+
+                let content = Column::new()
+                    .max_width(800)
+                    .spacing(20)
+                    .push(text);
+
+                Container::new(content)
+                    .width(Length::Fill)
+                    .center_x()
+                    .into()
             }
 
             Distrox::Loaded(state) => {
