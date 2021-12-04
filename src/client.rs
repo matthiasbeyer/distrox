@@ -1,13 +1,9 @@
-use std::io::Cursor;
+use std::convert::TryFrom;
 
 use anyhow::Result;
-use futures::FutureExt;
-use futures::TryFutureExt;
 use futures::TryStreamExt;
-use ipfs_api_backend_hyper::IpfsApi;
+use ipfs::Cid;
 
-use crate::cid::Cid;
-use crate::cid::TryToCid;
 use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 use crate::types::Node;
@@ -34,13 +30,10 @@ impl Client {
     }
 
     pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
-        let reader = Cursor::new(text);
-
         self.ipfs
-            .add(reader)
+            .put_dag(text.into())
             .await
             .map_err(anyhow::Error::from)
-            .and_then(crate::ipfs_client::backend::response::AddResponse::try_to_cid)
     }
 
     /// Post a text node
@@ -70,46 +63,39 @@ impl Client {
     }
 
     async fn post_payload(&self, payload: Payload) -> Result<Cid> {
-        self.post_serializable(&payload).await
+        self.post(payload).await
     }
 
     async fn post_node(&self, node: Node) -> Result<Cid> {
-        self.post_serializable(&node).await
+        self.post(node).await
     }
 
-    async fn post_serializable<S: serde::Serialize>(&self, s: &S) -> Result<Cid> {
-        let payload_s = serde_json::to_string(s)?;
-        let payload_c = Cursor::new(payload_s);
-        self.ipfs
-            .dag_put(payload_c)
-            .await
-            .map_err(anyhow::Error::from)
-            .and_then(crate::ipfs_client::backend::response::DagPutResponse::try_to_cid)
+    async fn post<S: Into<ipfs::Ipld>>(&self, s: S) -> Result<Cid> {
+        self.ipfs.put_dag(s.into()).await.map_err(anyhow::Error::from)
     }
 
     pub async fn get_node(&self, cid: Cid) -> Result<Node> {
-        self.get_deserializeable::<Node>(cid).await
+        self.get::<Node>(cid).await
     }
 
     pub async fn get_payload(&self, cid: Cid) -> Result<Payload> {
-        self.get_deserializeable::<Payload>(cid).await
+        self.get::<Payload>(cid).await
     }
 
-    async fn get_deserializeable<D: serde::de::DeserializeOwned>(&self, cid: Cid) -> Result<D> {
-        let bytes = self.ipfs
-            .dag_get(cid.as_ref())
-            .map_ok(|chunk| chunk.to_vec())
-            .try_concat()
+    async fn get<D: TryFrom<ipfs::Ipld, Error = anyhow::Error>>(&self, cid: Cid) -> Result<D> {
+        let ipld = self.ipfs
+            .get_dag(ipfs::IpfsPath::new(ipfs::path::PathRoot::Ipld(cid)))
             .await?;
 
-        let s = String::from_utf8(bytes)?;
-        serde_json::from_str(&s).map_err(anyhow::Error::from)
+        D::try_from(ipld)
     }
 
     pub async fn get_content_text(&self, cid: Cid) -> Result<String> {
+        let starting_point = ipfs::path::IpfsPath::new(ipfs::path::PathRoot::Ipld(cid));
+
         let bytes = self.ipfs
-            .cat(cid.as_ref())
-            .map_ok(|chunk| chunk.to_vec())
+            .cat_unixfs(starting_point, None)
+            .await?
             .try_concat()
             .await?;
 
@@ -123,8 +109,10 @@ fn now() -> DateTime {
 
 #[cfg(test)]
 mod tests {
-    use ipfs_api_backend_hyper::TryFromUri;
-    use crate::cid::string_to_cid;
+    use std::convert::TryFrom;
+
+    use cid::Cid;
+
     use crate::client::Client;
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
@@ -136,22 +124,32 @@ mod tests {
         chrono::prelude::Utc.ymd(y, m, d).and_hms(hr, min, sec).into()
     }
 
+    async fn mk_ipfs() -> IpfsClient {
+        let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
+        opts.mdns = false;
+        let (ipfs, fut): (ipfs::Ipfs<ipfs::Types>, _) = ipfs::UninitializedIpfs::new(opts).start().await.unwrap();
+        tokio::task::spawn(fut);
+        ipfs
+    }
+
     #[tokio::test]
     async fn test_post_text_blob() {
         let _ = env_logger::try_init();
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let ipfs  = mk_ipfs().await;
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
         let cid = client.post_text_blob(String::from("text")).await;
         assert!(cid.is_ok());
-        assert_eq!(cid.unwrap().as_ref(), "QmY2T5EfgLn8qWCt8eus6VX1gJuAp1nmUSdmoehgMxznAf");
+        let cid = cid.unwrap();
+        let expected_cid = Cid::try_from("bafyreienmqqpz622nxgi7xvcx2jf7p3lyagqkwcj5ieil3mhx2zckfl35u").unwrap();
+        assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
     }
 
     #[tokio::test]
     async fn test_post_text_node() {
         let _ = env_logger::try_init();
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let ipfs  = mk_ipfs().await;
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
@@ -159,13 +157,15 @@ mod tests {
 
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
-        assert_eq!(cid.unwrap().as_ref(), "bafyreifah3uwad7vm6o2zz3dsluscbjznmlgrgqqstk3s3djrdyvwgsulq");
+        let cid = cid.unwrap();
+        let expected_cid = Cid::try_from("bafyreifah3uwad7vm6o2zz3dsluscbjznmlgrgqqstk3s3djrdyvwgsulq").unwrap();
+        assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
     }
 
     #[tokio::test]
     async fn test_post_text_node_roundtrip() {
         let _ = env_logger::try_init();
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let ipfs  = mk_ipfs().await;
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
@@ -176,7 +176,8 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from(text), datetime.clone()).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        assert_eq!(cid.as_ref(), "bafyreiazg25u4bbymcpebwuadr42lwvhpf7diohojeenmsf3rt42v3kbdy");
+        let expected_cid = Cid::try_from("bafyreiazg25u4bbymcpebwuadr42lwvhpf7diohojeenmsf3rt42v3kbdy").unwrap();
+        assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
 
         let node = client.get_node(cid).await;
         assert!(node.is_ok());
@@ -202,7 +203,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_text_chain() {
         let _ = env_logger::try_init();
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let ipfs  = mk_ipfs().await;
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
@@ -212,7 +213,7 @@ mod tests {
             (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm"),
         ];
 
-        let mut prev: Option<crate::cid::Cid> = None;
+        let mut prev: Option<ipfs::Cid> = None;
         for (datetime, text, expected_cid) in chain_elements {
             let parents = if let Some(previous) = prev.as_ref() {
                 vec![previous.clone()]
@@ -223,7 +224,8 @@ mod tests {
             let cid = client.post_text_node_with_datetime(parents, String::from(text), datetime.clone()).await;
             assert!(cid.is_ok());
             let cid = cid.unwrap();
-            assert_eq!(cid.as_ref(), expected_cid);
+            let expected_cid = Cid::try_from(expected_cid).unwrap();
+            assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
             prev = Some(cid);
         }
     }
@@ -231,12 +233,12 @@ mod tests {
     #[tokio::test]
     async fn test_post_text_dag() {
         let _ = env_logger::try_init();
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
+        let ipfs  = mk_ipfs().await;
         let config = Config::default();
         let client = Client::new(ipfs, config);
 
         async fn post_chain(client: &Client, chain_elements: &Vec<(DateTime, &str, &str)>) {
-            let mut prev: Option<crate::cid::Cid> = None;
+            let mut prev: Option<ipfs::Cid> = None;
             for (datetime, text, expected_cid) in chain_elements {
                 let parents = if let Some(previous) = prev.as_ref() {
                     vec![previous.clone()]
@@ -247,7 +249,8 @@ mod tests {
                 let cid = client.post_text_node_with_datetime(parents, String::from(*text), datetime.clone()).await;
                 assert!(cid.is_ok());
                 let cid = cid.unwrap();
-                assert_eq!(cid.as_ref(), *expected_cid);
+                let expected_cid = Cid::try_from(*expected_cid).unwrap();
+                assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
                 prev = Some(cid);
             }
         }
@@ -277,14 +280,15 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text6"), mkdate(2021, 11, 27, 12, 32, 0)).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        assert_eq!(cid.as_ref(), "bafyreihrqhbsmqfkzmbsxvkvwtp4eekeri6m6afejf2wmk6gj64b2qwgsa");
+        let expected_cid = Cid::try_from("bafyreihrqhbsmqfkzmbsxvkvwtp4eekeri6m6afejf2wmk6gj64b2qwgsa").unwrap();
+        assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
 
         let parents = vec![
             // latest node in chain_1_elements
-            string_to_cid(String::from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm")).unwrap(),
+            ipfs::Cid::try_from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm").unwrap(),
 
             // latest node in chain_2_elements
-            string_to_cid(String::from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjl2km")).unwrap(),
+            ipfs::Cid::try_from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjl2km").unwrap(),
 
             // single node "text6"
             cid
@@ -293,7 +297,8 @@ mod tests {
         let cid = client.post_text_node_with_datetime(parents, String::from("text7"), mkdate(2021, 11, 27, 12, 32, 0)).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        assert_eq!(cid.as_ref(), "bafyreibnwo6phfbi5m6lzjfiaem4xtvjpeq5nnbsicie6whlnkoakgiyua");
+        let expected_cid = Cid::try_from("bafyreibnwo6phfbi5m6lzjfiaem4xtvjpeq5nnbsicie6whlnkoakgiyua").unwrap();
+        assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
     }
 
 }

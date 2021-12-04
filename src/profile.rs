@@ -1,27 +1,62 @@
+use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use ipfs_api_backend_hyper::IpfsApi;
-use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 
 use crate::client::Client;
-use crate::cid::Cid;
+use crate::config::Config;
+use crate::ipfs_client::IpfsClient;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug)]
 pub struct Profile {
-    key_name: String,
-    key_id: String,
+    client: Client,
 }
 
 impl Profile {
-    pub async fn create(name: &str, client: &Client) -> Result<Self> {
-        let key = client.ipfs.key_gen(name, ipfs_api_backend_hyper::KeyType::Ed25519, 64).await?;
+    pub async fn create(state_dir: &Path, name: &str, config: Config) -> Result<Self> {
+        let bootstrap = vec![]; // TODO
+        let mdns = false; // TODO
+        let keypair = ipfs::Keypair::generate_ed25519();
+        Self::write_to_statedir(state_dir, name, &keypair).await?;
 
-        Ok(Profile {
-            key_name: key.name,
-            key_id: key.id
-        })
+        let options = ipfs::IpfsOptions {
+            ipfs_path: Self::ipfs_path(state_dir, name).await?,
+            keypair,
+            bootstrap,
+            mdns,
+            kad_protocol: None,
+            listening_addrs: vec![],
+            span: Some(tracing::trace_span!("distrox-ipfs")),
+        };
+
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<ipfs::Types>::new(options)
+            .start()
+            .await?;
+        tokio::task::spawn(fut);
+        Ok(Self::new(ipfs, config))
+    }
+
+    async fn new_inmemory(config: Config) -> Result<Self> {
+        let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
+        opts.mdns = false;
+        let (ipfs, fut): (ipfs::Ipfs<ipfs::Types>, _) = ipfs::UninitializedIpfs::new(opts).start().await.unwrap();
+        tokio::task::spawn(fut);
+        Ok(Self::new(ipfs, config))
+    }
+
+    fn new(ipfs: IpfsClient, config: Config) -> Self {
+        Profile { client: Client::new(ipfs, config) }
+    }
+
+    async fn write_to_statedir(_state_dir: &Path, _name: &str, _keypair: &ipfs::Keypair) -> Result<()> {
+        unimplemented!()
+    }
+
+    async fn ipfs_path(state_dir: &Path, name: &str) -> Result<PathBuf> {
+        let path = state_dir.join(name).join("ipfs");
+        tokio::fs::create_dir_all(&path).await?;
+        Ok(path)
     }
 
     pub fn config_path(name: &str) -> String {
@@ -38,62 +73,13 @@ impl Profile {
             })
     }
 
-    /// Store the Profile on disk
-    pub async fn write_to_filesystem(&self) -> Result<()> {
-        let config_path = Self::config_file_path(&self.key_name)?;
-
-        let mut config_file = tokio::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(config_path)
-            .await?;
-
-        let config = serde_json::to_string(&self)?;
-        config_file.write_all(config.as_bytes()).await?;
-        config_file.sync_all().await?;
-        Ok(())
-    }
-
     /// Load the Profile from disk and ensure the keys exist in IPFS
-    pub async fn load_from_filesystem(name: &str, client: &Client) -> Result<Option<Self>> {
-        let config_path = Self::config_file_path(name)?;
-        let file_reader = tokio::fs::OpenOptions::new()
-            .read(true)
-            .open(config_path)
-            .await
-            .map(tokio::io::BufReader::new)?;
-
-        Self::load_from_reader(file_reader, name, client).await
+    pub async fn load_from_filesystem(_name: &str, _client: &Client) -> Result<Option<Self>> {
+        unimplemented!()
     }
 
-    async fn load_from_reader<R: AsyncReadExt + std::marker::Unpin>(mut r: R, name: &str, client: &Client) -> Result<Option<Self>> {
-        let mut buf = String::new();
-        let _ = r.read_to_string(&mut buf).await?;
-        let config: Self = serde_json::from_str(&buf)?;
-
-        client.ipfs
-            .key_list()
-            .await?
-            .keys
-            .into_iter()
-            .find(|keypair| keypair.name == name)
-            .map(|_| Ok(config))
-            .transpose()
-    }
-
-    pub async fn publish(&self, client: &Client, cid: Cid) -> Result<()> {
-        let path = format!("/ipfs/{}", cid.as_ref());
-        let resolve = true;
-        let lifetime = Some("10m");
-        let ttl = None;
-
-        let publish_response = client.ipfs
-            .name_publish(&path, resolve, lifetime, ttl, Some(&self.key_name))
-            .await?;
-
-        log::debug!("Publish response = {{ name: {}, value: {} }}", publish_response.name, publish_response.value);
-        Ok(())
+    async fn load_from_reader<R: AsyncReadExt + std::marker::Unpin>(_r: R, _name: &str, _client: &Client) -> Result<Option<Self>> {
+        unimplemented!()
     }
 
 }
@@ -105,35 +91,11 @@ mod tests {
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
 
-    use ipfs_api_backend_hyper::TryFromUri;
-
-    async fn mk_client() -> Client {
-        let ipfs  = IpfsClient::from_str("http://localhost:5001").unwrap();
-        let config = Config::default();
-        Client::new(ipfs, config)
-    }
-
-    macro_rules! run_test {
-        ($name:ident, $client:ident, $test:block) => {
-            $client.ipfs.key_rm($name).await;
-            {
-                $test
-            }
-            $client.ipfs.key_rm($name).await;
-        }
-    }
-
     #[tokio::test]
     async fn test_create_profile() {
         let _ = env_logger::try_init();
-        let client = mk_client().await;
-        let name = "test_create_profile";
-        run_test!(name, client,
-            {
-                let p = Profile::create(name, &client).await;
-                assert!(p.is_ok());
-            }
-        );
+        let profile = Profile::new_inmemory(Config::default()).await;
+        assert!(profile.is_ok());
     }
 
 }

@@ -1,6 +1,5 @@
 use anyhow::Result;
 
-pub mod cid;
 pub mod cli;
 pub mod client;
 pub mod config;
