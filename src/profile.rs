@@ -86,7 +86,7 @@ impl Profile {
             })
     }
 
-    fn state_dir_path(name: &str) -> Result<PathBuf> {
+    pub fn state_dir_path(name: &str) -> Result<PathBuf> {
         xdg::BaseDirectories::with_prefix("distrox")
             .map_err(anyhow::Error::from)
             .and_then(|dirs| {
