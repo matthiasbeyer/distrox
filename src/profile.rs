@@ -18,7 +18,7 @@ pub struct Profile {
 }
 
 impl Profile {
-    pub async fn create(state_dir: &Path, name: &str, config: Config) -> Result<Self> {
+    pub async fn create(state_dir: &StateDir, name: &str, config: Config) -> Result<Self> {
         let bootstrap = vec![]; // TODO
         let mdns = false; // TODO
         let keypair = ipfs::Keypair::generate_ed25519();
@@ -66,8 +66,8 @@ impl Profile {
         client.post_text_node(vec![], text).await
     }
 
-    async fn ipfs_path(state_dir: &Path, name: &str) -> Result<PathBuf> {
-        let path = state_dir.join(name).join("ipfs");
+    async fn ipfs_path(state_dir: &StateDir, name: &str) -> Result<PathBuf> {
+        let path = state_dir.path().join(name).join("ipfs");
         tokio::fs::create_dir_all(&path).await?;
         Ok(path)
     }
@@ -86,11 +86,13 @@ impl Profile {
             })
     }
 
-    pub fn state_dir_path(name: &str) -> Result<PathBuf> {
+    pub fn state_dir_path(name: &str) -> Result<StateDir> {
         xdg::BaseDirectories::with_prefix("distrox")
             .map_err(anyhow::Error::from)
             .and_then(|dirs| {
-                dirs.create_state_directory(name).map_err(anyhow::Error::from)
+                dirs.create_state_directory(name)
+                    .map(StateDir::from)
+                    .map_err(anyhow::Error::from)
             })
     }
 
@@ -134,6 +136,21 @@ impl Profile {
 
 }
 
+#[derive(Debug)]
+pub struct StateDir(PathBuf);
+
+impl StateDir {
+    pub fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl From<PathBuf> for StateDir {
+    fn from(p: PathBuf) -> Self {
+        Self(p)
+    }
+}
+
 #[derive(getset::Getters)]
 pub struct ProfileState {
     #[getset(get = "pub")]
@@ -171,12 +188,12 @@ impl ProfileStateSaveable {
         })
     }
 
-    pub async fn save_to_disk(&self, state_dir_path: &Path) -> Result<()> {
+    pub async fn save_to_disk(&self, state_dir_path: &StateDir) -> Result<()> {
         let state_s = serde_json::to_string(&self)?;
         tokio::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
-            .open(state_dir_path.join("profile_state"))
+            .open(state_dir_path.path().join("profile_state"))
             .await?
             .write_all(state_s.as_bytes())
             .await
@@ -184,10 +201,10 @@ impl ProfileStateSaveable {
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn load_from_disk(state_dir_path: &Path) -> Result<Self> {
+    pub async fn load_from_disk(state_dir_path: &StateDir) -> Result<Self> {
         let reader = tokio::fs::OpenOptions::new()
             .read(true)
-            .open(state_dir_path.join("profile_state"))
+            .open(state_dir_path.path().join("profile_state"))
             .await?
             .into_std()
             .await;
