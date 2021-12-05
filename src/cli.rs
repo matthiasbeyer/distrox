@@ -33,6 +33,14 @@ pub fn app<'a>() -> App<'a> {
                 .author(crate_authors!())
                 .version(crate_version!())
                 .about("Just serve the profile")
+
+                .arg(Arg::with_name("name")
+                    .long("name")
+                    .required(true)
+                    .takes_value(true)
+                    .value_name("NAME")
+                    .about("Name of the profile")
+                )
             )
         )
 }

@@ -37,6 +37,7 @@ getset           = "0.1"
 xdg              = "2.4"
 libp2p           = "0.39.1"
 tracing          = "0.1"
+ctrlc            = "3.2"
 
 [dependencies.ipfs]
 git = "https://github.com/rs-ipfs/rust-ipfs/"
