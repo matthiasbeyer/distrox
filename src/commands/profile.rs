@@ -18,5 +18,8 @@ async fn profile_create(matches: &ArgMatches) -> Result<()> {
 
     let profile = Profile::create(&state_dir, &name, Config::default()).await?;
     log::info!("Saving...");
-    profile.save().await
+    profile.save().await?;
+
+    log::info!("Shutting down...");
+    profile.exit().await
 }
