@@ -127,7 +127,7 @@ mod tests {
     async fn mk_ipfs() -> IpfsClient {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
         opts.mdns = false;
-        let (ipfs, fut): (ipfs::Ipfs<ipfs::Types>, _) = ipfs::UninitializedIpfs::new(opts).start().await.unwrap();
+        let (ipfs, fut): (ipfs::Ipfs<ipfs::TestTypes>, _) = ipfs::UninitializedIpfs::new(opts).start().await.unwrap();
         tokio::task::spawn(fut);
         ipfs
     }

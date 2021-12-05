@@ -30,7 +30,7 @@ impl Profile {
             span: Some(tracing::trace_span!("distrox-ipfs")),
         };
 
-        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<ipfs::Types>::new(options)
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(options)
             .start()
             .await?;
         tokio::task::spawn(fut);
@@ -40,7 +40,7 @@ impl Profile {
     async fn new_inmemory(config: Config) -> Result<Self> {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
         opts.mdns = false;
-        let (ipfs, fut): (ipfs::Ipfs<ipfs::Types>, _) = ipfs::UninitializedIpfs::new(opts).start().await.unwrap();
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(opts).start().await.unwrap();
         tokio::task::spawn(fut);
         Ok(Self::new(ipfs, config))
     }
