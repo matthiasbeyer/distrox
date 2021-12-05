@@ -67,7 +67,7 @@ impl Profile {
     }
 
     async fn ipfs_path(state_dir: &StateDir, name: &str) -> Result<PathBuf> {
-        let path = state_dir.path().join(name).join("ipfs");
+        let path = state_dir.path().join("ipfs");
         tokio::fs::create_dir_all(&path).await?;
         Ok(path)
     }
