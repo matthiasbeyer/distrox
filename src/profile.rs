@@ -67,7 +67,7 @@ impl Profile {
     }
 
     async fn ipfs_path(state_dir: &StateDir, name: &str) -> Result<PathBuf> {
-        let path = state_dir.path().join("ipfs");
+        let path = state_dir.ipfs();
         tokio::fs::create_dir_all(&path).await?;
         Ok(path)
     }
@@ -140,8 +140,16 @@ impl Profile {
 pub struct StateDir(PathBuf);
 
 impl StateDir {
-    pub fn path(&self) -> &Path {
-        &self.0
+    pub fn ipfs(&self) -> PathBuf {
+        self.0.join("ipfs")
+    }
+
+    pub fn profile_state(&self) -> PathBuf {
+        self.0.join("profile_state")
+    }
+
+    pub fn display(&self) -> std::path::Display {
+        self.0.display()
     }
 }
 
@@ -193,7 +201,7 @@ impl ProfileStateSaveable {
         tokio::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
-            .open(state_dir_path.path().join("profile_state"))
+            .open(&state_dir_path.profile_state())
             .await?
             .write_all(state_s.as_bytes())
             .await
@@ -204,7 +212,7 @@ impl ProfileStateSaveable {
     pub async fn load_from_disk(state_dir_path: &StateDir) -> Result<Self> {
         let reader = tokio::fs::OpenOptions::new()
             .read(true)
-            .open(state_dir_path.path().join("profile_state"))
+            .open(&state_dir_path.profile_state())
             .await?
             .into_std()
             .await;
