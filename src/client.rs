@@ -30,6 +30,11 @@ impl Client {
         }
     }
 
+    pub async fn exit(self) -> Result<()> {
+        self.ipfs.exit_daemon().await;
+        Ok(())
+    }
+
     pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
         self.ipfs
             .put_dag(text.into())

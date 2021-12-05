@@ -134,6 +134,10 @@ impl Profile {
         })
     }
 
+    pub async fn exit(self) -> Result<()> {
+        self.client.exit().await
+    }
+
 }
 
 #[derive(Debug)]
