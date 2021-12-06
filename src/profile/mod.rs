@@ -157,6 +157,7 @@ impl Profile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::convert::TryFrom;
     use crate::client::Client;
     use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
@@ -167,6 +168,19 @@ mod tests {
         let profile = Profile::new_inmemory(Config::default(), "test-create-profile").await;
         assert!(profile.is_ok());
         let exit = profile.unwrap().exit().await;
+        assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
+    }
+
+    #[tokio::test]
+    async fn test_create_profile_and_helloworld() {
+        let _ = env_logger::try_init();
+        let profile = Profile::new_inmemory(Config::default(), "test-create-profile-and-helloworld").await;
+        assert!(profile.is_ok());
+        let profile = profile.unwrap();
+        let head = profile.head();
+        let exp_cid = cid::Cid::try_from("bafyreie4haukbqj7u6vogjfvaxbwg73b7bzi7nqxbnkvv77dvwcqg5wtpe").unwrap();
+        assert_eq!(*head, exp_cid, "{} != {}", *head, exp_cid);
+        let exit = profile.exit().await;
         assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
     }
 
