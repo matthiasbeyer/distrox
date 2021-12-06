@@ -162,6 +162,8 @@ mod tests {
         let _ = env_logger::try_init();
         let profile = Profile::new_inmemory(Config::default(), "test-create-profile").await;
         assert!(profile.is_ok());
+        let exit = profile.unwrap().exit().await;
+        assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
     }
 
 }
