@@ -28,4 +28,5 @@ in
 pkgs.mkShell rec {
     buildInputs     = env ++ dependencies;
     LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
+    PROTOC          = "${pkgs.protobuf}/bin/protoc";
 }
