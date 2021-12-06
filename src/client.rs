@@ -92,19 +92,18 @@ impl Client {
     }
 
     pub async fn get_content_text(&self, cid: Cid) -> Result<String> {
-        let starting_point = ipfs::path::IpfsPath::new(ipfs::path::PathRoot::Ipld(cid));
+        struct S(String);
+        impl TryFrom<ipfs::Ipld> for S {
+            type Error = anyhow::Error;
+            fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
+                match ipld {
+                    ipfs::Ipld::String(s) => Ok(S(s)),
+                    _ => anyhow::bail!("Not a string"),
+                }
+            }
+        }
 
-        let bytes = self.ipfs
-            .cat_unixfs(starting_point, None)
-            .await
-            .context("cat unixfs")?
-            .try_concat()
-            .await
-            .context("concatenating")?;
-
-        String::from_utf8(bytes)
-            .context("parsing UTF8")
-            .map_err(anyhow::Error::from)
+        self.get::<S>(cid).await.map(|v| v.0)
     }
 }
 
