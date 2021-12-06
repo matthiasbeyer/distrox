@@ -274,7 +274,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_profile() {
         let _ = env_logger::try_init();
-        let profile = Profile::new_inmemory(Config::default()).await;
+        let profile = Profile::new_inmemory(Config::default(), "test-create-profile").await;
         assert!(profile.is_ok());
     }
 
