@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use anyhow::Context;
 use anyhow::Result;
 use futures::TryStreamExt;
 use ipfs::Cid;
@@ -95,11 +96,15 @@ impl Client {
 
         let bytes = self.ipfs
             .cat_unixfs(starting_point, None)
-            .await?
+            .await
+            .context("cat unixfs")?
             .try_concat()
-            .await?;
+            .await
+            .context("concatenating")?;
 
-        String::from_utf8(bytes).map_err(anyhow::Error::from)
+        String::from_utf8(bytes)
+            .context("parsing UTF8")
+            .map_err(anyhow::Error::from)
     }
 }
 
