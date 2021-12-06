@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
+use anyhow::Context;
 use anyhow::Result;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
@@ -87,32 +88,43 @@ impl Profile {
     }
 
     pub fn state_dir_path(name: &str) -> Result<StateDir> {
+        log::debug!("Getting state directory path");
         xdg::BaseDirectories::with_prefix("distrox")
+            .context("Fetching 'distrox' XDG base directory")
             .map_err(anyhow::Error::from)
             .and_then(|dirs| {
                 dirs.create_state_directory(name)
                     .map(StateDir::from)
+                    .with_context(|| format!("Creating 'distrox' XDG state directory for '{}'", name))
                     .map_err(anyhow::Error::from)
             })
     }
 
     pub async fn save(&self) -> Result<()> {
         let state_dir_path = Self::state_dir_path(&self.state.profile_name)?;
-        ProfileStateSaveable::new(&self.state)?
+        log::trace!("Saving to {:?}", state_dir_path.display());
+        ProfileStateSaveable::new(&self.state)
+            .context("Serializing profile state")?
             .save_to_disk(&state_dir_path)
             .await
+            .context("Saving state to disk")
+            .map_err(anyhow::Error::from)
     }
 
     pub async fn load(config: Config, name: &str) -> Result<Self> {
         let state_dir_path = Self::state_dir_path(name)?;
+        log::trace!("state_dir_path = {:?}", state_dir_path.display());
         let state: ProfileState = ProfileStateSaveable::load_from_disk(&state_dir_path)
             .await?
-            .try_into()?;
+            .try_into()
+            .context("Parsing profile state")?;
+        log::debug!("Loading state finished");
 
         let bootstrap = vec![]; // TODO
         let mdns = false; // TODO
         let keypair = state.keypair.clone();
 
+        log::debug!("Configuring IPFS backend");
         let options = ipfs::IpfsOptions {
             ipfs_path: Self::ipfs_path(&state_dir_path, name).await?,
             keypair,
@@ -123,11 +135,13 @@ impl Profile {
             span: Some(tracing::trace_span!("distrox-ipfs")),
         };
 
+        log::debug!("Starting IPFS backend");
         let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(options)
             .start()
             .await?;
         tokio::task::spawn(fut);
 
+        log::debug!("Profile loading finished");
         Ok(Profile {
             state,
             client: Client::new(ipfs, config),
@@ -201,27 +215,34 @@ impl ProfileStateSaveable {
     }
 
     pub async fn save_to_disk(&self, state_dir_path: &StateDir) -> Result<()> {
-        let state_s = serde_json::to_string(&self)?;
+        let state_s = serde_json::to_string(&self).context("Serializing state")?;
         tokio::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
             .open(&state_dir_path.profile_state())
-            .await?
+            .await
+            .with_context(|| format!("Opening {}", state_dir_path.profile_state().display()))?
             .write_all(state_s.as_bytes())
             .await
             .map(|_| ())
+            .with_context(|| format!("Writing to {}", state_dir_path.profile_state().display()))
             .map_err(anyhow::Error::from)
     }
 
     pub async fn load_from_disk(state_dir_path: &StateDir) -> Result<Self> {
+        log::trace!("Loading from disk: {:?}", state_dir_path.profile_state().display());
         let reader = tokio::fs::OpenOptions::new()
             .read(true)
             .open(&state_dir_path.profile_state())
-            .await?
+            .await
+            .context("Opening state file")?
             .into_std()
             .await;
 
-        serde_json::from_reader(reader).map_err(anyhow::Error::from)
+        log::trace!("Parsing state file");
+        serde_json::from_reader(reader)
+            .context("Parsing state file")
+            .map_err(anyhow::Error::from)
     }
 
 }
