@@ -20,7 +20,7 @@ pub struct Profile {
 impl Profile {
     pub async fn create(state_dir: &StateDir, name: &str, config: Config) -> Result<Self> {
         let bootstrap = vec![]; // TODO
-        let mdns = false; // TODO
+        let mdns = true; // TODO
         let keypair = ipfs::Keypair::generate_ed25519();
 
         let options = ipfs::IpfsOptions {
@@ -43,7 +43,7 @@ impl Profile {
 
     async fn new_inmemory(config: Config, name: &str) -> Result<Self> {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
-        opts.mdns = false;
+        opts.mdns = true;
         let keypair = opts.keypair.clone();
         let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(opts).start().await.unwrap();
         tokio::task::spawn(fut);
@@ -120,7 +120,7 @@ impl Profile {
         log::debug!("Loading state finished");
 
         let bootstrap = vec![]; // TODO
-        let mdns = false; // TODO
+        let mdns = true; // TODO
         let keypair = state.keypair().clone();
 
         log::debug!("Configuring IPFS backend");
