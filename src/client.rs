@@ -35,6 +35,10 @@ impl Client {
         Ok(())
     }
 
+    pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
+        self.ipfs.connect(peer).await
+    }
+
     pub async fn post_text_blob(&self, text: String) -> Result<Cid> {
         self.ipfs
             .put_dag(text.into())

@@ -61,6 +61,10 @@ impl Profile {
         self.state.profile_head()
     }
 
+    pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
+        self.client.connect(peer).await
+    }
+
     async fn post_hello_world(client: &Client, name: &str) -> Result<cid::Cid> {
         let text = format!("Hello world, I am {}", name);
         client.post_text_node(vec![], text).await
