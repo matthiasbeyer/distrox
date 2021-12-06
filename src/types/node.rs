@@ -1,43 +1,88 @@
-#[derive(Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, getset::Getters)]
+use anyhow::Result;
+
+use std::convert::TryFrom;
+
+#[derive(Debug, Eq, PartialEq, getset::Getters)]
 pub struct Node {
     /// Version
-    #[serde(rename = "v")]
     #[getset(get = "pub")]
     version: String,
 
     /// Parent Nodes, identified by cid
-    parents: Vec<crate::types::encodable_cid::EncodableCid>,
+    parents: Vec<ipfs::Cid>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
-    payload: crate::types::encodable_cid::EncodableCid,
+    payload: ipfs::Cid,
 }
 
-impl daglib::Node for Node {
-    type Id = crate::cid::Cid;
+impl Into<ipfs::Ipld> for Node {
+    fn into(self) -> ipfs::Ipld {
+        let mut map = std::collections::BTreeMap::new();
+        map.insert(String::from("version"), ipfs::Ipld::String(self.version));
+        map.insert(String::from("parents"), ipfs::Ipld::List(self.parents.into_iter().map(ipfs::Ipld::Link).collect()));
+        map.insert(String::from("payload"), ipfs::Ipld::Link(self.payload));
+        ipfs::Ipld::Map(map)
+    }
+}
 
-    fn parent_ids(&self) -> Vec<Self::Id> {
-        self.parents()
+impl TryFrom<ipfs::Ipld> for Node {
+    type Error = anyhow::Error;
+
+    fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
+        let missing_field = |name: &'static str| move || anyhow::anyhow!("Missing field {}", name);
+        let field_wrong_type = |name: &str, expty: &str| anyhow::bail!("Field {} has wrong type, expected {}", name, expty);
+        match ipld {
+            ipfs::Ipld::Map(map) => {
+                let version = match map.get("version").ok_or_else(missing_field("version"))? {
+                    ipfs::Ipld::String(s) => s.to_string(),
+                    _ => return field_wrong_type("version", "String")
+                };
+
+                let parents = match map.get("parents").ok_or_else(missing_field("parents"))? {
+                    ipfs::Ipld::List(s) => {
+                        s.into_iter()
+                            .map(|parent| -> Result<ipfs::Cid> {
+                                match parent {
+                                    ipfs::Ipld::Link(cid) => Ok(cid.clone()),
+                                    _ => anyhow::bail!("Field in parents has wrong type, expected Link"),
+                                }
+                            })
+                            .collect::<Result<Vec<ipfs::Cid>>>()?
+                    },
+                    _ => return field_wrong_type("parents", "Vec<Link>")
+                };
+
+                let payload = match map.get("payload").ok_or_else(missing_field("payload"))? {
+                    ipfs::Ipld::Link(cid) => cid.clone(),
+                    _ => return field_wrong_type("payload", "Link")
+                };
+
+                Ok(Node {
+                    version,
+                    parents,
+                    payload
+                })
+            }
+
+            _ => anyhow::bail!("Unexpected type, expected map")
+        }
     }
 }
 
 impl Node {
-    pub fn new(version: String, parents: Vec<crate::cid::Cid>, payload: crate::cid::Cid) -> Self {
+    pub fn new(version: String, parents: Vec<ipfs::Cid>, payload: ipfs::Cid) -> Self {
         Self {
             version,
-            parents: parents.into_iter().map(crate::types::encodable_cid::EncodableCid::from).collect(),
-            payload: payload.into()
+            parents,
+            payload,
         }
     }
 
-    pub fn parents(&self) -> Vec<crate::cid::Cid> {
-        self.parents
-            .clone()
-            .into_iter()
-            .map(crate::types::encodable_cid::EncodableCid::into)
-            .collect()
+    pub fn parents(&self) -> Vec<ipfs::Cid> {
+        self.parents.clone()
     }
 
-    pub fn payload(&self) -> crate::cid::Cid {
-        self.payload.clone().into()
+    pub fn payload(&self) -> ipfs::Cid {
+        self.payload.clone()
     }
 }

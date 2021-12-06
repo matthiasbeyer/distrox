@@ -21,20 +21,6 @@ pub trait TryToCid {
     fn try_to_cid(self) -> Result<Cid>;
 }
 
-impl TryToCid for ipfs_api_backend_hyper::response::AddResponse {
-    fn try_to_cid(self) -> Result<Cid> {
-        log::debug!("Transforming to CID => {:?}", self);
-        string_to_cid(self.hash)
-    }
-}
-
-impl TryToCid for ipfs_api_backend_hyper::response::DagPutResponse {
-    fn try_to_cid(self) -> Result<Cid> {
-        log::debug!("Transforming to CID => {:?}", self);
-        string_to_cid(self.cid.cid_string)
-    }
-}
-
 impl daglib::NodeId for Cid {
 }
 

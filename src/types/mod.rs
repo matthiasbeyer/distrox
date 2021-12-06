@@ -1,5 +1,3 @@
-mod encodable_cid;
-
 mod node;
 pub use node::*;
 
