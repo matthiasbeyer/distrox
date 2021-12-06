@@ -31,12 +31,25 @@ async fn profile_create(matches: &ArgMatches) -> Result<()> {
 }
 
 async fn profile_serve(matches: &ArgMatches) -> Result<()> {
+    use ipfs::MultiaddrWithPeerId;
+
     let name = matches.value_of("name").map(String::from).unwrap(); // required
+    let connect_peer = matches.value_of("connect").map(|s| {
+        s.parse::<MultiaddrWithPeerId>()
+            .map_err(anyhow::Error::from)
+    }).transpose()?;
+
     let state_dir = Profile::state_dir_path(&name)?;
 
     log::info!("Loading '{}' from {}", name, state_dir.display());
     let profile = Profile::load(Config::default(), &name).await?;
     log::info!("Profile loaded");
+    log::info!("Profile HEAD = {}", profile.head());
+
+    if let Some(connect_to) = connect_peer {
+        log::info!("Connecting to {:?}", connect_to);
+        profile.connect(connect_to).await?;
+    }
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();

@@ -41,6 +41,14 @@ pub fn app<'a>() -> App<'a> {
                     .value_name("NAME")
                     .about("Name of the profile")
                 )
+
+                .arg(Arg::with_name("connect")
+                    .long("connect")
+                    .required(false)
+                    .takes_value(true)
+                    .value_name("MULTIADDR")
+                    .about("Connect to MULTIADDR as well")
+                )
             )
         )
 }
