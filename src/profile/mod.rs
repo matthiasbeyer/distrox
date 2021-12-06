@@ -57,6 +57,10 @@ impl Profile {
         Ok(Profile { state, client })
     }
 
+    pub fn head(&self) -> &cid::Cid {
+        self.state.profile_head()
+    }
+
     async fn post_hello_world(client: &Client, name: &str) -> Result<cid::Cid> {
         let text = format!("Hello world, I am {}", name);
         client.post_text_node(vec![], text).await
