@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(payload.timestamp(), &datetime);
 
         let content = client.get_content_text(payload.content().clone()).await;
-        assert!(content.is_ok());
+        assert!(content.is_ok(), "not ok: {:?}", content);
         let content = content.unwrap();
 
         assert_eq!(content, text);
