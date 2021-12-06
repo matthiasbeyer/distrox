@@ -217,6 +217,7 @@ impl ProfileStateSaveable {
     pub async fn save_to_disk(&self, state_dir_path: &StateDir) -> Result<()> {
         let state_s = serde_json::to_string(&self).context("Serializing state")?;
         tokio::fs::OpenOptions::new()
+            .create_new(false) // do not _always_ create a new file
             .create(true)
             .truncate(true)
             .open(&state_dir_path.profile_state())
