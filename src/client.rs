@@ -158,7 +158,7 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text"), datetime).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        let expected_cid = Cid::try_from("bafyreifah3uwad7vm6o2zz3dsluscbjznmlgrgqqstk3s3djrdyvwgsulq").unwrap();
+        let expected_cid = Cid::try_from("bafyreidem25zq66ktf42l2sjlxmbz5f66bedw3i4ippshhb3h7dxextfty").unwrap();
         assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
     }
 
@@ -176,7 +176,7 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from(text), datetime.clone()).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        let expected_cid = Cid::try_from("bafyreiazg25u4bbymcpebwuadr42lwvhpf7diohojeenmsf3rt42v3kbdy").unwrap();
+        let expected_cid = Cid::try_from("bafyreicwvx755ysg7zfflxhwhl4d6wuuxmmgfexjfvdhgndiugj37bsphq").unwrap();
         assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
 
         let node = client.get_node(cid).await;
@@ -208,9 +208,9 @@ mod tests {
         let client = Client::new(ipfs, config);
 
         let chain_elements = vec![
-            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreiddewrcj6nwfzouxhycypbuqwohb6oev62vjqdko5w7obl5qrwhwm"),
-            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreibcu6wgvh62w4gwpnnbhzoafeog4il4wzqg2zo42ogjqrlnr44pgm"),
-            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm"),
+            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreidaxkxog3bssyxxjxlsubgg6wauxbobp7gwyucs6gwzyrtsavb7yu"),
+            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreifsgfl6tvcdn42kihjryg7fpjyjgi4v56bud2m2yniqjrrfn3ils4"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreifnim44y6zfsc7jrf4xs3lbawlc4qqmk4tgmbqnflbggmvvuvul7a"),
         ];
 
         let mut prev: Option<ipfs::Cid> = None;
@@ -264,14 +264,14 @@ mod tests {
         //           * -
 
         let chain_1_elements = vec![
-            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreiddewrcj6nwfzouxhycypbuqwohb6oev62vjqdko5w7obl5qrwhwm"),
-            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreibcu6wgvh62w4gwpnnbhzoafeog4il4wzqg2zo42ogjqrlnr44pgm"),
-            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm"),
+            (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreidaxkxog3bssyxxjxlsubgg6wauxbobp7gwyucs6gwzyrtsavb7yu"),
+            (mkdate(2021, 11, 27, 12, 31, 0), "text2", "bafyreifsgfl6tvcdn42kihjryg7fpjyjgi4v56bud2m2yniqjrrfn3ils4"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text3", "bafyreifnim44y6zfsc7jrf4xs3lbawlc4qqmk4tgmbqnflbggmvvuvul7a"),
         ];
 
         let chain_2_elements = vec![
-            (mkdate(2021, 11, 27, 12, 32, 0), "text4", "bafyreiabwst3adcfyqpknatxcs2buut2qnh3vgawio6a5mnth7u5hf4hgy"),
-            (mkdate(2021, 11, 27, 12, 32, 0), "text5", "bafyreih6wmjdpoegs4ibz3gsoec6g56nc63bifo4e4hqub6sjsbetuikhm"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text4", "bafyreibfkbslobjydkl3tuiqms7dk243fendyqxi5myqkhxquz7arayuwe"),
+            (mkdate(2021, 11, 27, 12, 32, 0), "text5", "bafyreicpzj4lfhzsx5pacp2otk7qyyx353lwsvmkp4aplwgvyisg3y4mjm"),
         ];
 
         post_chain(&client, &chain_1_elements).await;
@@ -280,15 +280,15 @@ mod tests {
         let cid = client.post_text_node_with_datetime(Vec::new(), String::from("text6"), mkdate(2021, 11, 27, 12, 32, 0)).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        let expected_cid = Cid::try_from("bafyreihrqhbsmqfkzmbsxvkvwtp4eekeri6m6afejf2wmk6gj64b2qwgsa").unwrap();
+        let expected_cid = Cid::try_from("bafyreifcpqvxzrgmcbdx5omysjfyupsvjxlrfzww5yh75ld7f7ox3vzno4").unwrap();
         assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
 
         let parents = vec![
             // latest node in chain_1_elements
-            ipfs::Cid::try_from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjlhkm").unwrap(),
+            ipfs::Cid::try_from("bafyreifnim44y6zfsc7jrf4xs3lbawlc4qqmk4tgmbqnflbggmvvuvul7a").unwrap(),
 
             // latest node in chain_2_elements
-            ipfs::Cid::try_from("bafyreica4fz6spaiuk3nd6ybfquj3ysn6nlxuoxcd54xblibpirisjl2km").unwrap(),
+            ipfs::Cid::try_from("bafyreicpzj4lfhzsx5pacp2otk7qyyx353lwsvmkp4aplwgvyisg3y4mjm").unwrap(),
 
             // single node "text6"
             cid
@@ -297,7 +297,7 @@ mod tests {
         let cid = client.post_text_node_with_datetime(parents, String::from("text7"), mkdate(2021, 11, 27, 12, 32, 0)).await;
         assert!(cid.is_ok());
         let cid = cid.unwrap();
-        let expected_cid = Cid::try_from("bafyreibnwo6phfbi5m6lzjfiaem4xtvjpeq5nnbsicie6whlnkoakgiyua").unwrap();
+        let expected_cid = Cid::try_from("bafyreieuac7kvefkiu5ls7tqumaef5qiur7l3moa33ay2kaxxpjmfdjbey").unwrap();
         assert_eq!(cid, expected_cid, "{} != {}", cid, expected_cid);
     }
 
