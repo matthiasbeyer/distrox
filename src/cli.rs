@@ -20,7 +20,7 @@ pub fn app<'a>() -> App<'a> {
                 .version(crate_version!())
                 .about("Create profile")
 
-                .arg(Arg::with_name("name")
+                .arg(Arg::new("name")
                     .long("name")
                     .required(true)
                     .takes_value(true)
@@ -34,7 +34,7 @@ pub fn app<'a>() -> App<'a> {
                 .version(crate_version!())
                 .about("Just serve the profile")
 
-                .arg(Arg::with_name("name")
+                .arg(Arg::new("name")
                     .long("name")
                     .required(true)
                     .takes_value(true)
@@ -42,7 +42,7 @@ pub fn app<'a>() -> App<'a> {
                     .about("Name of the profile")
                 )
 
-                .arg(Arg::with_name("connect")
+                .arg(Arg::new("connect")
                     .long("connect")
                     .required(false)
                     .takes_value(true)
