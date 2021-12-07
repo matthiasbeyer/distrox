@@ -182,7 +182,7 @@ mod tests {
         assert!(profile.is_ok());
         let profile = profile.unwrap();
         let head = profile.head();
-        let exp_cid = cid::Cid::try_from("bafyreie4haukbqj7u6vogjfvaxbwg73b7bzi7nqxbnkvv77dvwcqg5wtpe").unwrap();
+        let exp_cid = cid::Cid::try_from("bafyreig2koltmta6tvag37dwnzfjf5ft2qxrafymqt56a7r4e5dfkhy3zu").unwrap();
         assert_eq!(*head, exp_cid, "{} != {}", *head, exp_cid);
         let exit = profile.exit().await;
         assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
