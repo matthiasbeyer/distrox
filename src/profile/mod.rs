@@ -11,9 +11,11 @@ use crate::ipfs_client::IpfsClient;
 mod state;
 use state::*;
 
-#[derive(Debug)]
+#[derive(Debug, getset::Getters)]
 pub struct Profile {
     state: ProfileState,
+
+    #[getset(get = "pub")]
     client: Client,
 }
 
