@@ -8,6 +8,7 @@ use crate::client::Client;
 use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 
+mod device;
 mod state;
 use state::*;
 
