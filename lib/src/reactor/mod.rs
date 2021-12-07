@@ -5,6 +5,10 @@ use tokio::sync::RwLock;
 
 use crate::profile::Profile;
 
+mod gossip;
+mod device;
+mod account;
+
 /// Reactor type, for running the application logic
 ///
 /// The Reactor runs the whole application logic, that is syncing with other devices, fetching and
@@ -41,6 +45,17 @@ impl Reactor {
                 Ok(inner) => return inner.into_inner().exit().await,
             }
         }
+    }
+
+    /// Run the reactor
+    ///
+    /// Starts all inner functionality and exposes things
+    ///
+    /// # Return
+    ///
+    /// Return types are WIP, as this must return "running" objects that can be communicated with
+    pub async fn run(self) -> Result<()> {
+        unimplemented!()
     }
 
 }
