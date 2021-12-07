@@ -163,9 +163,7 @@ impl Profile {
 mod tests {
     use super::*;
     use std::convert::TryFrom;
-    use crate::client::Client;
     use crate::config::Config;
-    use crate::ipfs_client::IpfsClient;
 
     #[tokio::test]
     async fn test_create_profile() {
