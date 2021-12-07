@@ -24,7 +24,7 @@ impl Profile {
         let keypair = ipfs::Keypair::generate_ed25519();
 
         let options = ipfs::IpfsOptions {
-            ipfs_path: Self::ipfs_path(state_dir, name).await?,
+            ipfs_path: Self::ipfs_path(state_dir).await?,
             keypair,
             bootstrap,
             mdns,
@@ -70,7 +70,7 @@ impl Profile {
         client.post_text_node(vec![], text).await
     }
 
-    async fn ipfs_path(state_dir: &StateDir, name: &str) -> Result<PathBuf> {
+    async fn ipfs_path(state_dir: &StateDir) -> Result<PathBuf> {
         let path = state_dir.ipfs();
         tokio::fs::create_dir_all(&path).await?;
         Ok(path)
@@ -129,7 +129,7 @@ impl Profile {
 
         log::debug!("Configuring IPFS backend");
         let options = ipfs::IpfsOptions {
-            ipfs_path: Self::ipfs_path(&state_dir_path, name).await?,
+            ipfs_path: Self::ipfs_path(&state_dir_path).await?,
             keypair,
             bootstrap,
             mdns,
