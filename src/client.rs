@@ -1,8 +1,6 @@
 use std::convert::TryFrom;
 
-use anyhow::Context;
 use anyhow::Result;
-use futures::TryStreamExt;
 use ipfs::Cid;
 
 use crate::config::Config;
