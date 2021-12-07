@@ -61,6 +61,11 @@ impl ProfileState {
         self.profile_head = Some(cid);
         Ok(()) // reserved for future use
     }
+
+    pub(super) fn add_device(&mut self, d: Device) -> Result<()> {
+        self.other_devices.push(d);
+        Ok(()) // reserved for future use
+    }
 }
 
 impl std::fmt::Debug for ProfileState {
