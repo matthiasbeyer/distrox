@@ -79,7 +79,13 @@ impl Client {
     }
 
     async fn post<S: Into<ipfs::Ipld>>(&self, s: S) -> Result<Cid> {
-        self.ipfs.put_dag(s.into()).await.map_err(anyhow::Error::from)
+        let cid = self.ipfs.put_dag(s.into()).await?;
+        self.pin(&cid).await?;
+        Ok(cid)
+    }
+
+    async fn pin(&self, cid: &cid::Cid) -> Result<()> {
+        self.ipfs.insert_pin(cid, false).await.map_err(anyhow::Error::from)
     }
 
     pub async fn get_node(&self, cid: Cid) -> Result<Node> {
