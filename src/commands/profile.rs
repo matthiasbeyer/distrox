@@ -44,7 +44,7 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     log::info!("Loading '{}' from {}", name, state_dir.display());
     let profile = Profile::load(Config::default(), &name).await?;
     log::info!("Profile loaded");
-    log::info!("Profile HEAD = {}", profile.head());
+    log::info!("Profile HEAD = {:?}", profile.head());
 
     if let Some(connect_to) = connect_peer {
         log::info!("Connecting to {:?}", connect_to);

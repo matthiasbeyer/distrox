@@ -32,7 +32,7 @@ impl From<PathBuf> for StateDir {
 #[derive(getset::Getters)]
 pub struct ProfileState {
     #[getset(get = "pub")]
-    profile_head: cid::Cid,
+    profile_head: Option<cid::Cid>,
 
     #[getset(get = "pub")]
     profile_name: String,
@@ -42,9 +42,9 @@ pub struct ProfileState {
 }
 
 impl ProfileState {
-    pub(super) fn new(profile_head: cid::Cid, profile_name: String, keypair: libp2p::identity::Keypair) -> Self {
+    pub(super) fn new(profile_name: String, keypair: libp2p::identity::Keypair) -> Self {
         Self {
-            profile_head,
+            profile_head: None,
             profile_name,
             keypair
         }
@@ -59,7 +59,7 @@ impl std::fmt::Debug for ProfileState {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, getset::Getters)]
 pub(super) struct ProfileStateSaveable {
-    profile_head: Vec<u8>,
+    profile_head: Option<Vec<u8>>,
     profile_name: String,
     keypair: Vec<u8>,
 }
@@ -67,7 +67,7 @@ pub(super) struct ProfileStateSaveable {
 impl ProfileStateSaveable {
     pub(super) fn new(s: &ProfileState) -> Result<Self> {
         Ok(Self {
-            profile_head: s.profile_head.to_bytes(),
+            profile_head: s.profile_head.clone().map(|v| v.to_bytes()),
             profile_name: s.profile_name.clone(),
             keypair: match s.keypair {
                 libp2p::identity::Keypair::Ed25519(ref kp) => Vec::from(kp.encode()),
@@ -116,7 +116,7 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
 
     fn try_into(mut self) -> Result<ProfileState> {
         Ok(ProfileState {
-            profile_head: cid::Cid::try_from(self.profile_head)?,
+            profile_head: self.profile_head.map(|h| cid::Cid::try_from(h)).transpose()?,
             profile_name: self.profile_name,
             keypair: {
                 let kp = libp2p::identity::ed25519::Keypair::decode(&mut self.keypair)?;

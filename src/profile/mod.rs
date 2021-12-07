@@ -53,22 +53,16 @@ impl Profile {
 
     async fn new(ipfs: IpfsClient, config: Config, profile_name: String, keypair: libp2p::identity::Keypair) -> Result<Self> {
         let client = Client::new(ipfs, config);
-        let profile_head = Self::post_hello_world(&client, &profile_name).await?;
-        let state = ProfileState::new(profile_head, profile_name, keypair);
+        let state = ProfileState::new(profile_name, keypair);
         Ok(Profile { state, client })
     }
 
-    pub fn head(&self) -> &cid::Cid {
-        self.state.profile_head()
+    pub fn head(&self) -> Option<&cid::Cid> {
+        self.state.profile_head().as_ref()
     }
 
     pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
         self.client.connect(peer).await
-    }
-
-    async fn post_hello_world(client: &Client, name: &str) -> Result<cid::Cid> {
-        let text = format!("Hello world, I am {}", name);
-        client.post_text_node(vec![], text).await
     }
 
     async fn ipfs_path(state_dir: &StateDir) -> Result<PathBuf> {
@@ -180,11 +174,7 @@ mod tests {
         let profile = Profile::new_inmemory(Config::default(), "test-create-profile-and-helloworld").await;
         assert!(profile.is_ok());
         let profile = profile.unwrap();
-        let head = profile.head();
-        let exp_cid = cid::Cid::try_from("bafyreig2koltmta6tvag37dwnzfjf5ft2qxrafymqt56a7r4e5dfkhy3zu").unwrap();
-        assert_eq!(*head, exp_cid, "{} != {}", *head, exp_cid);
-        let exit = profile.exit().await;
-        assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
+        assert!(profile.head().is_none());
     }
 
 }
