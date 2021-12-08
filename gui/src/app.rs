@@ -4,7 +4,6 @@ use anyhow::Result;
 use iced::Application;
 use iced::Column;
 use iced::Container;
-use iced::Element;
 use iced::Length;
 use iced::Scrollable;
 use iced::TextInput;
@@ -13,7 +12,6 @@ use iced::text_input;
 
 use distrox_lib::profile::Profile;
 use distrox_lib::config::Config;
-use distrox_lib::ipfs_client::IpfsClient;
 
 #[derive(Debug)]
 enum Distrox {
