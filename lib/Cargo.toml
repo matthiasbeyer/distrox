@@ -37,7 +37,23 @@ getset        = "0.1"
 xdg           = "2.4"
 tracing       = "0.1"
 ctrlc         = "3.2"
-libp2p        = "0.39.0"
+
+[dependencies.libp2p]
+version          = "0.39.1"
+default-features = false
+features         = [
+    "dns-tokio",
+    "floodsub",
+    "gossipsub",
+    "identify",
+    "kad",
+    "mdns",
+    "mplex",
+    "noise",
+    "ping",
+    "tcp-tokio",
+    "yamux"
+]
 
 [dependencies.ipfs]
 git = "https://github.com/rs-ipfs/rust-ipfs/"
