@@ -33,7 +33,9 @@ git = "https://github.com/rs-ipfs/rust-ipfs/"
 rev = "ad3ab49b4d9236363969b0f74f14aabc7c906b3b"
 
 [dependencies.iced]
-version          = "0.3.0"
+git              = "https://github.com/iced-rs/iced"
+rev              = "6f3a608717e08330187871516b1ab54a9a2192a3"
+default-features = false
 features         = ["glow", "tokio", "debug"]
 
 [dependencies.distrox-lib]
