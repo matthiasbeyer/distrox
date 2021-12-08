@@ -1,7 +1,7 @@
 use anyhow::Result;
 
+mod app;
 mod cli;
-mod gui;
 
 use distrox_lib::*;
 
@@ -12,7 +12,7 @@ fn main() -> Result<()> {
     match matches.subcommand() {
         None => {
             let name = matches.value_of("name").map(String::from).unwrap(); // safe by clap
-            crate::gui::run(name)
+            crate::app::run(name)
         },
         Some((other, _)) => {
             log::error!("No subcommand {} implemented", other);
