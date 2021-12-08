@@ -46,13 +46,13 @@ enum Message {
 impl Application for Distrox {
     type Executor = iced::executor::Default; // tokio
     type Message = Message;
-    type Flags = ();
+    type Flags = String;
 
-    fn new(_flags: ()) -> (Self, iced::Command<Self::Message>) {
+    fn new(name: String) -> (Self, iced::Command<Self::Message>) {
         (
             Distrox::Loading,
             iced::Command::perform(async {
-                match Profile::new_inmemory(Config::default()).await {
+                match Profile::new_inmemory(Config::default(), &name).await {
                     Err(_) => Message::FailedToLoad,
                     Ok(instance) => {
                         Message::Loaded(Arc::new(instance))
@@ -169,7 +169,7 @@ impl Application for Distrox {
 
 }
 
-pub fn run() -> Result<()> {
+pub fn run(name: String) -> Result<()> {
     let settings = iced::Settings {
         window: iced::window::Settings {
             resizable: true,
@@ -178,6 +178,7 @@ pub fn run() -> Result<()> {
             always_on_top: false,
             ..iced::window::Settings::default()
         },
+        flags: name,
         exit_on_close_request: true,
         ..iced::Settings::default()
     };

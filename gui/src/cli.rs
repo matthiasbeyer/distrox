@@ -8,5 +8,12 @@ pub fn app<'a>() -> App<'a> {
         .author(crate_authors!())
         .version(crate_version!())
         .about("Distributed social network, GUI frontend")
+
+        .arg(Arg::new("name")
+            .index(1)
+            .takes_value(true)
+            .value_name("NAME")
+            .about("Profile to load the GUI for")
+        )
 }
 

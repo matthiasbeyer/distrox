@@ -10,14 +10,12 @@ fn main() -> Result<()> {
     let matches = crate::cli::app().get_matches();
 
     match matches.subcommand() {
-        None => crate::gui::run(),
+        None => {
+            let name = matches.value_of("name").map(String::from).unwrap(); // safe by clap
+            crate::gui::run(name)
+        },
         Some((other, _)) => {
             log::error!("No subcommand {} implemented", other);
-            Ok(())
-        },
-
-        _ => {
-            log::error!("Don't know what to do");
             Ok(())
         },
     }
