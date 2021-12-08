@@ -3,7 +3,8 @@ use anyhow::Result;
 mod cli;
 mod commands;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let _ = env_logger::try_init()?;
     let matches = crate::cli::app().get_matches();
 
