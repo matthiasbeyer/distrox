@@ -1,0 +1,46 @@
+[package]
+name          = "distrox-gui"
+version       = "0.1.0"
+authors       = ["Matthias Beyer <mail@beyermatthias.de>"]
+
+description   = "Distributed network build on IPFS, GUI frontend"
+
+keywords      = ["social", "network", "ipfs", "distributed"]
+readme        = "README.md"
+license       = "GPL-2.0"
+
+documentation = "https://docs.rs/distrox"
+repository    = "https://github.com/matthiasbeyer/distrox"
+homepage      = "http://github.com/matthiasbeyer/distrox"
+
+edition       = "2018"
+
+[dependencies]
+anyhow     = "1"
+chrono     = { version = "0.4", features = ["serde"] }
+cid        = "0.5"
+clap       = "3.0.0-beta.5"
+env_logger = "0.8"
+futures    = "0.3"
+log        = "0.4"
+getset     = "0.1"
+xdg        = "2.4"
+tracing    = "0.1"
+ctrlc      = "3.2"
+
+[dependencies.ipfs]
+git = "https://github.com/rs-ipfs/rust-ipfs/"
+rev = "ad3ab49b4d9236363969b0f74f14aabc7c906b3b"
+
+[dependencies.iced]
+git              = "https://github.com/iced-rs/iced"
+rev              = "6f3a608717e08330187871516b1ab54a9a2192a3"
+default-features = false
+features         = ["glow", "tokio", "debug"]
+
+[dependencies.distrox-lib]
+path = "../lib"
+
+[dev-dependencies]
+multibase = "0.8"
+

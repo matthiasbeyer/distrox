@@ -22,11 +22,37 @@ let
     pkgconfig
     which
     zlib
+
+    freetype
+    expat
+  ];
+  xorgPackages = with pkgs.xorg; [
+    libXcursor
+    libXfont2
+    # libXpm
+    # libXtst
+    # libxshmfence
+    # libXft
+    libXrandr
+    libXext
+    # libXinerama
+    # libXrender
+    # libXxf86misc
+    # libxcb
+    libX11
+    # libXcomposite
+    libXfont
+    libXi
+    # libXt
+    # libxkbfile
+
+    pkgs.libGL
   ];
 in
 
 pkgs.mkShell rec {
-    buildInputs     = env ++ dependencies;
+    buildInputs     = env ++ dependencies ++ xorgPackages;
     LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
     PROTOC          = "${pkgs.protobuf}/bin/protoc";
+    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath xorgPackages;
 }

@@ -11,9 +11,11 @@ use crate::ipfs_client::IpfsClient;
 mod state;
 use state::*;
 
-#[derive(Debug)]
+#[derive(Debug, getset::Getters)]
 pub struct Profile {
     state: ProfileState,
+
+    #[getset(get = "pub")]
     client: Client,
 }
 
@@ -41,8 +43,7 @@ impl Profile {
         Self::new(ipfs, config, name.to_string(), keypair).await
     }
 
-    #[cfg(test)]
-    async fn new_inmemory(config: Config, name: &str) -> Result<Self> {
+    pub async fn new_inmemory(config: Config, name: &str) -> Result<Self> {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
         opts.mdns = true;
         let keypair = opts.keypair.clone();
