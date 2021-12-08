@@ -11,9 +11,9 @@ use iced::TextInput;
 use iced::scrollable;
 use iced::text_input;
 
-use crate::profile::Profile;
-use crate::config::Config;
-use crate::ipfs_client::IpfsClient;
+use distrox_lib::profile::Profile;
+use distrox_lib::config::Config;
+use distrox_lib::ipfs_client::IpfsClient;
 
 #[derive(Debug)]
 enum Distrox {

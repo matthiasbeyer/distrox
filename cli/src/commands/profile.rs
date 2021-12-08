@@ -6,8 +6,8 @@ use anyhow::Context;
 use anyhow::Result;
 use clap::ArgMatches;
 
-use crate::config::Config;
-use crate::profile::Profile;
+use distrox_lib::config::Config;
+use distrox_lib::profile::Profile;
 
 pub async fn profile(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
