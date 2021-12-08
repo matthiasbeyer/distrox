@@ -51,7 +51,7 @@ impl Application for Distrox {
     fn new(name: String) -> (Self, iced::Command<Self::Message>) {
         (
             Distrox::Loading,
-            iced::Command::perform(async {
+            iced::Command::perform(async move {
                 match Profile::new_inmemory(Config::default(), &name).await {
                     Err(_) => Message::FailedToLoad,
                     Ok(instance) => {
@@ -66,7 +66,7 @@ impl Application for Distrox {
         String::from("distrox")
     }
 
-    fn update(&mut self, message: Self::Message, _clipboard: &mut iced::Clipboard) -> iced::Command<Self::Message> {
+    fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
         match self {
             Distrox::Loading => {
                 match message {
@@ -124,7 +124,7 @@ impl Application for Distrox {
     fn view(&mut self) -> iced::Element<Self::Message> {
         match self {
             Distrox::Loading => {
-                let text = iced_native::widget::text::Text::new("Loading");
+                let text = iced::Text::new("Loading");
 
                 let content = Column::new()
                     .max_width(800)
