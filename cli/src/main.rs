@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 mod cli;
-mod commands;
+mod profile;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
     let matches = crate::cli::app().get_matches();
 
     match matches.subcommand() {
-        Some(("profile", matches)) => crate::commands::profile(matches).await,
+        Some(("profile", matches)) => crate::profile::profile(matches).await,
         Some(("gui", _)) => {
             unimplemented!()
         },
