@@ -2,6 +2,7 @@ use clap::crate_authors;
 use clap::crate_version;
 use clap::App;
 use clap::Arg;
+use clap::ArgGroup;
 
 pub fn app<'a>() -> App<'a> {
     App::new("distrox")
@@ -48,6 +49,43 @@ pub fn app<'a>() -> App<'a> {
                     .value_name("MULTIADDR")
                     .about("Connect to MULTIADDR as well")
                 )
+            )
+
+            .subcommand(App::new("post")
+                .author(crate_authors!())
+                .version(crate_version!())
+                .about("Just serve the profile")
+
+                .arg(Arg::new("name")
+                    .long("name")
+                    .required(true)
+                    .takes_value(true)
+                    .value_name("NAME")
+                    .about("Name of the profile to post to")
+                )
+
+                .arg(Arg::new("editor")
+                    .long("editor")
+                    .short('e')
+                    .required(false)
+                    .takes_value(false)
+                    .about("Launch the editor for the text to be posted")
+                    .conflicts_with("text")
+                )
+                .arg(Arg::new("text")
+                    .long("text")
+                    .required(true)
+                    .takes_value(true)
+                    .value_name("TEXT")
+                    .about("The text to be posted")
+                    .conflicts_with("editor")
+                )
+                .group(ArgGroup::new("text-or-editor")
+                    .args(&["text", "editor"])
+                    .required(true) // one must be present
+                )
+
+
             )
         )
 

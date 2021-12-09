@@ -49,6 +49,11 @@ impl ProfileState {
             keypair
         }
     }
+
+    pub(super) fn update_head(&mut self, cid: cid::Cid) -> Result<()> {
+        self.profile_head = Some(cid);
+        Ok(()) // reserved for future use
+    }
 }
 
 impl std::fmt::Debug for ProfileState {

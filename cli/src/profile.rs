@@ -13,6 +13,7 @@ pub async fn profile(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
         Some(("create", m)) => profile_create(m).await,
         Some(("serve", m)) => profile_serve(m).await,
+        Some(("post", m)) => profile_post(m).await,
         _ => unimplemented!(),
     }
 }
@@ -67,3 +68,30 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     log::info!("Shutting down...");
     profile.exit().await
 }
+
+async fn profile_post(matches: &ArgMatches) -> Result<()> {
+    let text = match matches.value_of("text") {
+        Some(text) => String::from(text),
+        None => if matches.is_present("editor") {
+            editor_input::input_from_editor("")?
+        } else {
+            unreachable!()
+        }
+    };
+    let name = matches.value_of("name").map(String::from).unwrap(); // required
+    let state_dir = Profile::state_dir_path(&name)?;
+    log::info!("Creating '{}' in {}", name, state_dir.display());
+
+    log::info!("Loading '{}' from {}", name, state_dir.display());
+    let mut profile = Profile::load(Config::default(), &name).await?;
+    log::info!("Profile loaded");
+    log::info!("Profile HEAD = {:?}", profile.head());
+
+    log::info!("Posting text...");
+    profile.post_text(text).await?;
+    log::info!("Posting text finished");
+    profile.save().await?;
+    log::info!("Saving profile state to disk finished");
+    profile.exit().await
+}
+

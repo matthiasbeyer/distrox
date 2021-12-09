@@ -66,6 +66,19 @@ impl Profile {
         self.client.connect(peer).await
     }
 
+    pub async fn post_text(&mut self, text: String) -> Result<cid::Cid> {
+        let parent = self.state
+            .profile_head()
+            .as_ref()
+            .map(cid::Cid::clone)
+            .into_iter()
+            .collect::<Vec<cid::Cid>>();
+
+        let new_cid = self.client.post_text_node(parent, text).await?;
+        self.state.update_head(new_cid.clone())?;
+        Ok(new_cid)
+    }
+
     async fn ipfs_path(state_dir: &StateDir) -> Result<PathBuf> {
         let path = state_dir.ipfs();
         tokio::fs::create_dir_all(&path).await?;
