@@ -51,6 +51,20 @@ pub fn app<'a>() -> App<'a> {
                 )
             )
 
+            .subcommand(App::new("cat")
+                .author(crate_authors!())
+                .version(crate_version!())
+                .about("Read complete timeline of profile")
+
+                .arg(Arg::new("name")
+                    .long("name")
+                    .required(true)
+                    .takes_value(true)
+                    .value_name("NAME")
+                    .about("Name of the profile")
+                )
+            )
+
             .subcommand(App::new("post")
                 .author(crate_authors!())
                 .version(crate_version!())
@@ -84,8 +98,6 @@ pub fn app<'a>() -> App<'a> {
                     .args(&["text", "editor"])
                     .required(true) // one must be present
                 )
-
-
             )
         )
 

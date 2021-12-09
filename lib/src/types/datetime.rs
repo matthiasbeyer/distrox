@@ -33,3 +33,9 @@ impl From<chrono::DateTime<chrono::Utc>> for DateTime {
     }
 }
 
+impl DateTime {
+    pub fn inner(&self) -> &chrono::DateTime<chrono::Utc> {
+        &self.0
+    }
+}
+

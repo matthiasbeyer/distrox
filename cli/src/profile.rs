@@ -8,12 +8,14 @@ use clap::ArgMatches;
 
 use distrox_lib::config::Config;
 use distrox_lib::profile::Profile;
+use distrox_lib::types::Payload;
 
 pub async fn profile(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
         Some(("create", m)) => profile_create(m).await,
         Some(("serve", m)) => profile_serve(m).await,
         Some(("post", m)) => profile_post(m).await,
+        Some(("cat", m)) => profile_cat(m).await,
         _ => unimplemented!(),
     }
 }
@@ -78,6 +80,7 @@ async fn profile_post(matches: &ArgMatches) -> Result<()> {
             unreachable!()
         }
     };
+
     let name = matches.value_of("name").map(String::from).unwrap(); // required
     let state_dir = Profile::state_dir_path(&name)?;
     log::info!("Creating '{}' in {}", name, state_dir.display());
@@ -95,3 +98,70 @@ async fn profile_post(matches: &ArgMatches) -> Result<()> {
     profile.exit().await
 }
 
+async fn profile_cat(matches: &ArgMatches) -> Result<()> {
+    use distrox_lib::stream::NodeStreamBuilder;
+    use futures::stream::StreamExt;
+
+    let name = matches.value_of("name").map(String::from).unwrap(); // required
+    let state_dir = Profile::state_dir_path(&name)?;
+    log::info!("Creating '{}' in {}", name, state_dir.display());
+
+    log::info!("Loading '{}' from {}", name, state_dir.display());
+    let profile = Profile::load(Config::default(), &name).await?;
+    log::info!("Profile loaded");
+    if let Some(head) = profile.head() {
+        log::info!("Profile HEAD = {:?}", head);
+        NodeStreamBuilder::starting_from(head.clone())
+            .into_stream(profile.client())
+            .then(|node| async {
+                match node {
+                    Err(e) => Err(e),
+                    Ok(node) => {
+                        profile.client()
+                            .get_payload(node.payload())
+                            .await
+                    }
+                }
+            })
+            .then(|payload| async {
+                match payload {
+                    Err(e) => Err(e),
+                    Ok(payload) => {
+                        profile.client()
+                            .get_content_text(payload.content())
+                            .await
+                            .map(|text| (payload, text))
+                    }
+                }
+            })
+            .then(|res| async {
+                use std::io::Write;
+                match res {
+                    Err(e) => {
+                        let out = std::io::stderr();
+                        let mut lock = out.lock();
+                        writeln!(lock, "Error: {:?}", e)?;
+                    }
+                    Ok((payload, text)) => {
+                        let out = std::io::stdout();
+                        let mut lock = out.lock();
+                        writeln!(lock, "{time} - {cid}",
+                            time = payload.timestamp().inner(),
+                            cid = payload.content())?;
+
+                        writeln!(lock, "{text}", text = text)?;
+                        writeln!(lock, "")?;
+                    },
+                }
+                Ok(())
+            })
+            .collect::<Vec<Result<()>>>()
+            .await
+            .into_iter()
+            .collect::<Result<()>>()?;
+    } else {
+        eprintln!("Profile has no posts");
+    }
+
+    Ok(())
+}
