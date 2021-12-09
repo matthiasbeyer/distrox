@@ -19,7 +19,7 @@ edition       = "2018"
 anyhow     = "1"
 chrono     = { version = "0.4", features = ["serde"] }
 cid        = "0.5"
-clap       = "3.0.0-beta.5"
+clap       = "=3.0.0-beta.5"
 env_logger = "0.8"
 futures    = "0.3"
 log        = "0.4"
