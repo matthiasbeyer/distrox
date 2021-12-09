@@ -1,10 +1,9 @@
 # distrox
 
-A distributed social network build on IPFS.
+A distributed social network build on IPFS/IPLD.
 
 
 ## License
 
-Server: AGPL-2.0 only.
-
+GPL-2.0 only.
 
