@@ -17,40 +17,17 @@ use crate::reactor::ctrl::ReactorReceiver;
 use crate::reactor::ctrl::ReactorSender;
 use crate::reactor::ctrl::ReplyChannel;
 
+mod ctrl;
+pub use ctrl::GossipRequest;
+pub use ctrl::GossipReply;
+
+mod msg;
+pub use msg::GossipMessage;
 
 #[derive(Debug)]
 pub struct GossipReactor {
     inner: Reactor<GossipRequest, GossipReply>,
     gossip_topic_name: String,
-}
-
-#[derive(Debug)]
-pub enum GossipRequest {
-    Ping,
-    PublishMe,
-}
-
-#[derive(Debug)]
-pub enum GossipReply {
-    Pong,
-    NoHead,
-    PublishMeResult(Result<()>),
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub enum GossipMessage {
-    CurrentProfileState {
-        peer_id: Vec<u8>,
-        cid: Vec<u8>,
-    },
-}
-
-impl GossipMessage {
-    fn into_bytes(self) -> Result<Vec<u8>> {
-        serde_json::to_string(&self)
-            .map(String::into_bytes)
-            .map_err(anyhow::Error::from)
-    }
 }
 
 
