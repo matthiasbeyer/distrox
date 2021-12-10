@@ -24,6 +24,8 @@ pub enum ReactorRequest<CustomRequest: Debug + Send + Sync> {
     /// Quit the reactor
     Exit,
 
+    Connect(ipfs::MultiaddrWithPeerId),
+
     Custom(CustomRequest),
 }
 
@@ -31,6 +33,8 @@ pub enum ReactorRequest<CustomRequest: Debug + Send + Sync> {
 pub enum ReactorReply<CustomReply: Debug + Send + Sync> {
     Pong,
     Exiting,
+
+    ConnectResult((Result<()>, ipfs::MultiaddrWithPeerId)),
 
     Custom(CustomReply),
 }
@@ -106,6 +110,22 @@ impl<CustomReactorRequest, CustomReactorReply> Reactor<CustomReactorRequest, Cus
                 }
                 Ok(None)
             },
+
+            (ReactorRequest::Connect(addr), reply_channel) => {
+                match self.profile.read().await.client().connect(addr.clone()).await {
+                    Ok(()) => if let Err(_) = reply_channel.send(ReactorReply::ConnectResult((Ok(()), addr.clone()))) {
+                        anyhow::bail!("Failed sending ConnectResult({}, Ok(()))", addr)
+                    } else {
+                        Ok(None)
+                    }
+
+                    Err(e) => if let Err(_) = reply_channel.send(ReactorReply::ConnectResult((Err(e), addr.clone()))) {
+                        anyhow::bail!("Failed sending ConnectResult({}, Err(_))", addr)
+                    } else {
+                        Ok(None)
+                    }
+                }
+            }
 
             (ReactorRequest::Custom(c), reply_channel) => {
                 Ok(Some((c, reply_channel)))
