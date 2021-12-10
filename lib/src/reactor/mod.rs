@@ -43,11 +43,13 @@ pub enum ReactorReply<CustomReply: Debug + Send + Sync> {
 ///
 /// The Reactor runs the whole application logic, that is syncing with other devices, fetching and
 /// keeping profile updates of other accounts, communication on the gossipsub topics... etc
-#[derive(Debug)]
+#[derive(Debug, getset::Getters, getset::Setters)]
 pub(super) struct Reactor<CustomReactorRequest, CustomReactorReply>
     where CustomReactorRequest: Debug + Send + Sync,
           CustomReactorReply: Debug + Send + Sync
 {
+    #[getset(get = "pub", set = "pub")]
+    running: bool,
     profile: Arc<RwLock<Profile>>,
     rx: ReactorReceiver<CustomReactorRequest, CustomReactorReply>,
 }
@@ -59,6 +61,7 @@ impl<CustomReactorRequest, CustomReactorReply> Reactor<CustomReactorRequest, Cus
     pub(super) fn new(profile: Arc<RwLock<Profile>>) -> (Self, ReactorSender<CustomReactorRequest, CustomReactorReply>) {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
         let reactor = Reactor {
+            running: true,
             profile,
             rx,
         };
@@ -105,6 +108,7 @@ impl<CustomReactorRequest, CustomReactorReply> Reactor<CustomReactorRequest, Cus
             },
 
             (ReactorRequest::Exit, reply_channel) => {
+                self.running = false;
                 if let Err(_) = reply_channel.send(ReactorReply::Exiting) {
                     anyhow::bail!("Failed sending EXITING reply")
                 }

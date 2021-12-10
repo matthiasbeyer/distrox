@@ -123,6 +123,7 @@ impl GossipReactor {
     pub async fn run(mut self) -> Result<()> {
         use futures::stream::StreamExt;
 
+        self.inner.set_running(true);
         let mut subscription_stream = self.inner.profile()
             .read()
             .await
@@ -147,6 +148,10 @@ impl GossipReactor {
                         break;
                     }
                 }
+            }
+
+            if !self.inner.running() {
+                break;
             }
         }
         Ok(())
