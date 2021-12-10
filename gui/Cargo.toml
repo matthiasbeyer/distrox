@@ -27,6 +27,7 @@ getset     = "0.1"
 xdg        = "2.4"
 tracing    = "0.1"
 ctrlc      = "3.2"
+mime       = "0.3"
 
 [dependencies.ipfs]
 git = "https://github.com/rs-ipfs/rust-ipfs/"
