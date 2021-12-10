@@ -46,6 +46,14 @@ impl GossipReactor {
         self.inner.receive_next_message().await
     }
 
+    fn send_gossip_reply(channel: ReplyChannel<GossipReply>, reply: GossipReply) -> Result<()> {
+        if let Err(_) = channel.send(ReactorReply::Custom(reply)) {
+            anyhow::bail!("Failed to send GossipReply::NoHead)")
+        }
+
+        Ok(())
+    }
+
     pub(super) async fn process_reactor_message(&mut self, request: (ReactorRequest<GossipRequest>, ReplyChannel<GossipReply>)) -> Result<()> {
         match self.inner.process_reactor_message(request).await? {
             None => Ok(()),
@@ -63,17 +71,15 @@ impl GossipReactor {
 
                 let head = profile.head();
                 if head.is_none() {
-                    if let Err(_) = reply_channel.send(ReactorReply::Custom(GossipReply::NoHead)) {
-                        anyhow::bail!("Failed to send GossipReply::NoHead)")
-                    }
+                    Self::send_gossip_reply(reply_channel, GossipReply::NoHead)?;
+                    return Ok(())
                 }
                 let head = head.unwrap().to_bytes();
 
                 let own_id = match profile.client().own_id().await {
                     Ok(id) => id,
-                    Err(e) => if let Err(_) = reply_channel.send(ReactorReply::Custom(GossipReply::PublishMeResult(Err(e)))) {
-                        anyhow::bail!("Failed to send GossipReply::PublishMeResult(Err(_))")
-                    } else {
+                    Err(e) => {
+                        Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e)))?;
                         return Ok(()) // TODO: abort operation here for now, maybe not the best idea
                     }
                 };
@@ -88,18 +94,8 @@ impl GossipReactor {
                     .await;
 
                 match publish_res {
-                    Ok(()) => if let Err(_) = reply_channel.send(ReactorReply::Custom(GossipReply::PublishMeResult(Ok(())))) {
-                        anyhow::bail!("Failed to send GossipReply::PublishMeResult(Ok(()))")
-                    } else {
-                        Ok(())
-                    },
-
-                    Err(e) => if let Err(_) = reply_channel.send(ReactorReply::Custom(GossipReply::PublishMeResult(Err(e)))) {
-                        anyhow::bail!("Failed to send GossipReply::PublishMeResult(Err(_))")
-                    } else {
-                        Ok(())
-                    }
-
+                    Ok(()) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Ok(()))),
+                    Err(e) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e))),
                 }
             },
         }
