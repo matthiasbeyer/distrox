@@ -65,39 +65,41 @@ impl GossipReactor {
                 Ok(())
             },
 
-            Some((GossipRequest::PublishMe, reply_channel)) => {
-                let profile = self.inner.profile();
-                let profile = profile.read().await;
+            Some((GossipRequest::PublishMe, reply_channel)) => self.publish_me(reply_channel).await
+        }
+    }
 
-                let head = profile.head();
-                if head.is_none() {
-                    Self::send_gossip_reply(reply_channel, GossipReply::NoHead)?;
-                    return Ok(())
-                }
-                let head = head.unwrap().to_bytes();
+    async fn publish_me(&self, reply_channel: ReplyChannel<GossipReply>) -> Result<()> {
+        let profile = self.inner.profile();
+        let profile = profile.read().await;
 
-                let own_id = match profile.client().own_id().await {
-                    Ok(id) => id,
-                    Err(e) => {
-                        Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e)))?;
-                        return Ok(()) // TODO: abort operation here for now, maybe not the best idea
-                    }
-                };
+        let head = profile.head();
+        if head.is_none() {
+            Self::send_gossip_reply(reply_channel, GossipReply::NoHead)?;
+            return Ok(())
+        }
+        let head = head.unwrap().to_bytes();
 
-                let publish_res = profile
-                    .client()
-                    .ipfs
-                    .pubsub_publish(self.gossip_topic_name.clone(), GossipMessage::CurrentProfileState {
-                        peer_id: own_id.to_bytes(),
-                        cid: head
-                    }.into_bytes()?)
-                    .await;
+        let own_id = match profile.client().own_id().await {
+            Ok(id) => id,
+            Err(e) => {
+                Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e)))?;
+                return Ok(()) // TODO: abort operation here for now, maybe not the best idea
+            }
+        };
 
-                match publish_res {
-                    Ok(()) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Ok(()))),
-                    Err(e) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e))),
-                }
-            },
+        let publish_res = profile
+            .client()
+            .ipfs
+            .pubsub_publish(self.gossip_topic_name.clone(), GossipMessage::CurrentProfileState {
+                peer_id: own_id.to_bytes(),
+                cid: head
+            }.into_bytes()?)
+            .await;
+
+        match publish_res {
+            Ok(()) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Ok(()))),
+            Err(e) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e))),
         }
     }
 
