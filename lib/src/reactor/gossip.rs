@@ -11,9 +11,9 @@ use tokio::sync::RwLock;
 
 use crate::profile::Profile;
 use crate::reactor::Reactor;
+use crate::reactor::ReactorReply;
+use crate::reactor::ReactorRequest;
 use crate::reactor::ctrl::ReactorReceiver;
-use crate::reactor::ctrl::ReactorReply;
-use crate::reactor::ctrl::ReactorRequest;
 use crate::reactor::ctrl::ReactorSender;
 use crate::reactor::ctrl::ReplyChannel;
 

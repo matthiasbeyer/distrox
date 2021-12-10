@@ -12,10 +12,28 @@ mod account;
 mod ctrl;
 
 pub use ctrl::ReactorReceiver;
-pub use ctrl::ReactorReply;
-pub use ctrl::ReactorRequest;
 pub use ctrl::ReactorSender;
 pub use ctrl::ReplyChannel;
+
+/// Send control messages to the reactor
+#[derive(Debug)]
+pub enum ReactorRequest<CustomRequest: Debug + Send + Sync> {
+    /// check if the reactor still responds
+    Ping,
+
+    /// Quit the reactor
+    Exit,
+
+    Custom(CustomRequest),
+}
+
+#[derive(Debug)]
+pub enum ReactorReply<CustomReply: Debug + Send + Sync> {
+    Pong,
+    Exiting,
+
+    Custom(CustomReply),
+}
 
 /// Reactor type, for running the application logic
 ///
