@@ -158,3 +158,59 @@ impl GossipReactor {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::convert::TryFrom;
+    use std::sync::Arc;
+    use tokio::sync::RwLock;
+
+    use crate::config::Config;
+
+    #[tokio::test]
+    async fn test_gossip_reactor_simple() {
+        let _ = env_logger::try_init();
+
+        let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple").await;
+        assert!(profile.is_ok());
+        let profile = Arc::new(RwLock::new(profile.unwrap()));
+
+        let gossip_topic_name = String::from("test-gossip-reactor-simple-topic");
+        let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name);
+
+        let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
+        tx.send((ReactorRequest::Ping, reply_sender));
+
+        let mut pong_received = false;
+        tokio::select! {
+            reply = reply_receiver.recv() => {
+                match reply {
+                    Some(ReactorReply::Pong) => {
+                        pong_received = true;
+                        let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
+                        tx.send((ReactorRequest::Exit, reply_sender));
+                    }
+                    Some(r) => {
+                        assert!(false, "Expected ReactorReply::Pong, got: {:?}", r);
+                    }
+                    None => {
+                        // nothing
+                    }
+                }
+            },
+
+            reactor_res = reactor.run() => {
+                match reactor_res {
+                    Ok(()) => assert!(false, "Reactor finished before pong was received"),
+
+                    Err(e) => {
+                        assert!(false, "Reactor errored: {:?}", e);
+                    }
+                }
+            }
+        }
+
+        assert!(pong_received, "No pong received");
+    }
+}
