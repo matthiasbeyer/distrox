@@ -27,10 +27,11 @@ struct State {
     scroll: scrollable::State,
     input: text_input::State,
     input_value: String,
+    timeline: Timeline,
 }
 
 #[derive(Debug, Clone)]
-enum Message {
+pub enum Message {
     Loaded(Arc<Profile>),
     FailedToLoad,
 
