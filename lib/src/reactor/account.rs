@@ -14,6 +14,6 @@ pub struct AccountReactor(GossipReactor);
 
 impl AccountReactor {
     pub(super) fn new(profile: Arc<RwLock<Profile>>) -> Self {
-        Self(GossipReactor::new(profile))
+        unimplemented!()
     }
 }
