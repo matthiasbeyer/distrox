@@ -12,6 +12,7 @@ use iced::text_input;
 
 use distrox_lib::profile::Profile;
 use distrox_lib::config::Config;
+use crate::timeline::Timeline;
 
 #[derive(Debug)]
 enum Distrox {
@@ -75,6 +76,7 @@ impl Application for Distrox {
                             scroll: scrollable::State::default(),
                             input: text_input::State::default(),
                             input_value: String::default(),
+                            timeline: Timeline::new()
                         };
                         *self = Distrox::Loaded(state);
                     }
@@ -150,7 +152,8 @@ impl Application for Distrox {
                 let content = Column::new()
                     .max_width(800)
                     .spacing(20)
-                    .push(input);
+                    .push(input)
+                    .push(state.timeline.view());
 
                 Scrollable::new(&mut state.scroll)
                     .padding(40)
