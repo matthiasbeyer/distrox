@@ -103,8 +103,24 @@ impl GossipReactor {
         }
     }
 
-    pub async fn run(mut self) -> Result<()> {
+    async fn handle_gossip_message(&self, msg: Arc<ipfs::PubsubMessage>) -> Result<()> {
         use std::convert::TryFrom;
+
+        match serde_json::from_slice(&msg.data) {
+            Err(e) => log::trace!("Failed to deserialize gossip message from {}", msg.source),
+            Ok(GossipMessage::CurrentProfileState { peer_id, cid }) => {
+                let peer_id = ipfs::PeerId::from_bytes(&peer_id);
+                let cid = cid::Cid::try_from(&*cid);
+                log::trace!("Peer {:?} is at {:?}", peer_id, cid);
+
+                // TODO start dispatched node chain fetching
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn run(mut self) -> Result<()> {
         use futures::stream::StreamExt;
 
         let mut subscription_stream = self.inner.profile()
@@ -126,14 +142,7 @@ impl GossipReactor {
 
                 next_gossip_message = subscription_stream.next() => {
                     if let Some(next_gossip_message) = next_gossip_message {
-                        match serde_json::from_slice(&next_gossip_message.data) {
-                            Err(e) => log::trace!("Failed to deserialize gossip message from {}", next_gossip_message.source),
-                            Ok(GossipMessage::CurrentProfileState { peer_id, cid }) => {
-                                let peer_id = ipfs::PeerId::from_bytes(&peer_id);
-                                let cid = cid::Cid::try_from(&*cid);
-                                log::trace!("Peer {:?} is at {:?}", peer_id, cid)
-                            }
-                        }
+                        self.handle_gossip_message(next_gossip_message).await?;
                     } else {
                         break;
                     }
