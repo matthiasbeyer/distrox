@@ -242,4 +242,66 @@ mod tests {
 
         assert!(pong_received, "No pong received");
     }
+
+    #[tokio::test]
+    async fn test_gossip_reactor_gossipping() {
+        let _ = env_logger::try_init();
+
+        let gossip_topic_name = String::from("test-gossip-reactor-gossipping-topic");
+        let (left_profile, left_reactor, left_tx) = {
+            let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple-left").await;
+            assert!(profile.is_ok());
+            let profile = Arc::new(RwLock::new(profile.unwrap()));
+
+            let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name.clone());
+            (profile, reactor, tx)
+        };
+
+        let (right_profile, right_reactor, right_tx) = {
+            let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple-right").await;
+            assert!(profile.is_ok());
+            let profile = Arc::new(RwLock::new(profile.unwrap()));
+
+            let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name.clone());
+            (profile, reactor, tx)
+        };
+
+        async fn get_peer_id(profile: Arc<RwLock<Profile>>) -> Result<ipfs::MultiaddrWithPeerId> {
+            profile.read()
+                .await
+                .client()
+                .ipfs
+                .identity()
+                .await
+                .map(|(pubkey, addr)| (pubkey.into_peer_id(), addr))
+                .and_then(|(peerid, mut addr)| {
+                    ipfs::MultiaddrWithPeerId::try_from({
+                        addr.pop().expect("At least one address for client")
+                    })
+                    .map_err(anyhow::Error::from)
+                })
+        }
+
+        let left_peer_id = get_peer_id(left_profile.clone()).await;
+        assert!(left_peer_id.is_ok(), "Not ok: {:?}", left_peer_id);
+        let left_peer_id = left_peer_id.unwrap();
+        let (right_reply_sender, mut right_reply_receiver) = tokio::sync::mpsc::unbounded_channel();
+        right_tx.send((ReactorRequest::Connect(left_peer_id), right_reply_sender));
+
+        if let Some(reply) = right_reply_receiver.recv().await {
+            match reply {
+                ReactorReply::Custom(GossipReply::ConnectResult(Ok(()))) => assert!(true),
+                other => assert!(false, "Expected ConnectResult(Ok(())), recv: {:?}", other),
+            }
+        } else {
+            assert!(false, "No reply from right reactor received");
+        }
+
+        let right_peer_id = get_peer_id(right_profile.clone()).await;
+        assert!(right_peer_id.is_ok(), "Not ok: {:?}", right_peer_id);
+        let right_peer_id = right_peer_id.unwrap();
+        let connected = left_reactor.is_connected_to(right_peer_id).await;
+        assert!(connected.is_ok());
+        assert!(connected.unwrap(), "Peers are not connected");
+    }
 }
