@@ -65,7 +65,17 @@ impl GossipReactor {
                 Ok(())
             },
 
-            Some((GossipRequest::PublishMe, reply_channel)) => self.publish_me(reply_channel).await
+            Some((GossipRequest::PublishMe, reply_channel)) => self.publish_me(reply_channel).await,
+
+            Some((GossipRequest::Connect(addr), reply_channel)) => {
+                let reply = GossipReply::ConnectResult(self.connect(addr.clone()).await);
+                if let Err(_) = Self::send_gossip_reply(reply_channel, reply) {
+                    anyhow::bail!("Failed sending Connect({}) reply", addr)
+                }
+
+                Ok(())
+            },
+
         }
     }
 
@@ -101,6 +111,10 @@ impl GossipReactor {
             Ok(()) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Ok(()))),
             Err(e) => Self::send_gossip_reply(reply_channel, GossipReply::PublishMeResult(Err(e))),
         }
+    }
+
+    async fn connect(&self, addr: ipfs::MultiaddrWithPeerId) -> Result<()> {
+        self.inner.profile().read().await.client().connect(addr).await
     }
 
     async fn handle_gossip_message(&self, msg: Arc<ipfs::PubsubMessage>) -> Result<()> {
