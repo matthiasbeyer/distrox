@@ -117,6 +117,21 @@ impl GossipReactor {
         self.inner.profile().read().await.client().connect(addr).await
     }
 
+    #[cfg(test)]
+    async fn is_connected_to(&self, addr: ipfs::MultiaddrWithPeerId) -> Result<bool> {
+        self.inner
+            .profile()
+            .read()
+            .await
+            .client()
+            .ipfs
+            .peers()
+            .await
+            .map(|connections| {
+                connections.iter().any(|connection| connection.addr == addr)
+            })
+    }
+
     async fn handle_gossip_message(&self, msg: Arc<ipfs::PubsubMessage>) -> Result<()> {
         use std::convert::TryFrom;
 
