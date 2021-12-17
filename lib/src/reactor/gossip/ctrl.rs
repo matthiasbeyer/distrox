@@ -2,6 +2,7 @@ use anyhow::Result;
 
 #[derive(Debug)]
 pub enum GossipRequest {
+    Exit,
     Ping,
     PublishMe,
     Connect(ipfs::MultiaddrWithPeerId),
@@ -9,6 +10,7 @@ pub enum GossipRequest {
 
 #[derive(Debug)]
 pub enum GossipReply {
+    Exiting,
     Pong,
     NoHead,
     PublishMeResult(Result<()>),

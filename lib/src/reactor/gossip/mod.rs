@@ -11,11 +11,10 @@ use tokio::sync::RwLock;
 
 use crate::profile::Profile;
 use crate::reactor::Reactor;
-use crate::reactor::ReactorReply;
-use crate::reactor::ReactorRequest;
+use crate::reactor::ReactorBuilder;
 use crate::reactor::ctrl::ReactorReceiver;
 use crate::reactor::ctrl::ReactorSender;
-use crate::reactor::ctrl::ReplyChannel;
+use crate::reactor::ctrl::ReplySender;
 
 mod ctrl;
 pub use ctrl::GossipRequest;
@@ -25,63 +24,49 @@ mod msg;
 pub use msg::GossipMessage;
 
 #[derive(Debug)]
-pub struct GossipReactor {
-    inner: Reactor<GossipRequest, GossipReply>,
+pub struct GossipReactorBuilder {
+    profile: Arc<RwLock<Profile>>,
     gossip_topic_name: String,
 }
 
+impl GossipReactorBuilder {
+    pub fn new(profile: Arc<RwLock<Profile>>, gossip_topic_name: String) -> Self {
+        Self { profile, gossip_topic_name }
+    }
+}
+
+impl ReactorBuilder for GossipReactorBuilder {
+    type Reactor = GossipReactor;
+
+    fn build_with_receiver(self, rr: ReactorReceiver<GossipRequest, GossipReply>) -> Self::Reactor {
+        GossipReactor {
+            running: false,
+            profile: self.profile,
+            gossip_topic_name: self.gossip_topic_name,
+            receiver: rr,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct GossipReactor {
+    running: bool,
+    profile: Arc<RwLock<Profile>>,
+    gossip_topic_name: String,
+    receiver: ReactorReceiver<GossipRequest, GossipReply>,
+}
 
 impl GossipReactor {
-    pub fn new(profile: Arc<RwLock<Profile>>, gossip_topic_name: String) -> (Self, ReactorSender<GossipRequest, GossipReply>) {
-        let (inner, sender) = Reactor::<GossipRequest, GossipReply>::new(profile);
-        let reactor = Self {
-            inner,
-            gossip_topic_name,
-        };
-
-        (reactor, sender)
-    }
-
-    pub async fn receive_next_message(&mut self) -> Option<(ReactorRequest<GossipRequest>, ReplyChannel<GossipReply>)> {
-        self.inner.receive_next_message().await
-    }
-
-    fn send_gossip_reply(channel: ReplyChannel<GossipReply>, reply: GossipReply) -> Result<()> {
-        if let Err(_) = channel.send(ReactorReply::Custom(reply)) {
+    fn send_gossip_reply(channel: ReplySender<GossipReply>, reply: GossipReply) -> Result<()> {
+        if let Err(_) = channel.send(reply) {
             anyhow::bail!("Failed to send GossipReply::NoHead)")
         }
 
         Ok(())
     }
 
-    pub(super) async fn process_reactor_message(&mut self, request: (ReactorRequest<GossipRequest>, ReplyChannel<GossipReply>)) -> Result<()> {
-        match self.inner.process_reactor_message(request).await? {
-            None => Ok(()),
-            Some((GossipRequest::Ping, reply_channel)) => {
-                if let Err(_) = reply_channel.send(ReactorReply::Custom(GossipReply::Pong)) {
-                    anyhow::bail!("Failed sening PONG reply")
-                }
-
-                Ok(())
-            },
-
-            Some((GossipRequest::PublishMe, reply_channel)) => self.publish_me(reply_channel).await,
-
-            Some((GossipRequest::Connect(addr), reply_channel)) => {
-                let reply = GossipReply::ConnectResult(self.connect(addr.clone()).await);
-                if let Err(_) = Self::send_gossip_reply(reply_channel, reply) {
-                    anyhow::bail!("Failed sending Connect({}) reply", addr)
-                }
-
-                Ok(())
-            },
-
-        }
-    }
-
-    async fn publish_me(&self, reply_channel: ReplyChannel<GossipReply>) -> Result<()> {
-        let profile = self.inner.profile();
-        let profile = profile.read().await;
+    async fn publish_me(&self, reply_channel: ReplySender<GossipReply>) -> Result<()> {
+        let profile = self.profile.read().await;
 
         let head = profile.head();
         if head.is_none() {
@@ -114,13 +99,12 @@ impl GossipReactor {
     }
 
     async fn connect(&self, addr: ipfs::MultiaddrWithPeerId) -> Result<()> {
-        self.inner.profile().read().await.client().connect(addr).await
+        self.profile.read().await.client().connect(addr).await
     }
 
     #[cfg(test)]
     async fn is_connected_to(&self, addr: ipfs::MultiaddrWithPeerId) -> Result<bool> {
-        self.inner
-            .profile()
+        self.profile
             .read()
             .await
             .client()
@@ -149,11 +133,18 @@ impl GossipReactor {
         Ok(())
     }
 
-    pub async fn run(mut self) -> Result<()> {
+}
+
+#[async_trait::async_trait]
+impl Reactor for GossipReactor {
+    type Request = GossipRequest;
+    type Reply = GossipReply;
+
+    async fn run(mut self) -> Result<()> {
         use futures::stream::StreamExt;
 
-        self.inner.set_running(true);
-        let mut subscription_stream = self.inner.profile()
+        self.running = true;
+        let mut subscription_stream = self.profile
             .read()
             .await
             .client()
@@ -163,10 +154,30 @@ impl GossipReactor {
 
         loop {
             tokio::select! {
-                next_control_msg = self.receive_next_message() => {
+                next_control_msg = self.receiver.recv() => {
                     match next_control_msg {
                         None => break,
-                        Some(tpl) => self.process_reactor_message(tpl).await?,
+                        Some((GossipRequest::Exit, reply_channel)) => {
+                            if let Err(_) = reply_channel.send(GossipReply::Exiting) {
+                                anyhow::bail!("Failed sending EXITING reply")
+                            }
+                            break
+                        },
+
+                        Some((GossipRequest::Ping, reply_channel)) => {
+                            if let Err(_) = reply_channel.send(GossipReply::Pong) {
+                                anyhow::bail!("Failed sending PONG reply")
+                            }
+                        },
+
+                        Some((GossipRequest::PublishMe, reply_channel)) => self.publish_me(reply_channel).await?,
+
+                        Some((GossipRequest::Connect(addr), reply_channel)) => {
+                            let reply = GossipReply::ConnectResult(self.connect(addr.clone()).await);
+                            if let Err(_) = Self::send_gossip_reply(reply_channel, reply) {
+                                anyhow::bail!("Failed sending Connect({}) reply", addr)
+                            }
+                        },
                     }
                 }
 
@@ -179,7 +190,7 @@ impl GossipReactor {
                 }
             }
 
-            if !self.inner.running() {
+            if !self.running {
                 break;
             }
         }
@@ -206,19 +217,20 @@ mod tests {
         let profile = Arc::new(RwLock::new(profile.unwrap()));
 
         let gossip_topic_name = String::from("test-gossip-reactor-simple-topic");
-        let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name);
+        let (rx, tx) = tokio::sync::mpsc::unbounded_channel();
+        let reactor = GossipReactorBuilder::new(profile.clone(), gossip_topic_name).build_with_receiver(tx);
 
         let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
-        tx.send((ReactorRequest::Ping, reply_sender));
+        rx.send((GossipRequest::Ping, reply_sender));
 
         let mut pong_received = false;
         tokio::select! {
             reply = reply_receiver.recv() => {
                 match reply {
-                    Some(ReactorReply::Pong) => {
+                    Some(GossipReply::Pong) => {
                         pong_received = true;
                         let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
-                        tx.send((ReactorRequest::Exit, reply_sender));
+                        rx.send((GossipRequest::Exit, reply_sender));
                     }
                     Some(r) => {
                         assert!(false, "Expected ReactorReply::Pong, got: {:?}", r);
@@ -253,8 +265,9 @@ mod tests {
             assert!(profile.is_ok());
             let profile = Arc::new(RwLock::new(profile.unwrap()));
 
-            let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name.clone());
-            (profile, reactor, tx)
+            let (rx, tx) = tokio::sync::mpsc::unbounded_channel();
+            let reactor = GossipReactorBuilder::new(profile.clone(), gossip_topic_name.clone()).build_with_receiver(tx);
+            (profile, reactor, rx)
         };
 
         let (right_profile, right_reactor, right_tx) = {
@@ -262,8 +275,9 @@ mod tests {
             assert!(profile.is_ok());
             let profile = Arc::new(RwLock::new(profile.unwrap()));
 
-            let (reactor, tx) = GossipReactor::new(profile.clone(), gossip_topic_name.clone());
-            (profile, reactor, tx)
+            let (rx, tx) = tokio::sync::mpsc::unbounded_channel();
+            let reactor = GossipReactorBuilder::new(profile.clone(), gossip_topic_name.clone()).build_with_receiver(tx);
+            (profile, reactor, rx)
         };
 
         async fn get_peer_id(profile: Arc<RwLock<Profile>>) -> Result<ipfs::MultiaddrWithPeerId> {
@@ -286,11 +300,11 @@ mod tests {
         assert!(left_peer_id.is_ok(), "Not ok: {:?}", left_peer_id);
         let left_peer_id = left_peer_id.unwrap();
         let (right_reply_sender, mut right_reply_receiver) = tokio::sync::mpsc::unbounded_channel();
-        right_tx.send((ReactorRequest::Connect(left_peer_id), right_reply_sender));
+        right_tx.send((GossipRequest::Connect(left_peer_id), right_reply_sender));
 
         if let Some(reply) = right_reply_receiver.recv().await {
             match reply {
-                ReactorReply::Custom(GossipReply::ConnectResult(Ok(()))) => assert!(true),
+                GossipReply::ConnectResult(Ok(())) => assert!(true),
                 other => assert!(false, "Expected ConnectResult(Ok(())), recv: {:?}", other),
             }
         } else {
