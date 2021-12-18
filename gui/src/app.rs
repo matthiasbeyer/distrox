@@ -52,7 +52,7 @@ impl Application for Distrox {
         (
             Distrox::Loading,
             iced::Command::perform(async move {
-                match Profile::new_inmemory(Config::default(), &name).await {
+                match Profile::load(Config::default(), &name).await {
                     Err(_) => Message::FailedToLoad,
                     Ok(instance) => {
                         Message::Loaded(Arc::new(instance))
