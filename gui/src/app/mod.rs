@@ -9,44 +9,27 @@ use iced::Scrollable;
 use iced::TextInput;
 use iced::scrollable;
 use iced::text_input;
-
 use distrox_lib::profile::Profile;
+
 use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
 use crate::post::Post;
 
+mod message;
+pub use message::Message;
+
 #[derive(Debug)]
 enum Distrox {
     Loading,
-    Loaded(State),
+    Loaded {
+        profile: Arc<Profile>,
+
+        scroll: scrollable::State,
+        input: text_input::State,
+        input_value: String,
+        timeline: Timeline,
+    },
     FailedToStart,
-}
-
-#[derive(Debug)]
-struct State {
-    profile: Arc<Profile>,
-
-    scroll: scrollable::State,
-    input: text_input::State,
-    input_value: String,
-    timeline: Timeline,
-}
-
-#[derive(Debug, Clone)]
-pub enum Message {
-    Loaded(Arc<Profile>),
-    FailedToLoad,
-
-    InputChanged(String),
-    CreatePost,
-
-    PostCreated(cid::Cid),
-    PostCreationFailed(String),
-
-    PostLoaded((distrox_lib::types::Payload, String)),
-    PostLoadingFailed,
-
-    TimelineScrolled(f32),
 }
 
 impl Application for Distrox {
@@ -59,7 +42,7 @@ impl Application for Distrox {
             Distrox::Loading,
             iced::Command::perform(async move {
                 match Profile::load(&name).await {
-                    Err(_) => Message::FailedToLoad,
+                    Err(e) => Message::FailedToLoad(e.to_string()),
                     Ok(instance) => {
                         Message::Loaded(Arc::new(instance))
                     }
@@ -77,18 +60,17 @@ impl Application for Distrox {
             Distrox::Loading => {
                 match message {
                     Message::Loaded(profile) => {
-                        let state = State {
+                        *self = Distrox::Loaded {
                             profile,
                             scroll: scrollable::State::default(),
                             input: text_input::State::default(),
                             input_value: String::default(),
                             timeline: Timeline::new(),
                         };
-                        *self = Distrox::Loaded(state);
                     }
 
-                    Message::FailedToLoad => {
-                        log::error!("Failed to load");
+                    Message::FailedToLoad(e) => {
+                        log::error!("Failed to load: {}", e);
                         *self = Distrox::FailedToStart;
                     }
 
@@ -97,16 +79,16 @@ impl Application for Distrox {
                 }
             }
 
-            Distrox::Loaded(state) => {
+            Distrox::Loaded { profile, ref mut input_value, timeline, .. } => {
                 match message {
                     Message::InputChanged(input) => {
-                        state.input_value = input;
+                        *input_value = input;
                     }
 
                     Message::CreatePost => {
-                        if !state.input_value.is_empty() {
-                            let input = state.input_value.clone();
-                            let client = state.profile.client().clone();
+                        if !input_value.is_empty() {
+                            let input = input_value.clone();
+                            let client = profile.client().clone();
                             log::trace!("Posting...");
                             iced::Command::perform(async move {
                                 log::trace!("Posting: '{}'", input);
@@ -120,7 +102,7 @@ impl Application for Distrox {
                     }
 
                     Message::PostCreated(cid) => {
-                        state.input_value = String::new();
+                        *input_value = String::new();
                         log::info!("Post created: {}", cid);
                     }
 
@@ -129,7 +111,7 @@ impl Application for Distrox {
                     }
 
                     Message::PostLoaded((payload, content)) => {
-                        state.timeline.push(payload, content);
+                        timeline.push(payload, content);
                     }
 
                     Message::PostLoadingFailed => {
@@ -167,20 +149,20 @@ impl Application for Distrox {
                     .into()
             }
 
-            Distrox::Loaded(state) => {
+            Distrox::Loaded { input, input_value, timeline, scroll, .. } => {
                 let input = TextInput::new(
-                    &mut state.input,
+                    input,
                     "What do you want to tell the world?",
-                    &mut state.input_value,
+                    input_value,
                     Message::InputChanged,
                 )
                 .padding(15)
                 .size(12)
                 .on_submit(Message::CreatePost);
 
-                let timeline = state.timeline.view();
+                let timeline = timeline.view();
 
-                Scrollable::new(&mut state.scroll)
+                Scrollable::new(scroll)
                     .padding(40)
                     .push(input)
                     .push(timeline)
@@ -195,14 +177,14 @@ impl Application for Distrox {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         match self {
-            Distrox::Loaded(state) => {
-                let head = state.profile.head();
+            Distrox::Loaded { profile, .. } => {
+                let head = profile.head();
 
                 match head {
                     None => iced::Subscription::none(),
                     Some(head) => {
                         iced::Subscription::from_recipe({
-                            PostLoadingRecipe::new(state.profile.client().clone(), head.clone())
+                            PostLoadingRecipe::new(profile.client().clone(), head.clone())
                         })
                     }
                 }
@@ -229,3 +211,4 @@ pub fn run(name: String) -> Result<()> {
 
     Distrox::run(settings).map_err(anyhow::Error::from)
 }
+
