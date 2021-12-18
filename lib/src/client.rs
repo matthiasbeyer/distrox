@@ -9,6 +9,7 @@ use crate::types::Node;
 use crate::types::Payload;
 use crate::types::DateTime;
 
+#[derive(Clone)]
 pub struct Client {
     pub(crate) ipfs: IpfsClient,
     config: Config,
