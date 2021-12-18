@@ -138,13 +138,14 @@ impl Application for Distrox {
                 let text = iced::Text::new("Loading");
 
                 let content = Column::new()
-                    .max_width(800)
                     .spacing(20)
                     .push(text);
 
                 Container::new(content)
                     .width(Length::Fill)
+                    .height(Length::Fill)
                     .center_x()
+                    .center_y()
                     .into()
             }
 
