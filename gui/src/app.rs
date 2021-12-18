@@ -107,7 +107,9 @@ impl Application for Distrox {
                         if !state.input_value.is_empty() {
                             let input = state.input_value.clone();
                             let client = state.profile.client().clone();
+                            log::trace!("Posting...");
                             iced::Command::perform(async move {
+                                log::trace!("Posting: '{}'", input);
                                 client.post_text_blob(input).await
                             },
                             |res| match res {
