@@ -160,7 +160,7 @@ impl Reactor for GossipReactor {
         loop {
             tokio::select! {
                 next_control_msg = self.receiver.recv() => {
-                    log::trace!("Received control message");
+                    log::trace!("Received control message: {:?}", next_control_msg);
                     match next_control_msg {
                         None => break,
                         Some((GossipRequest::Exit, reply_channel)) => {
@@ -171,6 +171,7 @@ impl Reactor for GossipReactor {
                         },
 
                         Some((GossipRequest::Ping, reply_channel)) => {
+                            log::trace!("Replying with Pong");
                             if let Err(_) = reply_channel.send(GossipReply::Pong) {
                                 anyhow::bail!("Failed sending PONG reply")
                             }
