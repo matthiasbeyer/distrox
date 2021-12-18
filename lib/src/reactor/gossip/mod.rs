@@ -47,11 +47,16 @@ impl ReactorBuilder for GossipReactorBuilder {
     }
 }
 
-#[derive(Debug)]
 pub struct GossipReactor {
     profile: Arc<RwLock<Profile>>,
     gossip_topic_name: String,
     receiver: ReactorReceiver<GossipRequest, GossipReply>,
+}
+
+impl std::fmt::Debug for GossipReactor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "GossipReactor {{ topic: '{}' }}", self.gossip_topic_name)
+    }
 }
 
 impl GossipReactor {
