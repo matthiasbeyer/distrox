@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum GossipMessage {
     CurrentProfileState {
         peer_id: Vec<u8>,

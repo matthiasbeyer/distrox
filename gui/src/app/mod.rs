@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::RwLock as StdRwLock;
 
 use anyhow::Result;
 use iced::Application;
@@ -18,11 +19,16 @@ use crate::timeline::PostLoadingRecipe;
 mod message;
 pub use message::Message;
 
+use crate::gossip::GossipRecipe;
+
 #[derive(Debug)]
 enum Distrox {
-    Loading,
+    Loading {
+        gossip_subscription_recv: StdRwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
+    },
     Loaded {
         profile: Arc<Profile>,
+        gossip_subscription_recv: StdRwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
 
         scroll: scrollable::State,
         input: text_input::State,
@@ -40,15 +46,33 @@ impl Application for Distrox {
     type Flags = String;
 
     fn new(name: String) -> (Self, iced::Command<Self::Message>) {
+        let (gossip_subscription_sender, gossip_subscription_recv) = tokio::sync::oneshot::channel();
         (
-            Distrox::Loading,
+            Distrox::Loading {
+                gossip_subscription_recv: StdRwLock::new(gossip_subscription_recv),
+            },
+
             iced::Command::perform(async move {
-                match Profile::load(&name).await {
-                    Err(e) => Message::FailedToLoad(e.to_string()),
-                    Ok(instance) => {
-                        Message::Loaded(Arc::new(instance))
-                    }
+                let profile = match Profile::load(&name).await {
+                    Err(e) => return Message::FailedToLoad(e.to_string()),
+                    Ok(instance) => Arc::new(instance),
+                };
+
+                if let Err(e) = profile.client()
+                    .pubsub_subscribe("distrox".to_string())
+                    .await
+                    .map_err(anyhow::Error::from)
+                    .map(|stream| {
+                        log::trace!("Subscription to 'distrox' pubsub channel worked");
+                        GossipRecipe::new(profile.clone(), stream)
+                    })
+                    .and_then(|s| gossip_subscription_sender.send(s).map_err(|_| anyhow::anyhow!("Failed to initialize gossipping module")))
+                {
+                    log::error!("Failed to load gossip recipe");
+                    return Message::FailedToLoad(e.to_string())
                 }
+
+                Message::Loaded(profile)
             }, |m: Message| -> Message { m })
         )
     }
@@ -59,33 +83,30 @@ impl Application for Distrox {
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
         match self {
-            Distrox::Loading => {
-                match message {
-                    Message::Loaded(profile) => {
-                        *self = Distrox::Loaded {
-                            profile,
-                            scroll: scrollable::State::default(),
-                            input: text_input::State::default(),
-                            input_value: String::default(),
-                            timeline: Timeline::new(),
-                            log_visible: false
-                        };
-                    }
+            Distrox::Loading { gossip_subscription_recv } => {
+                if let Message::Loaded(profile) = message {
+                    *self = Distrox::Loaded {
+                        profile,
 
-                    Message::FailedToLoad(e) => {
-                        log::error!("Failed to load: {}", e);
-                        *self = Distrox::FailedToStart;
-                    }
+                        // Don't even try to think what hoops I am jumping through here...
+                        gossip_subscription_recv: std::mem::replace(gossip_subscription_recv, StdRwLock::new(tokio::sync::oneshot::channel().1)),
+                        scroll: scrollable::State::default(),
+                        input: text_input::State::default(),
+                        input_value: String::default(),
+                        timeline: Timeline::new(),
+                        log_visible: false
+                    };
 
-                    _ => {}
 
                 }
-            }
+                iced::Command::none()
+            },
 
             Distrox::Loaded { profile, ref mut input_value, timeline, log_visible, .. } => {
                 match message {
                     Message::InputChanged(input) => {
                         *input_value = input;
+                        iced::Command::none()
                     }
 
                     Message::CreatePost => {
@@ -100,37 +121,45 @@ impl Application for Distrox {
                             |res| match res {
                                 Ok(cid) => Message::PostCreated(cid),
                                 Err(e) => Message::PostCreationFailed(e.to_string())
-                            });
+                            })
+                        } else {
+                            iced::Command::none()
                         }
                     }
 
                     Message::PostCreated(cid) => {
                         *input_value = String::new();
                         log::info!("Post created: {}", cid);
+                        iced::Command::none()
                     }
 
                     Message::PostCreationFailed(err) => {
                         log::error!("Post creation failed: {}", err);
+                        iced::Command::none()
                     }
 
                     Message::PostLoaded((payload, content)) => {
                         timeline.push(payload, content);
+                        iced::Command::none()
                     }
 
                     Message::PostLoadingFailed => {
                         log::error!("Failed to load some post, TODO: Better error logging");
+                        iced::Command::none()
                     }
 
                     Message::TimelineScrolled(f) => {
                         log::trace!("Timeline scrolled: {}", f);
+                        iced::Command::none()
                     }
 
                     Message::ToggleLog => {
                         log::trace!("Log toggled");
                         *log_visible = !*log_visible;
+                        iced::Command::none()
                     }
 
-                    _ => {}
+                    _ => iced::Command::none(),
                 }
             }
 
@@ -138,12 +167,11 @@ impl Application for Distrox {
                 unimplemented!()
             }
         }
-        iced::Command::none()
     }
 
     fn view(&mut self) -> iced::Element<Self::Message> {
         match self {
-            Distrox::Loading => {
+            Distrox::Loading { .. } => {
                 let text = iced::Text::new("Loading");
 
                 let content = Column::new()
@@ -252,10 +280,28 @@ impl Application for Distrox {
             })
         };
 
-        iced::Subscription::batch(vec![
+        let gossip_sub = match self {
+            Distrox::Loaded { gossip_subscription_recv, .. }  => {
+                match gossip_subscription_recv.write().ok() {
+                    Some(mut sub) => sub.try_recv()
+                        .ok() // Either empty or closed, ignore both
+                        .map(|sub| iced::Subscription::from_recipe(sub)),
+                    None => None
+                }
+            },
+            _ => None,
+        };
+
+        let mut subscriptions = vec![
             post_loading_subs,
-            keyboard_subs
-        ])
+            keyboard_subs,
+        ];
+
+        if let Some(gossip_sub) = gossip_sub {
+            subscriptions.push(gossip_sub);
+        }
+
+        iced::Subscription::batch(subscriptions)
     }
 
 }

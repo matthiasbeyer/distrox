@@ -18,14 +18,14 @@ use crate::gossip::GossipMessage;
 pub struct GossipHandler<Strategy = LogStrategy>
     where Strategy: GossipHandlingStrategy + Sync + Send
 {
-    profile: Arc<RwLock<Profile>>,
+    profile: Arc<Profile>,
     strategy: std::marker::PhantomData<Strategy>,
 }
 
 impl<Strat> GossipHandler<Strat>
     where Strat: GossipHandlingStrategy + Sync + Send
 {
-    pub fn new(profile: Arc<RwLock<Profile>>) -> Self {
+    pub fn new(profile: Arc<Profile>) -> Self {
         Self {
             profile,
             strategy: std::marker::PhantomData,
@@ -48,14 +48,14 @@ impl<Strat> GossipHandler<Strat>
 
 #[async_trait::async_trait]
 pub trait GossipHandlingStrategy: Sync + Send {
-    async fn handle_gossip_message(profile: Arc<RwLock<Profile>>, source: &ipfs::PeerId, msg: &GossipMessage) -> Result<()>;
+    async fn handle_gossip_message(profile: Arc<Profile>, source: &ipfs::PeerId, msg: &GossipMessage) -> Result<()>;
 }
 
 pub struct LogStrategy;
 
 #[async_trait::async_trait]
 impl GossipHandlingStrategy for LogStrategy {
-    async fn handle_gossip_message(_profile: Arc<RwLock<Profile>>, source: &ipfs::PeerId, msg: &GossipMessage) -> Result<()> {
+    async fn handle_gossip_message(_profile: Arc<Profile>, source: &ipfs::PeerId, msg: &GossipMessage) -> Result<()> {
         use std::convert::TryFrom;
         use std::ops::Deref;
 

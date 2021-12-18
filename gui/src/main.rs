@@ -4,6 +4,7 @@ mod app;
 mod cli;
 mod timeline;
 mod post;
+mod gossip;
 
 fn main() -> Result<()> {
     let _ = env_logger::try_init()?;
