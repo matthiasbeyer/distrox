@@ -10,6 +10,8 @@ pub enum Message {
     Loaded(Arc<Profile>),
     FailedToLoad(String),
 
+    ToggleLog,
+
     InputChanged(String),
     CreatePost,
 

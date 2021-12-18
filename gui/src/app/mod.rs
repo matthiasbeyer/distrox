@@ -5,6 +5,7 @@ use iced::Application;
 use iced::Column;
 use iced::Container;
 use iced::Length;
+use iced::Row;
 use iced::Scrollable;
 use iced::TextInput;
 use iced::scrollable;
@@ -27,6 +28,8 @@ enum Distrox {
         input: text_input::State,
         input_value: String,
         timeline: Timeline,
+
+        log_visible: bool,
     },
     FailedToStart,
 }
@@ -65,6 +68,7 @@ impl Application for Distrox {
                             input: text_input::State::default(),
                             input_value: String::default(),
                             timeline: Timeline::new(),
+                            log_visible: false
                         };
                     }
 
@@ -78,7 +82,7 @@ impl Application for Distrox {
                 }
             }
 
-            Distrox::Loaded { profile, ref mut input_value, timeline, .. } => {
+            Distrox::Loaded { profile, ref mut input_value, timeline, log_visible, .. } => {
                 match message {
                     Message::InputChanged(input) => {
                         *input_value = input;
@@ -121,6 +125,11 @@ impl Application for Distrox {
                         log::trace!("Timeline scrolled: {}", f);
                     }
 
+                    Message::ToggleLog => {
+                        log::trace!("Log toggled");
+                        *log_visible = !*log_visible;
+                    }
+
                     _ => {}
                 }
             }
@@ -149,24 +158,58 @@ impl Application for Distrox {
                     .into()
             }
 
-            Distrox::Loaded { input, input_value, timeline, scroll, .. } => {
-                let input = TextInput::new(
-                    input,
-                    "What do you want to tell the world?",
-                    input_value,
-                    Message::InputChanged,
-                )
-                .padding(15)
-                .size(12)
-                .on_submit(Message::CreatePost);
+            Distrox::Loaded { input, input_value, timeline, scroll, log_visible, .. } => {
+                let left_column = Column::new()
+                    .into();
 
-                let timeline = timeline.view();
+                let mid_column = Column::new()
+                    .push({
+                        let input = TextInput::new(
+                            input,
+                            "What do you want to tell the world?",
+                            input_value,
+                            Message::InputChanged,
+                        )
+                        .padding(15)
+                        .size(12)
+                        .on_submit(Message::CreatePost);
 
-                Scrollable::new(scroll)
-                    .padding(40)
-                    .push(input)
-                    .push(timeline)
-                    .into()
+                        let timeline = timeline.view();
+
+                        Scrollable::new(scroll)
+                            .padding(40)
+                            .push(input)
+                            .push(timeline)
+                    })
+                    .into();
+
+                let right_column = Column::new()
+                    .into();
+
+                let content = Row::with_children(vec![
+                        left_column,
+                        mid_column,
+                        right_column
+                    ])
+                    .spacing(20)
+                    .height(Length::Fill)
+                    .width(Length::Fill);
+
+                let content = Column::new()
+                    .height(Length::Fill)
+                    .width(Length::Fill)
+                    .push(content);
+
+                if *log_visible {
+                    let log = Column::new()
+                        .push({
+                            iced::Text::new("Here goes some log,... not yet implemented!")
+                                .size(8)
+                        });
+                    content.push(log)
+                } else {
+                    content
+                }.into()
             }
 
             Distrox::FailedToStart => {
@@ -176,7 +219,7 @@ impl Application for Distrox {
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        match self {
+        let post_loading_subs = match self {
             Distrox::Loaded { profile, .. } => {
                 let head = profile.head();
 
@@ -190,7 +233,29 @@ impl Application for Distrox {
                 }
             }
             _ => iced::Subscription::none(),
-        }
+        };
+
+        let keyboard_subs = {
+            use iced_native::event::Event;
+
+            iced_native::subscription::events_with(|event, _| {
+                match event {
+                    Event::Keyboard(iced_native::keyboard::Event::KeyPressed { key_code, .. }) => {
+                        if key_code == iced_native::keyboard::KeyCode::F11 {
+                            Some(Message::ToggleLog)
+                        } else {
+                            None
+                        }
+                    },
+                    _ => None,
+                }
+            })
+        };
+
+        iced::Subscription::batch(vec![
+            post_loading_subs,
+            keyboard_subs
+        ])
     }
 
 }
