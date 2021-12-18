@@ -229,31 +229,22 @@ mod tests {
         rx.send((GossipRequest::Ping, reply_sender)).unwrap();
 
         let mut pong_received = false;
-        tokio::select! {
-            reply = reply_receiver.recv() => {
-                match reply {
-                    Some(GossipReply::Pong) => {
-                        pong_received = true;
-                        let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
-                        rx.send((GossipRequest::Exit, reply_sender)).unwrap();
-                    }
-                    Some(r) => {
-                        assert!(false, "Expected ReactorReply::Pong, got: {:?}", r);
-                    }
-                    None => {
-                        // nothing
-                    }
-                }
-            },
+        let _ = tokio::spawn(async move {
+            reactor.run().await
+        });
 
-            reactor_res = reactor.run() => {
-                match reactor_res {
-                    Ok(()) => assert!(false, "Reactor finished before pong was received"),
-
-                    Err(e) => {
-                        assert!(false, "Reactor errored: {:?}", e);
-                    }
-                }
+        match reply_receiver.recv().await {
+            Some(GossipReply::Pong) => {
+                pong_received = true;
+                log::trace!("Pong received!");
+                let (reply_sender, mut reply_receiver) = tokio::sync::mpsc::unbounded_channel();
+                rx.send((GossipRequest::Exit, reply_sender)).unwrap();
+            }
+            Some(r) => {
+                assert!(false, "Expected ReactorReply::Pong, got: {:?}", r);
+            }
+            None => {
+                // nothing
             }
         }
 
