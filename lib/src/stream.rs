@@ -15,7 +15,7 @@ impl NodeStreamBuilder {
         }
     }
 
-    pub fn into_stream<'a>(self, client: &'a Client) -> impl futures::stream::Stream<Item = Result<Node>> + 'a {
+    pub fn into_stream(self, client: Client) -> impl futures::stream::Stream<Item = Result<Node>> {
         futures::stream::unfold((client, self.state), move |(client, mut state)| {
                 async move {
                     if let Some(node_cid) = state.pop() {

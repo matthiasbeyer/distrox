@@ -112,7 +112,7 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
     if let Some(head) = profile.head() {
         log::info!("Profile HEAD = {:?}", head);
         NodeStreamBuilder::starting_from(head.clone())
-            .into_stream(profile.client())
+            .into_stream(profile.client().clone())
             .then(|node| async {
                 match node {
                     Err(e) => Err(e),
