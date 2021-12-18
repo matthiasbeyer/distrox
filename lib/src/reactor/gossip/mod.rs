@@ -23,6 +23,10 @@ pub use ctrl::GossipReply;
 mod msg;
 pub use msg::GossipMessage;
 
+mod strategy;
+pub use strategy::GossipHandlingStrategy;
+pub use strategy::LogStrategy;
+
 #[derive(Debug)]
 pub struct GossipReactorBuilder {
     profile: Arc<RwLock<Profile>>,
@@ -43,23 +47,31 @@ impl ReactorBuilder for GossipReactorBuilder {
             profile: self.profile,
             gossip_topic_name: self.gossip_topic_name,
             receiver: rr,
+            strategy: std::marker::PhantomData,
         }
     }
 }
 
-pub struct GossipReactor {
+pub struct GossipReactor<Strategy = LogStrategy>
+    where Strategy: GossipHandlingStrategy + Sync + Send
+{
     profile: Arc<RwLock<Profile>>,
     gossip_topic_name: String,
     receiver: ReactorReceiver<GossipRequest, GossipReply>,
+    strategy: std::marker::PhantomData<Strategy>,
 }
 
-impl std::fmt::Debug for GossipReactor {
+impl<S> std::fmt::Debug for GossipReactor<S>
+    where S: GossipHandlingStrategy + Sync + Send
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "GossipReactor {{ topic: '{}' }}", self.gossip_topic_name)
     }
 }
 
-impl GossipReactor {
+impl<S> GossipReactor<S>
+    where S: GossipHandlingStrategy + Sync + Send
+{
     fn send_gossip_reply(channel: ReplySender<GossipReply>, reply: GossipReply) -> Result<()> {
         if let Err(_) = channel.send(reply) {
             anyhow::bail!("Failed to send GossipReply::NoHead)")
@@ -120,27 +132,12 @@ impl GossipReactor {
             })
     }
 
-    async fn handle_gossip_message(&self, msg: Arc<ipfs::PubsubMessage>) -> Result<()> {
-        use std::convert::TryFrom;
-
-        match serde_json::from_slice(&msg.data) {
-            Err(e) => log::trace!("Failed to deserialize gossip message from {}", msg.source),
-            Ok(GossipMessage::CurrentProfileState { peer_id, cid }) => {
-                let peer_id = ipfs::PeerId::from_bytes(&peer_id);
-                let cid = cid::Cid::try_from(&*cid);
-                log::trace!("Peer {:?} is at {:?}", peer_id, cid);
-
-                // TODO start dispatched node chain fetching
-            }
-        }
-
-        Ok(())
-    }
-
 }
 
 #[async_trait::async_trait]
-impl Reactor for GossipReactor {
+impl<S> Reactor for GossipReactor<S>
+    where S: GossipHandlingStrategy + Sync + Send
+{
     type Request = GossipRequest;
     type Reply = GossipReply;
 
@@ -189,9 +186,12 @@ impl Reactor for GossipReactor {
                 }
 
                 next_gossip_message = subscription_stream.next() => {
-                    if let Some(next_gossip_message) = next_gossip_message {
+                    if let Some(msg) = next_gossip_message {
                         log::trace!("Received gossip message");
-                        self.handle_gossip_message(next_gossip_message).await?;
+                        match serde_json::from_slice(&msg.data) {
+                            Ok(m) => S::handle_gossip_message(self.profile.clone(), msg.source, m).await?,
+                            Err(e) => log::trace!("Failed to deserialize gossip message from {}", msg.source),
+                        }
                     } else {
                         log::trace!("Gossip stream closed, breaking reactor loop");
                         break;
