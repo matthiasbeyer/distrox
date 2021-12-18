@@ -117,6 +117,15 @@ impl Application for Distrox {
                         }
                     }
 
+                    Message::PostCreated(cid) => {
+                        state.input_value = String::new();
+                        log::info!("Post created: {}", cid);
+                    }
+
+                    Message::PostCreationFailed(err) => {
+                        log::error!("Post creation failed: {}", err);
+                    }
+
                     Message::PostLoaded((payload, content)) => {
                         state.timeline.push(payload, content);
                     }
