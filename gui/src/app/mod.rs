@@ -13,7 +13,6 @@ use distrox_lib::profile::Profile;
 
 use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
-use crate::post::Post;
 
 mod message;
 pub use message::Message;

@@ -15,7 +15,7 @@ pub struct LogStrategy;
 
 #[async_trait::async_trait]
 impl GossipHandlingStrategy for LogStrategy {
-    async fn handle_gossip_message(profile: Arc<RwLock<Profile>>, source: ipfs::PeerId, msg: GossipMessage) -> Result<()> {
+    async fn handle_gossip_message(_profile: Arc<RwLock<Profile>>, source: ipfs::PeerId, msg: GossipMessage) -> Result<()> {
         use std::convert::TryFrom;
         match msg {
             GossipMessage::CurrentProfileState { peer_id, cid } => {

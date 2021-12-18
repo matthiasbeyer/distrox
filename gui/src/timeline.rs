@@ -1,6 +1,4 @@
 use anyhow::Result;
-use chrono::DateTime;
-use chrono::Utc;
 use futures::StreamExt;
 
 use iced_native::widget::scrollable::State as ScrollableState;
