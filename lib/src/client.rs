@@ -29,6 +29,14 @@ impl Client {
         Ok(())
     }
 
+    pub async fn own_id(&self) -> Result<ipfs::PeerId> {
+        self.ipfs
+            .identity()
+            .await
+            .map(|id| id.0.into_peer_id())
+            .map_err(anyhow::Error::from)
+    }
+
     pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
         self.ipfs.connect(peer).await
     }

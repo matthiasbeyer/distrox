@@ -6,6 +6,9 @@ use anyhow::Context;
 use anyhow::Result;
 use tokio::io::AsyncWriteExt;
 
+use crate::profile::device::Device;
+use crate::profile::device::DeviceSaveable;
+
 #[derive(Debug)]
 pub struct StateDir(PathBuf);
 
@@ -39,6 +42,9 @@ pub struct ProfileState {
 
     #[getset(get = "pub")]
     keypair: libp2p::identity::Keypair,
+
+    #[getset(get = "pub")]
+    other_devices: Vec<Device>,
 }
 
 impl ProfileState {
@@ -46,12 +52,18 @@ impl ProfileState {
         Self {
             profile_head: None,
             profile_name,
-            keypair
+            keypair,
+            other_devices: vec![],
         }
     }
 
     pub(super) fn update_head(&mut self, cid: cid::Cid) -> Result<()> {
         self.profile_head = Some(cid);
+        Ok(()) // reserved for future use
+    }
+
+    pub(super) fn add_device(&mut self, d: Device) -> Result<()> {
+        self.other_devices.push(d);
         Ok(()) // reserved for future use
     }
 }
@@ -67,6 +79,7 @@ pub(super) struct ProfileStateSaveable {
     profile_head: Option<Vec<u8>>,
     profile_name: String,
     keypair: Vec<u8>,
+    other_devices: Vec<DeviceSaveable>
 }
 
 impl ProfileStateSaveable {
@@ -77,7 +90,14 @@ impl ProfileStateSaveable {
             keypair: match s.keypair {
                 libp2p::identity::Keypair::Ed25519(ref kp) => Vec::from(kp.encode()),
                 _ => anyhow::bail!("Only keypair type ed25519 supported"),
-            }
+            },
+            other_devices: {
+                s.other_devices
+                    .iter()
+                    .cloned()
+                    .map(DeviceSaveable::try_from)
+                    .collect::<Result<Vec<_>>>()?
+            },
         })
     }
 
@@ -126,6 +146,12 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
             keypair: {
                 let kp = libp2p::identity::ed25519::Keypair::decode(&mut self.keypair)?;
                 libp2p::identity::Keypair::Ed25519(kp)
+            },
+            other_devices: {
+                self.other_devices
+                    .into_iter()
+                    .map(DeviceSaveable::try_into)
+                    .collect::<Result<Vec<_>>>()?
             },
         })
     }

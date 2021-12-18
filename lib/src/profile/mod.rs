@@ -7,6 +7,8 @@ use anyhow::Result;
 use crate::client::Client;
 use crate::ipfs_client::IpfsClient;
 
+mod device;
+use device::Device;
 mod state;
 use state::*;
 
@@ -163,6 +165,10 @@ impl Profile {
         self.client.exit().await
     }
 
+
+    pub fn add_device(&mut self, d: Device) -> Result<()> {
+        self.state.add_device(d)
+    }
 }
 
 
