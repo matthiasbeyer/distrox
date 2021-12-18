@@ -21,20 +21,16 @@ pub use message::Message;
 #[derive(Debug)]
 enum Distrox {
     Loading,
-    Loaded(State),
+    Loaded {
+        profile: Arc<Profile>,
+
+        scroll: scrollable::State,
+        input: text_input::State,
+        input_value: String,
+        timeline: Timeline,
+    },
     FailedToStart,
 }
-
-#[derive(Debug)]
-struct State {
-    profile: Arc<Profile>,
-
-    scroll: scrollable::State,
-    input: text_input::State,
-    input_value: String,
-    timeline: Timeline,
-}
-
 
 impl Application for Distrox {
     type Executor = iced::executor::Default; // tokio
@@ -64,14 +60,13 @@ impl Application for Distrox {
             Distrox::Loading => {
                 match message {
                     Message::Loaded(profile) => {
-                        let state = State {
+                        *self = Distrox::Loaded {
                             profile,
                             scroll: scrollable::State::default(),
                             input: text_input::State::default(),
                             input_value: String::default(),
                             timeline: Timeline::new(),
                         };
-                        *self = Distrox::Loaded(state);
                     }
 
                     Message::FailedToLoad => {
@@ -84,16 +79,16 @@ impl Application for Distrox {
                 }
             }
 
-            Distrox::Loaded(state) => {
+            Distrox::Loaded { profile, ref mut input_value, timeline, .. } => {
                 match message {
                     Message::InputChanged(input) => {
-                        state.input_value = input;
+                        *input_value = input;
                     }
 
                     Message::CreatePost => {
-                        if !state.input_value.is_empty() {
-                            let input = state.input_value.clone();
-                            let client = state.profile.client().clone();
+                        if !input_value.is_empty() {
+                            let input = input_value.clone();
+                            let client = profile.client().clone();
                             log::trace!("Posting...");
                             iced::Command::perform(async move {
                                 log::trace!("Posting: '{}'", input);
@@ -107,7 +102,7 @@ impl Application for Distrox {
                     }
 
                     Message::PostCreated(cid) => {
-                        state.input_value = String::new();
+                        *input_value = String::new();
                         log::info!("Post created: {}", cid);
                     }
 
@@ -116,7 +111,7 @@ impl Application for Distrox {
                     }
 
                     Message::PostLoaded((payload, content)) => {
-                        state.timeline.push(payload, content);
+                        timeline.push(payload, content);
                     }
 
                     Message::PostLoadingFailed => {
@@ -154,20 +149,20 @@ impl Application for Distrox {
                     .into()
             }
 
-            Distrox::Loaded(state) => {
+            Distrox::Loaded { input, input_value, timeline, scroll, .. } => {
                 let input = TextInput::new(
-                    &mut state.input,
+                    input,
                     "What do you want to tell the world?",
-                    &mut state.input_value,
+                    input_value,
                     Message::InputChanged,
                 )
                 .padding(15)
                 .size(12)
                 .on_submit(Message::CreatePost);
 
-                let timeline = state.timeline.view();
+                let timeline = timeline.view();
 
-                Scrollable::new(&mut state.scroll)
+                Scrollable::new(scroll)
                     .padding(40)
                     .push(input)
                     .push(timeline)
@@ -182,14 +177,14 @@ impl Application for Distrox {
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         match self {
-            Distrox::Loaded(state) => {
-                let head = state.profile.head();
+            Distrox::Loaded { profile, .. } => {
+                let head = profile.head();
 
                 match head {
                     None => iced::Subscription::none(),
                     Some(head) => {
                         iced::Subscription::from_recipe({
-                            PostLoadingRecipe::new(state.profile.client().clone(), head.clone())
+                            PostLoadingRecipe::new(profile.client().clone(), head.clone())
                         })
                     }
                 }
