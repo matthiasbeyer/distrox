@@ -9,11 +9,14 @@ use iced::Scrollable;
 use iced::TextInput;
 use iced::scrollable;
 use iced::text_input;
-
 use distrox_lib::profile::Profile;
+
 use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
 use crate::post::Post;
+
+mod message;
+pub use message::Message;
 
 #[derive(Debug)]
 enum Distrox {
@@ -32,22 +35,6 @@ struct State {
     timeline: Timeline,
 }
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Loaded(Arc<Profile>),
-    FailedToLoad,
-
-    InputChanged(String),
-    CreatePost,
-
-    PostCreated(cid::Cid),
-    PostCreationFailed(String),
-
-    PostLoaded((distrox_lib::types::Payload, String)),
-    PostLoadingFailed,
-
-    TimelineScrolled(f32),
-}
 
 impl Application for Distrox {
     type Executor = iced::executor::Default; // tokio
@@ -229,3 +216,4 @@ pub fn run(name: String) -> Result<()> {
 
     Distrox::run(settings).map_err(anyhow::Error::from)
 }
+
