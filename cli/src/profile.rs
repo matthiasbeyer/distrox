@@ -6,7 +6,6 @@ use anyhow::Context;
 use anyhow::Result;
 use clap::ArgMatches;
 
-use distrox_lib::config::Config;
 use distrox_lib::profile::Profile;
 use distrox_lib::types::Payload;
 
@@ -25,7 +24,7 @@ async fn profile_create(matches: &ArgMatches) -> Result<()> {
     let state_dir = Profile::state_dir_path(&name)?;
     log::info!("Creating '{}' in {}", name, state_dir.display());
 
-    let profile = Profile::create(&state_dir, &name, Config::default()).await?;
+    let profile = Profile::create(&state_dir, &name).await?;
     log::info!("Saving...");
     profile.save().await?;
 
@@ -45,7 +44,7 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     let state_dir = Profile::state_dir_path(&name)?;
 
     log::info!("Loading '{}' from {}", name, state_dir.display());
-    let profile = Profile::load(Config::default(), &name).await?;
+    let profile = Profile::load(&name).await?;
     log::info!("Profile loaded");
     if let Some(head) = profile.head().as_ref() {
         log::info!("Profile HEAD = {}", head);
@@ -86,7 +85,7 @@ async fn profile_post(matches: &ArgMatches) -> Result<()> {
     log::info!("Creating '{}' in {}", name, state_dir.display());
 
     log::info!("Loading '{}' from {}", name, state_dir.display());
-    let mut profile = Profile::load(Config::default(), &name).await?;
+    let mut profile = Profile::load(&name).await?;
     log::info!("Profile loaded");
     log::info!("Profile HEAD = {:?}", profile.head());
 
@@ -107,7 +106,7 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
     log::info!("Creating '{}' in {}", name, state_dir.display());
 
     log::info!("Loading '{}' from {}", name, state_dir.display());
-    let profile = Profile::load(Config::default(), &name).await?;
+    let profile = Profile::load(&name).await?;
     log::info!("Profile loaded");
     if let Some(head) = profile.head() {
         log::info!("Profile HEAD = {:?}", head);

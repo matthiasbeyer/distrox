@@ -5,7 +5,6 @@ use anyhow::Context;
 use anyhow::Result;
 
 use crate::client::Client;
-use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 
 mod state;
@@ -20,7 +19,7 @@ pub struct Profile {
 }
 
 impl Profile {
-    pub async fn create(state_dir: &StateDir, name: &str, config: Config) -> Result<Self> {
+    pub async fn create(state_dir: &StateDir, name: &str) -> Result<Self> {
         let bootstrap = vec![]; // TODO
         let mdns = true; // TODO
         let keypair = ipfs::Keypair::generate_ed25519();
@@ -40,20 +39,20 @@ impl Profile {
             .start()
             .await?;
         tokio::task::spawn(fut);
-        Self::new(ipfs, config, name.to_string(), keypair).await
+        Self::new(ipfs, name.to_string(), keypair).await
     }
 
-    pub async fn new_inmemory(config: Config, name: &str) -> Result<Self> {
+    pub async fn new_inmemory(name: &str) -> Result<Self> {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
         opts.mdns = true;
         let keypair = opts.keypair.clone();
         let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(opts).start().await.unwrap();
         tokio::task::spawn(fut);
-        Self::new(ipfs, config, format!("inmemory-{}", name), keypair).await
+        Self::new(ipfs, format!("inmemory-{}", name), keypair).await
     }
 
-    async fn new(ipfs: IpfsClient, config: Config, profile_name: String, keypair: libp2p::identity::Keypair) -> Result<Self> {
-        let client = Client::new(ipfs, config);
+    async fn new(ipfs: IpfsClient, profile_name: String, keypair: libp2p::identity::Keypair) -> Result<Self> {
+        let client = Client::new(ipfs);
         let state = ProfileState::new(profile_name, keypair);
         Ok(Profile { state, client })
     }
@@ -123,7 +122,7 @@ impl Profile {
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn load(config: Config, name: &str) -> Result<Self> {
+    pub async fn load(name: &str) -> Result<Self> {
         let state_dir_path = Self::state_dir_path(name)?;
         log::trace!("state_dir_path = {:?}", state_dir_path.display());
         let state: ProfileState = ProfileStateSaveable::load_from_disk(&state_dir_path)
@@ -156,7 +155,7 @@ impl Profile {
         log::debug!("Profile loading finished");
         Ok(Profile {
             state,
-            client: Client::new(ipfs, config),
+            client: Client::new(ipfs),
         })
     }
 
@@ -171,12 +170,11 @@ impl Profile {
 mod tests {
     use super::*;
     use std::convert::TryFrom;
-    use crate::config::Config;
 
     #[tokio::test]
     async fn test_create_profile() {
         let _ = env_logger::try_init();
-        let profile = Profile::new_inmemory(Config::default(), "test-create-profile").await;
+        let profile = Profile::new_inmemory("test-create-profile").await;
         assert!(profile.is_ok());
         let exit = profile.unwrap().exit().await;
         assert!(exit.is_ok(), "Not cleanly exited: {:?}", exit);
@@ -185,7 +183,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_profile_and_helloworld() {
         let _ = env_logger::try_init();
-        let profile = Profile::new_inmemory(Config::default(), "test-create-profile-and-helloworld").await;
+        let profile = Profile::new_inmemory("test-create-profile-and-helloworld").await;
         assert!(profile.is_ok());
         let profile = profile.unwrap();
         assert!(profile.head().is_none());

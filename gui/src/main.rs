@@ -3,7 +3,7 @@ use anyhow::Result;
 mod app;
 mod cli;
 mod timeline;
-mod timeline_post;
+mod post;
 
 fn main() -> Result<()> {
     let _ = env_logger::try_init()?;

@@ -3,7 +3,6 @@ use std::convert::TryFrom;
 use anyhow::Result;
 use ipfs::Cid;
 
-use crate::config::Config;
 use crate::ipfs_client::IpfsClient;
 use crate::types::Node;
 use crate::types::Payload;
@@ -12,21 +11,17 @@ use crate::types::DateTime;
 #[derive(Clone)]
 pub struct Client {
     pub(crate) ipfs: IpfsClient,
-    config: Config,
 }
 
 impl std::fmt::Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Client {{ config: {:?} }}", self.config)
+        write!(f, "Client {{ }}")
     }
 }
 
 impl Client {
-    pub fn new(ipfs: IpfsClient, config: Config) -> Self {
-        Client {
-            ipfs,
-            config
-        }
+    pub fn new(ipfs: IpfsClient) -> Self {
+        Client { ipfs }
     }
 
     pub async fn exit(self) -> Result<()> {
@@ -132,7 +127,6 @@ mod tests {
     use cid::Cid;
 
     use crate::client::Client;
-    use crate::config::Config;
     use crate::ipfs_client::IpfsClient;
     use crate::types::DateTime;
 
@@ -154,8 +148,7 @@ mod tests {
     async fn test_post_text_blob() {
         let _ = env_logger::try_init();
         let ipfs  = mk_ipfs().await;
-        let config = Config::default();
-        let client = Client::new(ipfs, config);
+        let client = Client::new(ipfs);
 
         let cid = client.post_text_blob(String::from("text")).await;
         assert!(cid.is_ok());
@@ -168,8 +161,7 @@ mod tests {
     async fn test_post_text_node() {
         let _ = env_logger::try_init();
         let ipfs  = mk_ipfs().await;
-        let config = Config::default();
-        let client = Client::new(ipfs, config);
+        let client = Client::new(ipfs);
 
         let datetime = mkdate(2021, 11, 27, 12, 30, 0);
 
@@ -184,8 +176,7 @@ mod tests {
     async fn test_post_text_node_roundtrip() {
         let _ = env_logger::try_init();
         let ipfs  = mk_ipfs().await;
-        let config = Config::default();
-        let client = Client::new(ipfs, config);
+        let client = Client::new(ipfs);
 
         let datetime = mkdate(2021, 11, 27, 12, 30, 0);
 
@@ -222,8 +213,7 @@ mod tests {
     async fn test_post_text_chain() {
         let _ = env_logger::try_init();
         let ipfs  = mk_ipfs().await;
-        let config = Config::default();
-        let client = Client::new(ipfs, config);
+        let client = Client::new(ipfs);
 
         let chain_elements = vec![
             (mkdate(2021, 11, 27, 12, 30, 0), "text1", "bafyreidaxkxog3bssyxxjxlsubgg6wauxbobp7gwyucs6gwzyrtsavb7yu"),
@@ -252,8 +242,7 @@ mod tests {
     async fn test_post_text_dag() {
         let _ = env_logger::try_init();
         let ipfs  = mk_ipfs().await;
-        let config = Config::default();
-        let client = Client::new(ipfs, config);
+        let client = Client::new(ipfs);
 
         async fn post_chain(client: &Client, chain_elements: &Vec<(DateTime, &str, &str)>) {
             let mut prev: Option<ipfs::Cid> = None;

@@ -28,6 +28,7 @@ xdg        = "2.4"
 tracing    = "0.1"
 ctrlc      = "3.2"
 mime       = "0.3"
+tokio      = { version = "1", features = ["full", "rt", "macros"] }
 
 [dependencies.ipfs]
 git = "https://github.com/rs-ipfs/rust-ipfs/"
@@ -38,6 +39,13 @@ git              = "https://github.com/iced-rs/iced"
 rev              = "6f3a608717e08330187871516b1ab54a9a2192a3"
 default-features = false
 features         = ["glow", "tokio", "debug"]
+
+
+[dependencies.iced_native]
+git              = "https://github.com/iced-rs/iced"
+rev              = "6f3a608717e08330187871516b1ab54a9a2192a3"
+default-features = false
+
 
 [dependencies.distrox-lib]
 path = "../lib"
