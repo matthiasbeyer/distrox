@@ -8,7 +8,7 @@ use distrox_lib::types::Payload;
 #[derive(Debug, Clone)]
 pub enum Message {
     Loaded(Arc<Profile>),
-    FailedToLoad,
+    FailedToLoad(String),
 
     InputChanged(String),
     CreatePost,

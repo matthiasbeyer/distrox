@@ -42,7 +42,7 @@ impl Application for Distrox {
             Distrox::Loading,
             iced::Command::perform(async move {
                 match Profile::load(&name).await {
-                    Err(_) => Message::FailedToLoad,
+                    Err(e) => Message::FailedToLoad(e.to_string()),
                     Ok(instance) => {
                         Message::Loaded(Arc::new(instance))
                     }
@@ -69,8 +69,8 @@ impl Application for Distrox {
                         };
                     }
 
-                    Message::FailedToLoad => {
-                        log::error!("Failed to load");
+                    Message::FailedToLoad(e) => {
+                        log::error!("Failed to load: {}", e);
                         *self = Distrox::FailedToStart;
                     }
 
