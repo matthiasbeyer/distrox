@@ -211,13 +211,11 @@ mod tests {
     use std::sync::Arc;
     use tokio::sync::RwLock;
 
-    use crate::config::Config;
-
     #[tokio::test]
     async fn test_gossip_reactor_simple() {
         let _ = env_logger::try_init();
 
-        let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple").await;
+        let profile = Profile::new_inmemory("test-gossip-reactor-simple").await;
         assert!(profile.is_ok());
         let profile = Arc::new(RwLock::new(profile.unwrap()));
 
@@ -257,7 +255,7 @@ mod tests {
 
         let gossip_topic_name = String::from("test-gossip-reactor-gossipping-topic");
         let (left_profile, left_reactor, left_rx) = {
-            let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple-left").await;
+            let profile = Profile::new_inmemory("test-gossip-reactor-simple-left").await;
             assert!(profile.is_ok());
             let profile = Arc::new(RwLock::new(profile.unwrap()));
 
@@ -268,7 +266,7 @@ mod tests {
         log::trace!("Built left GossipReactor");
 
         let (right_profile, right_reactor, right_rx) = {
-            let profile = Profile::new_inmemory(Config::default(), "test-gossip-reactor-simple-right").await;
+            let profile = Profile::new_inmemory("test-gossip-reactor-simple-right").await;
             assert!(profile.is_ok());
             let profile = Arc::new(RwLock::new(profile.unwrap()));
 
