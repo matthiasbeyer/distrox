@@ -146,7 +146,7 @@ impl Application for Distrox {
                     Message::InputChanged,
                 )
                 .padding(15)
-                .size(30)
+                .size(12)
                 .on_submit(Message::CreatePost);
 
                 let content = Column::new()
