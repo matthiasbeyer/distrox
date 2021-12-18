@@ -13,7 +13,6 @@ use iced::text_input;
 use distrox_lib::profile::Profile;
 use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
-use crate::post::Post;
 
 #[derive(Debug)]
 enum Distrox {
