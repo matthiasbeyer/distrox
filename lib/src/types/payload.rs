@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use crate::types::DateTime;
 
-#[derive(Debug, Eq, PartialEq, getset::Getters)]
+#[derive(Clone, Debug, Eq, PartialEq, getset::Getters)]
 pub struct Payload {
     // TODO: Make this a mime::Mime, but as this type does not impl Serialize/Deserialize, we
     // cannot do this trivially yet
