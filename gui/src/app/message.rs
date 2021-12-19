@@ -29,3 +29,29 @@ pub enum Message {
 
     TimelineScrolled(f32),
 }
+
+impl Message {
+    pub fn description(&self) -> &'static str {
+        match self {
+            Message::Loaded(_)                   => "Loaded",
+            Message::FailedToLoad(_)             => "FailedToLoad",
+
+            Message::ToggleLog                   => "ToggleLog",
+
+            Message::GossipSubscriptionFailed(_) => "GossipSubscriptionFailed",
+            Message::GossipHandled(_)            => "GossipHandled",
+
+            Message::InputChanged(_)             => "InputChanged",
+            Message::CreatePost                  => "CreatePost",
+
+            Message::PostCreated(_)              => "PostCreated",
+            Message::PostCreationFailed(_)       => "PostCreationFailed",
+
+            Message::PostLoaded(_)               => "PostLoaded",
+            Message::PostLoadingFailed           => "PostLoadingFailed",
+
+            Message::TimelineScrolled(_)         => "TimelineScrolled",
+        }
+    }
+}
+

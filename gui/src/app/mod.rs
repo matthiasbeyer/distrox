@@ -82,6 +82,7 @@ impl Application for Distrox {
     }
 
     fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+        log::trace!("Received message: {}", message.description());
         match self {
             Distrox::Loading { gossip_subscription_recv } => {
                 if let Message::Loaded(profile) = message {
