@@ -36,7 +36,7 @@ enum Distrox {
         timeline: Timeline,
 
         log_visible: bool,
-        log: std::collections::VecDeque<distrox_lib::gossip::GossipMessage>,
+        log: std::collections::VecDeque<String>,
     },
     FailedToStart,
 }
@@ -163,7 +163,14 @@ impl Application for Distrox {
                     }
 
                     Message::GossipHandled(msg) => {
+                        use distrox_lib::gossip::GossipMessage;
+
                         log::trace!("Gossip handled, adding to log: {:?}", msg);
+                        let msg = match msg {
+                            GossipMessage::CurrentProfileState { peer_id, cid } => {
+                                format!("Peer {:?} is at {:?}", peer_id, cid)
+                            }
+                        };
                         log.push_back(msg);
                         while log.len() > 1000 {
                             let _ = log.pop_front();
@@ -243,14 +250,6 @@ impl Application for Distrox {
                 if *log_visible {
                     let log = Column::with_children({
                         log.iter()
-                            .map(|msg| {
-                                use distrox_lib::gossip::GossipMessage;
-                                match msg {
-                                    GossipMessage::CurrentProfileState { peer_id, cid } => {
-                                        format!("Peer {:?} is at {:?}", peer_id, cid)
-                                    }
-                                }
-                            })
                             .map(iced::Text::new)
                             .map(|txt| txt.size(8))
                             .map(iced::Element::from)
