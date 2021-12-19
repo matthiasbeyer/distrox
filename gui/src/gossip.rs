@@ -29,7 +29,8 @@ where
 
     fn hash(&self, state: &mut H) {
         use std::hash::Hash;
-        unimplemented!()
+        struct Marker;
+        std::any::TypeId::of::<Marker>().hash(state);
     }
 
     fn stream(self: Box<Self>, _input: futures::stream::BoxStream<'static, I>) -> futures::stream::BoxStream<'static, Self::Output> {
