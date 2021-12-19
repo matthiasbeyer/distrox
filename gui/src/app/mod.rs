@@ -36,6 +36,7 @@ enum Distrox {
         timeline: Timeline,
 
         log_visible: bool,
+        log: std::collections::VecDeque<distrox_lib::gossip::GossipMessage>,
     },
     FailedToStart,
 }
@@ -95,7 +96,8 @@ impl Application for Distrox {
                         input: text_input::State::default(),
                         input_value: String::default(),
                         timeline: Timeline::new(),
-                        log_visible: false
+                        log_visible: false,
+                        log: std::collections::VecDeque::with_capacity(1000),
                     };
 
 
@@ -103,7 +105,7 @@ impl Application for Distrox {
                 iced::Command::none()
             },
 
-            Distrox::Loaded { profile, ref mut input_value, timeline, log_visible, .. } => {
+            Distrox::Loaded { profile, ref mut input_value, timeline, log_visible, log, .. } => {
                 match message {
                     Message::InputChanged(input) => {
                         *input_value = input;
@@ -160,6 +162,15 @@ impl Application for Distrox {
                         iced::Command::none()
                     }
 
+                    Message::GossipHandled(msg) => {
+                        log::trace!("Gossip handled, adding to log: {:?}", msg);
+                        log.push_back(msg);
+                        while log.len() > 1000 {
+                            let _ = log.pop_front();
+                        }
+                        iced::Command::none()
+                    }
+
                     _ => iced::Command::none(),
                 }
             }
@@ -187,7 +198,7 @@ impl Application for Distrox {
                     .into()
             }
 
-            Distrox::Loaded { input, input_value, timeline, scroll, log_visible, .. } => {
+            Distrox::Loaded { input, input_value, timeline, scroll, log_visible, log, .. } => {
                 let left_column = Column::new()
                     .into();
 
@@ -230,11 +241,21 @@ impl Application for Distrox {
                     .push(content);
 
                 if *log_visible {
-                    let log = Column::new()
-                        .push({
-                            iced::Text::new("Here goes some log,... not yet implemented!")
-                                .size(8)
-                        });
+                    let log = Column::with_children({
+                        log.iter()
+                            .map(|msg| {
+                                use distrox_lib::gossip::GossipMessage;
+                                match msg {
+                                    GossipMessage::CurrentProfileState { peer_id, cid } => {
+                                        format!("Peer {:?} is at {:?}", peer_id, cid)
+                                    }
+                                }
+                            })
+                            .map(iced::Text::new)
+                            .map(|txt| txt.size(8))
+                            .map(iced::Element::from)
+                            .collect()
+                    });
                     content.push(log)
                 } else {
                     content
