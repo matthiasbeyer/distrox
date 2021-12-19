@@ -178,6 +178,29 @@ impl Application for Distrox {
                         iced::Command::none()
                     }
 
+                    Message::PublishGossipAboutMe => {
+                        let profile = profile.clone();
+                        iced::Command::perform(async move {
+                            if let Err(e) = profile.gossip_own_state("distrox".to_string()).await {
+                                Message::GossippingFailed(e.to_string())
+                            } else {
+                                Message::OwnStateGossipped
+                            }
+                        }, |m: Message| -> Message { m })
+                    }
+
+                    Message::OwnStateGossipped => {
+                        log::trace!("Gossipped own state");
+                        log.push_back("Gossipped own state".to_string());
+                        iced::Command::none()
+                    }
+
+                    Message::GossippingFailed(e) => {
+                        log::trace!("Gossipped failed: {}", e);
+                        log.push_back(format!("Gossipped failed: {}", e));
+                        iced::Command::none()
+                    }
+
                     _ => iced::Command::none(),
                 }
             }
@@ -313,9 +336,15 @@ impl Application for Distrox {
             _ => None,
         };
 
+        let gossip_sending_sub = {
+            iced::time::every(std::time::Duration::from_millis(100))
+                .map(|_| Message::PublishGossipAboutMe)
+        };
+
         let mut subscriptions = vec![
             post_loading_subs,
             keyboard_subs,
+            gossip_sending_sub,
         ];
 
         if let Some(gossip_sub) = gossip_sub {

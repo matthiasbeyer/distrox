@@ -18,6 +18,10 @@ pub enum Message {
     GossipSubscriptionFailed(String),
     GossipHandled(GossipMessage),
 
+    PublishGossipAboutMe,
+    OwnStateGossipped,
+    GossippingFailed(String),
+
     InputChanged(String),
     CreatePost,
 
@@ -40,6 +44,10 @@ impl Message {
 
             Message::GossipSubscriptionFailed(_) => "GossipSubscriptionFailed",
             Message::GossipHandled(_)            => "GossipHandled",
+
+            Message::PublishGossipAboutMe        => "PublishGossipAboutMe",
+            Message::OwnStateGossipped           => "OwnStateGossipped",
+            Message::GossippingFailed(_)         => "GossippingFailed",
 
             Message::InputChanged(_)             => "InputChanged",
             Message::CreatePost                  => "CreatePost",
