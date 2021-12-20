@@ -63,6 +63,10 @@ impl Profile {
         self.state.profile_head().as_ref()
     }
 
+    pub async fn listen_on(&self, addr: ipfs::Multiaddr) -> Result<()> {
+        self.client.listen_on(addr).await
+    }
+
     pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
         self.client.connect(peer).await
     }
