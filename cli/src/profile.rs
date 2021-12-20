@@ -67,6 +67,17 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
         }
     }
 
+    {
+        let addrs = profile.client().own_addresses().await?;
+        if addrs.is_empty() {
+            log::error!("No own address");
+        } else {
+            for addr in addrs {
+                log::info!("Own addr: {}", addr);
+            }
+        }
+    }
+
     if let Some(connect_to) = connect_peer {
         for c in connect_to {
             log::info!("Connecting to {:?}", c);
