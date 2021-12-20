@@ -85,8 +85,22 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
         }
     }
 
+    let mut gossip_channel = Box::pin({
+        profile.client()
+            .pubsub_subscribe("distrox".to_string())
+            .await
+            .map(|stream| {
+                use distrox_lib::gossip::deserializer::GossipDeserializer;
+                use distrox_lib::gossip::deserializer::LogStrategy;
+
+                GossipDeserializer::<LogStrategy>::new().run(stream)
+            })?
+    });
+
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
+
+    let own_peer_id = profile.client().own_id().await?;
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::SeqCst);
@@ -94,8 +108,21 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 
     log::info!("Serving...");
     while running.load(Ordering::SeqCst) {
+        use futures::stream::StreamExt;
+        use distrox_lib::gossip::GossipMessage;
+
         tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
-        profile.gossip_own_state("distrox".to_string()).await?
+
+        tokio::select! {
+            own = profile.gossip_own_state("distrox".to_string()) => own?,
+            other = gossip_channel.next() => {
+                let gossip_myself = other.as_ref().map(|(source, _)| *source == own_peer_id).unwrap_or(false);
+
+                if !gossip_myself {
+                    log::trace!("Received gossip: {:?}", other);
+                }
+            }
+        }
     }
     log::info!("Shutting down...");
     profile.exit().await
