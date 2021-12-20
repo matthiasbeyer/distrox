@@ -46,6 +46,7 @@ pub fn app<'a>() -> App<'a> {
                     .long("connect")
                     .required(false)
                     .takes_value(true)
+                    .multiple(true)
                     .value_name("MULTIADDR")
                     .about("Connect to MULTIADDR as well")
                 )

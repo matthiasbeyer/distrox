@@ -36,10 +36,14 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     use ipfs::MultiaddrWithPeerId;
 
     let name = matches.value_of("name").map(String::from).unwrap(); // required
-    let connect_peer = matches.value_of("connect").map(|s| {
-        s.parse::<MultiaddrWithPeerId>()
-            .map_err(anyhow::Error::from)
-    }).transpose()?;
+    let connect_peer = matches.values_of("connect")
+        .map(|v| {
+            v.map(|s| {
+                s.parse::<MultiaddrWithPeerId>().map_err(anyhow::Error::from)
+            })
+            .collect::<Result<Vec<_>>>()
+        })
+        .transpose()?;
 
     let state_dir = Profile::state_dir_path(&name)?;
 
@@ -51,8 +55,10 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     }
 
     if let Some(connect_to) = connect_peer {
-        log::info!("Connecting to {:?}", connect_to);
-        profile.connect(connect_to).await?;
+        for c in connect_to {
+            log::info!("Connecting to {:?}", c);
+            profile.connect(c).await?;
+        }
     }
 
     let running = Arc::new(AtomicBool::new(true));
