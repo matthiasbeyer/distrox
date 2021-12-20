@@ -36,6 +36,12 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     use ipfs::MultiaddrWithPeerId;
 
     let name = matches.value_of("name").map(String::from).unwrap(); // required
+    let listen_addrs = matches.values_of("listen")
+        .map(|v| {
+            v.map(|s| s.parse::<ipfs::Multiaddr>().map_err(anyhow::Error::from))
+                .collect::<Result<Vec<_>>>()
+        })
+        .transpose()?;
     let connect_peer = matches.values_of("connect")
         .map(|v| {
             v.map(|s| {
@@ -52,6 +58,13 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     log::info!("Profile loaded");
     if let Some(head) = profile.head().as_ref() {
         log::info!("Profile HEAD = {}", head);
+    }
+
+    if let Some(listen) = listen_addrs {
+        for l in listen {
+            log::debug!("Adding listening address: {}", l);
+            profile.listen_on(l).await?;
+        }
     }
 
     if let Some(connect_to) = connect_peer {
