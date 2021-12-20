@@ -46,8 +46,18 @@ pub fn app<'a>() -> App<'a> {
                     .long("connect")
                     .required(false)
                     .takes_value(true)
+                    .multiple(true)
                     .value_name("MULTIADDR")
                     .about("Connect to MULTIADDR as well")
+                )
+
+                .arg(Arg::new("listen")
+                    .long("listen")
+                    .required(false)
+                    .takes_value(true)
+                    .multiple(true)
+                    .value_name("MULTIADDR")
+                    .about("Listen on MULTIADDR, e.g. '/ip4/127.0.0.1/tcp/10000'")
                 )
             )
 

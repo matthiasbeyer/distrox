@@ -36,10 +36,20 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     use ipfs::MultiaddrWithPeerId;
 
     let name = matches.value_of("name").map(String::from).unwrap(); // required
-    let connect_peer = matches.value_of("connect").map(|s| {
-        s.parse::<MultiaddrWithPeerId>()
-            .map_err(anyhow::Error::from)
-    }).transpose()?;
+    let listen_addrs = matches.values_of("listen")
+        .map(|v| {
+            v.map(|s| s.parse::<ipfs::Multiaddr>().map_err(anyhow::Error::from))
+                .collect::<Result<Vec<_>>>()
+        })
+        .transpose()?;
+    let connect_peer = matches.values_of("connect")
+        .map(|v| {
+            v.map(|s| {
+                s.parse::<MultiaddrWithPeerId>().map_err(anyhow::Error::from)
+            })
+            .collect::<Result<Vec<_>>>()
+        })
+        .transpose()?;
 
     let state_dir = Profile::state_dir_path(&name)?;
 
@@ -50,13 +60,47 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
         log::info!("Profile HEAD = {}", head);
     }
 
-    if let Some(connect_to) = connect_peer {
-        log::info!("Connecting to {:?}", connect_to);
-        profile.connect(connect_to).await?;
+    if let Some(listen) = listen_addrs {
+        for l in listen {
+            log::debug!("Adding listening address: {}", l);
+            profile.listen_on(l).await?;
+        }
     }
+
+    {
+        let addrs = profile.client().own_addresses().await?;
+        if addrs.is_empty() {
+            log::error!("No own address");
+        } else {
+            for addr in addrs {
+                log::info!("Own addr: {}", addr);
+            }
+        }
+    }
+
+    if let Some(connect_to) = connect_peer {
+        for c in connect_to {
+            log::info!("Connecting to {:?}", c);
+            profile.connect(c).await?;
+        }
+    }
+
+    let mut gossip_channel = Box::pin({
+        profile.client()
+            .pubsub_subscribe("distrox".to_string())
+            .await
+            .map(|stream| {
+                use distrox_lib::gossip::deserializer::GossipDeserializer;
+                use distrox_lib::gossip::deserializer::LogStrategy;
+
+                GossipDeserializer::<LogStrategy>::new().run(stream)
+            })?
+    });
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
+
+    let own_peer_id = profile.client().own_id().await?;
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::SeqCst);
@@ -64,7 +108,21 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 
     log::info!("Serving...");
     while running.load(Ordering::SeqCst) {
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await // sleep not so busy
+        use futures::stream::StreamExt;
+        use distrox_lib::gossip::GossipMessage;
+
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
+
+        tokio::select! {
+            own = profile.gossip_own_state("distrox".to_string()) => own?,
+            other = gossip_channel.next() => {
+                let gossip_myself = other.as_ref().map(|(source, _)| *source == own_peer_id).unwrap_or(false);
+
+                if !gossip_myself {
+                    log::trace!("Received gossip: {:?}", other);
+                }
+            }
+        }
     }
     log::info!("Shutting down...");
     profile.exit().await

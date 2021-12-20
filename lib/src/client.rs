@@ -37,6 +37,22 @@ impl Client {
             .map_err(anyhow::Error::from)
     }
 
+    pub async fn own_addresses(&self) -> Result<Vec<ipfs::Multiaddr>> {
+        self.ipfs
+            .identity()
+            .await
+            .map(|(_, addrs)| addrs)
+            .map_err(anyhow::Error::from)
+    }
+
+    pub async fn listen_on(&self, addr: ipfs::Multiaddr) -> Result<()> {
+        self.ipfs
+            .add_listening_address(addr)
+            .await
+            .map(|_| ())
+            .map_err(anyhow::Error::from)
+    }
+
     pub async fn connect(&self, peer: ipfs::MultiaddrWithPeerId) -> Result<()> {
         self.ipfs.connect(peer).await
     }
