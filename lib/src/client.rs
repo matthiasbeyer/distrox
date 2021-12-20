@@ -122,6 +122,10 @@ impl Client {
 
         self.get::<S>(cid).await.map(|v| v.0)
     }
+
+    pub async fn pubsub_subscribe(&self, topic: String) -> Result<ipfs::SubscriptionStream> {
+        self.ipfs.pubsub_subscribe(topic).await.map_err(anyhow::Error::from)
+    }
 }
 
 fn now() -> DateTime {

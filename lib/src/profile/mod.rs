@@ -169,6 +169,30 @@ impl Profile {
     pub fn add_device(&mut self, d: Device) -> Result<()> {
         self.state.add_device(d)
     }
+
+    pub async fn gossip_own_state(&self, topic: String) -> Result<()> {
+        let cid = self.state
+            .profile_head()
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Profile has no HEAD yet"))?
+            .to_bytes();
+
+        let peer_id = self.client
+            .own_id()
+            .await?
+            .to_bytes();
+
+        self.client
+            .ipfs
+            .pubsub_publish(topic, {
+                crate::gossip::GossipMessage::CurrentProfileState {
+                    peer_id,
+                    cid,
+                }.into_bytes()?
+            })
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }
 
 
