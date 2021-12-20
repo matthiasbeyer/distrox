@@ -94,7 +94,8 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 
     log::info!("Serving...");
     while running.load(Ordering::SeqCst) {
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await // sleep not so busy
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
+        profile.gossip_own_state("distrox".to_string()).await?
     }
     log::info!("Shutting down...");
     profile.exit().await
