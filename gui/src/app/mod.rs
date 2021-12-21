@@ -118,11 +118,11 @@ impl Application for Distrox {
                     Message::CreatePost => {
                         if !input_value.is_empty() {
                             let input = input_value.clone();
-                            let client = profile.client().clone();
+                            let profile = profile.clone();
                             log::trace!("Posting...");
                             iced::Command::perform(async move {
                                 log::trace!("Posting: '{}'", input);
-                                client.post_text_blob(input).await
+                                profile.write().await.post_text(input).await
                             },
                             |res| match res {
                                 Ok(cid) => Message::PostCreated(cid),
