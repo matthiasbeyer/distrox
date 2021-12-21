@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use cid::Cid;
+use tokio::sync::RwLock;
 
 use distrox_lib::gossip::GossipMessage;
 use distrox_lib::profile::Profile;
@@ -10,7 +11,7 @@ use crate::gossip::GossipRecipe;
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    Loaded(Arc<Profile>),
+    Loaded(Arc<RwLock<Profile>>),
     FailedToLoad(String),
 
     ToggleLog,

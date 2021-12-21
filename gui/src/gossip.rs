@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio::sync::RwLock;
 
 use distrox_lib::profile::Profile;
 use distrox_lib::client::Client;
@@ -9,12 +10,12 @@ use crate::app::Message;
 
 #[derive(Clone, Debug)]
 pub struct GossipRecipe {
-    profile: Arc<Profile>,
+    profile: Arc<RwLock<Profile>>,
     subscription: Arc<ipfs::SubscriptionStream>,
 }
 
 impl GossipRecipe {
-    pub fn new(profile: Arc<Profile>, subscription: ipfs::SubscriptionStream) -> Self {
+    pub fn new(profile: Arc<RwLock<Profile>>, subscription: ipfs::SubscriptionStream) -> Self {
         Self { profile, subscription: Arc::new(subscription) }
     }
 }
