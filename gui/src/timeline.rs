@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::Result;
 use futures::StreamExt;
 
@@ -11,6 +13,7 @@ use distrox_lib::types::Payload;
 
 #[derive(Debug)]
 pub struct Timeline {
+    post_ids: HashSet<cid::Cid>,
     posts: Vec<Post>,
     scrollable: ScrollableState,
 }
@@ -18,13 +21,16 @@ pub struct Timeline {
 impl Timeline {
     pub fn new() -> Self {
         Self {
+            post_ids: HashSet::with_capacity(1000),
             posts: Vec::new(),
             scrollable: ScrollableState::new(),
         }
     }
 
     pub fn push(&mut self, payload: Payload, content: String) {
-        self.posts.push(Post::new(payload, content));
+        if self.post_ids.insert(payload.content()) {
+            self.posts.push(Post::new(payload, content));
+        }
     }
 
     pub fn view(&mut self) -> iced::Element<Message> {
