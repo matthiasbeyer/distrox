@@ -337,7 +337,7 @@ impl Application for Distrox {
         };
 
         let gossip_sending_sub = {
-            iced::time::every(std::time::Duration::from_millis(100))
+            iced::time::every(std::time::Duration::from_secs(5))
                 .map(|_| Message::PublishGossipAboutMe)
         };
 
