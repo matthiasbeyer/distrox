@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use anyhow::Error;
 use anyhow::Result;
 
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
