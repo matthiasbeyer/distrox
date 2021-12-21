@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::collections::BTreeMap;
 
 use anyhow::Result;
 use futures::StreamExt;
@@ -10,11 +11,12 @@ use crate::post::Post;
 use distrox_lib::client::Client;
 use distrox_lib::stream::NodeStreamBuilder;
 use distrox_lib::types::Payload;
+use distrox_lib::types::DateTime;
 
 #[derive(Debug)]
 pub struct Timeline {
     post_ids: HashSet<cid::Cid>,
-    posts: Vec<Post>,
+    posts: BTreeMap<DateTime, Post>,
     scrollable: ScrollableState,
 }
 
@@ -22,14 +24,14 @@ impl Timeline {
     pub fn new() -> Self {
         Self {
             post_ids: HashSet::with_capacity(1000),
-            posts: Vec::new(),
+            posts: BTreeMap::new(),
             scrollable: ScrollableState::new(),
         }
     }
 
     pub fn push(&mut self, payload: Payload, content: String) {
         if self.post_ids.insert(payload.content()) {
-            self.posts.push(Post::new(payload, content));
+            self.posts.insert(payload.timestamp().clone(), Post::new(payload, content));
         }
     }
 
@@ -45,7 +47,8 @@ impl Timeline {
 
         self.posts
             .iter()
-            .fold(scrollable, |scrollable, post| {
+            .rev()
+            .fold(scrollable, |scrollable, (_, post)| {
                 scrollable.push(post.view())
             })
             .into()
