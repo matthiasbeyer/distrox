@@ -136,8 +136,26 @@ impl Application for Distrox {
                     Message::PostCreated(cid) => {
                         *input_value = String::new();
                         log::info!("Post created: {}", cid);
-                        iced::Command::none()
+
+                        let profile = profile.clone();
+                        iced::Command::perform(async move {
+                            if let Err(e) = profile.read().await.save().await {
+                                Message::ProfileStateSavingFailed(e.to_string())
+                            } else {
+                                Message::ProfileStateSaved
+                            }
+                        }, |m: Message| -> Message { m })
                     }
+
+                    Message::ProfileStateSaved => {
+                        log::info!("Profile state saved");
+                        iced::Command::none()
+                    },
+
+                    Message::ProfileStateSavingFailed(e) => {
+                        log::error!("Saving profile failed: {}", e);
+                        iced::Command::none()
+                    },
 
                     Message::PostCreationFailed(err) => {
                         log::error!("Post creation failed: {}", err);

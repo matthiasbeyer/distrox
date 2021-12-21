@@ -13,6 +13,8 @@ use crate::gossip::GossipRecipe;
 pub enum Message {
     Loaded(Arc<RwLock<Profile>>),
     FailedToLoad(String),
+    ProfileStateSaved,
+    ProfileStateSavingFailed(String),
 
     ToggleLog,
 
@@ -40,6 +42,8 @@ impl Message {
         match self {
             Message::Loaded(_)                   => "Loaded",
             Message::FailedToLoad(_)             => "FailedToLoad",
+            Message::ProfileStateSaved           => "ProfileStateSaved",
+            Message::ProfileStateSavingFailed(_) => "ProfileStateSavingFailed",
 
             Message::ToggleLog                   => "ToggleLog",
 
