@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::sync::RwLock as StdRwLock;
 
 use anyhow::Result;
 use iced::Application;
@@ -12,6 +11,7 @@ use iced::TextInput;
 use iced::scrollable;
 use iced::text_input;
 use distrox_lib::profile::Profile;
+use tokio::sync::RwLock;
 
 use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
@@ -24,11 +24,11 @@ use crate::gossip::GossipRecipe;
 #[derive(Debug)]
 enum Distrox {
     Loading {
-        gossip_subscription_recv: StdRwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
+        gossip_subscription_recv: RwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
     },
     Loaded {
-        profile: Arc<Profile>,
-        gossip_subscription_recv: StdRwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
+        profile: Arc<RwLock<Profile>>,
+        gossip_subscription_recv: RwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
 
         scroll: scrollable::State,
         input: text_input::State,
@@ -50,16 +50,19 @@ impl Application for Distrox {
         let (gossip_subscription_sender, gossip_subscription_recv) = tokio::sync::oneshot::channel();
         (
             Distrox::Loading {
-                gossip_subscription_recv: StdRwLock::new(gossip_subscription_recv),
+                gossip_subscription_recv: RwLock::new(gossip_subscription_recv),
             },
 
             iced::Command::perform(async move {
                 let profile = match Profile::load(&name).await {
                     Err(e) => return Message::FailedToLoad(e.to_string()),
-                    Ok(instance) => Arc::new(instance),
+                    Ok(instance) => Arc::new(RwLock::new(instance)),
                 };
 
-                if let Err(e) = profile.client()
+                if let Err(e) = profile
+                    .read()
+                    .await
+                    .client()
                     .pubsub_subscribe("distrox".to_string())
                     .await
                     .map_err(anyhow::Error::from)
@@ -91,7 +94,7 @@ impl Application for Distrox {
                         profile,
 
                         // Don't even try to think what hoops I am jumping through here...
-                        gossip_subscription_recv: std::mem::replace(gossip_subscription_recv, StdRwLock::new(tokio::sync::oneshot::channel().1)),
+                        gossip_subscription_recv: std::mem::replace(gossip_subscription_recv, RwLock::new(tokio::sync::oneshot::channel().1)),
                         scroll: scrollable::State::default(),
                         input: text_input::State::default(),
                         input_value: String::default(),
@@ -115,11 +118,11 @@ impl Application for Distrox {
                     Message::CreatePost => {
                         if !input_value.is_empty() {
                             let input = input_value.clone();
-                            let client = profile.client().clone();
+                            let profile = profile.clone();
                             log::trace!("Posting...");
                             iced::Command::perform(async move {
                                 log::trace!("Posting: '{}'", input);
-                                client.post_text_blob(input).await
+                                profile.write().await.post_text(input).await
                             },
                             |res| match res {
                                 Ok(cid) => Message::PostCreated(cid),
@@ -133,8 +136,26 @@ impl Application for Distrox {
                     Message::PostCreated(cid) => {
                         *input_value = String::new();
                         log::info!("Post created: {}", cid);
-                        iced::Command::none()
+
+                        let profile = profile.clone();
+                        iced::Command::perform(async move {
+                            if let Err(e) = profile.read().await.save().await {
+                                Message::ProfileStateSavingFailed(e.to_string())
+                            } else {
+                                Message::ProfileStateSaved
+                            }
+                        }, |m: Message| -> Message { m })
                     }
+
+                    Message::ProfileStateSaved => {
+                        log::info!("Profile state saved");
+                        iced::Command::none()
+                    },
+
+                    Message::ProfileStateSavingFailed(e) => {
+                        log::error!("Saving profile failed: {}", e);
+                        iced::Command::none()
+                    },
 
                     Message::PostCreationFailed(err) => {
                         log::error!("Post creation failed: {}", err);
@@ -181,7 +202,7 @@ impl Application for Distrox {
                     Message::PublishGossipAboutMe => {
                         let profile = profile.clone();
                         iced::Command::perform(async move {
-                            if let Err(e) = profile.gossip_own_state("distrox".to_string()).await {
+                            if let Err(e) = profile.read().await.gossip_own_state("distrox".to_string()).await {
                                 Message::GossippingFailed(e.to_string())
                             } else {
                                 Message::OwnStateGossipped
@@ -293,9 +314,12 @@ impl Application for Distrox {
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         let post_loading_subs = match self {
             Distrox::Loaded { profile, .. } => {
-                let head = profile.head();
+                let profile = match profile.try_read() {
+                    Err(_) => return iced::Subscription::none(),
+                    Ok(p) => p,
+                };
 
-                match head {
+                match profile.head() {
                     None => iced::Subscription::none(),
                     Some(head) => {
                         iced::Subscription::from_recipe({
@@ -326,18 +350,18 @@ impl Application for Distrox {
 
         let gossip_sub = match self {
             Distrox::Loaded { gossip_subscription_recv, .. }  => {
-                match gossip_subscription_recv.write().ok() {
-                    Some(mut sub) => sub.try_recv()
-                        .ok() // Either empty or closed, ignore both
+                match gossip_subscription_recv.try_write() {
+                    Err(_) => None,
+                    Ok(mut sub) => sub.try_recv()
+                        .ok()
                         .map(|sub| iced::Subscription::from_recipe(sub)),
-                    None => None
                 }
             },
             _ => None,
         };
 
         let gossip_sending_sub = {
-            iced::time::every(std::time::Duration::from_millis(100))
+            iced::time::every(std::time::Duration::from_secs(5))
                 .map(|_| Message::PublishGossipAboutMe)
         };
 
