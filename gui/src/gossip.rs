@@ -5,6 +5,8 @@ use tokio::sync::RwLock;
 
 use distrox_lib::profile::Profile;
 use distrox_lib::client::Client;
+use distrox_lib::gossip::GossipDeserializer;
+use distrox_lib::gossip::LogStrategy;
 
 use crate::app::Message;
 
@@ -35,19 +37,13 @@ where
     }
 
     fn stream(self: Box<Self>, _input: futures::stream::BoxStream<'static, I>) -> futures::stream::BoxStream<'static, Self::Output> {
-        use distrox_lib::gossip::deserializer;
-        use distrox_lib::gossip::handler;
-
         // TODO: Do "right", whatever this means...
         let stream = Arc::try_unwrap(self.subscription).unwrap();
 
         Box::pin({
-            let stream = deserializer::GossipDeserializer::<deserializer::LogStrategy>::new().run(stream);
-            let stream = handler::GossipHandler::<handler::LogStrategy>::new(self.profile.clone()).run(stream);
-
-            stream.map(|(gossip_message, _handling_result)| {
-                Message::GossipHandled(gossip_message)
-            })
+            GossipDeserializer::<LogStrategy>::new()
+                .run(stream)
+                .map(|(source, msg)| Message::GossipMessage(source, msg))
         })
     }
 }
