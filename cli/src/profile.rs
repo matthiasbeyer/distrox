@@ -90,8 +90,8 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
             .pubsub_subscribe("distrox".to_string())
             .await
             .map(|stream| {
-                use distrox_lib::gossip::deserializer::GossipDeserializer;
-                use distrox_lib::gossip::deserializer::LogStrategy;
+                use distrox_lib::gossip::GossipDeserializer;
+                use distrox_lib::gossip::LogStrategy;
 
                 GossipDeserializer::<LogStrategy>::new().run(stream)
             })?

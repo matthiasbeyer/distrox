@@ -183,6 +183,13 @@ impl Application for Distrox {
                         iced::Command::none()
                     }
 
+                    Message::GossipMessage(source, msg) => {
+                        log::trace!("Received Gossip from {}: {:?}", source, msg);
+                        iced::Command::perform(async {
+                            Message::GossipHandled(msg)
+                        }, |m: Message| -> Message { m })
+                    }
+
                     Message::GossipHandled(msg) => {
                         use distrox_lib::gossip::GossipMessage;
 

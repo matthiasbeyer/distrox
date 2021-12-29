@@ -18,6 +18,7 @@ pub enum Message {
 
     ToggleLog,
 
+    GossipMessage(ipfs::PeerId, GossipMessage),
     GossipSubscriptionFailed(String),
     GossipHandled(GossipMessage),
 
@@ -47,6 +48,7 @@ impl Message {
 
             Message::ToggleLog                   => "ToggleLog",
 
+            Message::GossipMessage(_, _)         => "GossipMessage",
             Message::GossipSubscriptionFailed(_) => "GossipSubscriptionFailed",
             Message::GossipHandled(_)            => "GossipHandled",
 
