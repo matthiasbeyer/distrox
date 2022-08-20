@@ -149,7 +149,7 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
         Ok(ProfileState {
             profile_head: self
                 .profile_head
-                .map(|h| cid::Cid::try_from(h))
+                .map(cid::Cid::try_from)
                 .transpose()?,
             profile_name: self.profile_name,
             keypair: {
