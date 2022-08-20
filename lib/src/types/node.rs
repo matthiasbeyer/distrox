@@ -45,7 +45,7 @@ impl TryFrom<ipfs::Ipld> for Node {
 
                 let parents = match map.get("parents").ok_or_else(missing_field("parents"))? {
                     ipfs::Ipld::List(s) => s
-                        .into_iter()
+                        .iter()
                         .map(|parent| -> Result<ipfs::Cid> {
                             match parent {
                                 ipfs::Ipld::Link(cid) => Ok(cid.clone()),
