@@ -113,11 +113,12 @@
           #   cargoArtifacts = packages.distrox-gui;
           #   cargoclippyExtraArgs = "-- --deny warnings";
           # };
-          # distrox-lib-clippy = craneLib.cargoClippy {
-          #   inherit src;
-          #   cargoArtifacts = packages.distrox-lib;
-          #   cargoclippyExtraArgs = "-- --deny warnings";
-          # };
+          distrox-lib-clippy = craneLib.cargoClippy {
+            src = ./.;
+            cargoExtraArgs = "--package distrox-lib";
+            cargoArtifacts = distrox-lib-deps;
+            cargoclippyExtraArgs = "-- --deny warnings";
+          };
 
           distrox-cli-fmt = craneLib.cargoFmt {
             src = ./.;
