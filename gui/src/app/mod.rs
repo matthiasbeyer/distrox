@@ -220,7 +220,7 @@ impl Application for Distrox {
                 Ok(mut sub) => sub
                     .try_recv()
                     .ok()
-                    .map(|sub| iced::Subscription::from_recipe(sub)),
+                    .map(iced::Subscription::from_recipe),
             },
             _ => None,
         };
