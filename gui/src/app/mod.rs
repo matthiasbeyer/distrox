@@ -24,6 +24,7 @@ mod handler;
 use crate::gossip::GossipRecipe;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum Distrox {
     Loading {
         gossip_subscription_recv: RwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
