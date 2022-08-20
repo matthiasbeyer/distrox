@@ -166,9 +166,11 @@
             buildInputs = xorgPkgs ++ [ packages.distrox-lib ];
             doCheck = false;
           };
+
+          default = packages.distrox-gui;
         };
 
-        apps ={
+        apps = {
           distrox-gui = flake-utils.lib.mkApp {
             name = "distrox-gui";
             drv = packages.distrox-gui;
