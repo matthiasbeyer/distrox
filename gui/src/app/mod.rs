@@ -41,7 +41,6 @@ pub(crate) enum Distrox {
         log_visible: bool,
         log: std::collections::VecDeque<String>,
     },
-    FailedToStart,
 }
 
 impl Application for Distrox {
@@ -171,10 +170,6 @@ impl Application for Distrox {
                     content
                 }
                 .into()
-            }
-
-            Distrox::FailedToStart => {
-                unimplemented!()
             }
         }
     }
