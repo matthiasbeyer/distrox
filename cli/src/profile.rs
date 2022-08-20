@@ -211,7 +211,7 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
                         )?;
 
                         writeln!(lock, "{text}", text = text)?;
-                        writeln!(lock, "")?;
+                        writeln!(lock)?;
                     }
                 }
                 Ok(())
