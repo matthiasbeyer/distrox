@@ -45,7 +45,7 @@ where
         let stream = Arc::try_unwrap(self.subscription).unwrap();
 
         Box::pin({
-            GossipDeserializer::<LogStrategy>::new()
+            GossipDeserializer::<LogStrategy>::default()
                 .run(stream)
                 .map(|(source, msg)| Message::GossipMessage(source, msg))
         })

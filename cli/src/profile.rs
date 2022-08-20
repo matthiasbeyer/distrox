@@ -96,7 +96,7 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
                 use distrox_lib::gossip::GossipDeserializer;
                 use distrox_lib::gossip::LogStrategy;
 
-                GossipDeserializer::<LogStrategy>::new().run(stream)
+                GossipDeserializer::<LogStrategy>::default().run(stream)
             })?
     });
 

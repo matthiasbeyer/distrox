@@ -13,16 +13,21 @@ where
     strategy: std::marker::PhantomData<ErrStrategy>,
 }
 
-impl<ErrStrategy> GossipDeserializer<ErrStrategy>
+impl<ErrStrategy> Default for GossipDeserializer<ErrStrategy>
 where
     ErrStrategy: GossipDeserializerErrorStrategy,
 {
-    pub fn new() -> Self {
+    fn default() -> Self {
         Self {
             strategy: std::marker::PhantomData,
         }
     }
+}
 
+impl<ErrStrategy> GossipDeserializer<ErrStrategy>
+where
+    ErrStrategy: GossipDeserializerErrorStrategy,
+{
     pub fn run<S>(self, input: S) -> impl Stream<Item = (ipfs::PeerId, GossipMessage)>
     where
         S: Stream<Item = Arc<ipfs::PubsubMessage>>,
