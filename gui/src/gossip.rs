@@ -11,14 +11,12 @@ use crate::app::Message;
 
 #[derive(Clone, Debug)]
 pub struct GossipRecipe {
-    profile: Arc<RwLock<Profile>>,
     subscription: Arc<ipfs::SubscriptionStream>,
 }
 
 impl GossipRecipe {
-    pub fn new(profile: Arc<RwLock<Profile>>, subscription: ipfs::SubscriptionStream) -> Self {
+    pub fn new(_profile: Arc<RwLock<Profile>>, subscription: ipfs::SubscriptionStream) -> Self {
         Self {
-            profile,
             subscription: Arc::new(subscription),
         }
     }
