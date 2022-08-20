@@ -2,9 +2,9 @@ use anyhow::Result;
 
 mod app;
 mod cli;
-mod timeline;
-mod post;
 mod gossip;
+mod post;
+mod timeline;
 
 fn main() -> Result<()> {
     let _ = env_logger::try_init()?;
@@ -14,12 +14,10 @@ fn main() -> Result<()> {
         None => {
             let name = matches.value_of("name").map(String::from).unwrap(); // safe by clap
             crate::app::run(name)
-        },
+        }
         Some((other, _)) => {
             log::error!("No subcommand {} implemented", other);
             Ok(())
-        },
+        }
     }
 }
-
-

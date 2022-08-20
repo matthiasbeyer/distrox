@@ -36,16 +36,19 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     use ipfs::MultiaddrWithPeerId;
 
     let name = matches.value_of("name").map(String::from).unwrap(); // required
-    let listen_addrs = matches.values_of("listen")
+    let listen_addrs = matches
+        .values_of("listen")
         .map(|v| {
             v.map(|s| s.parse::<ipfs::Multiaddr>().map_err(anyhow::Error::from))
                 .collect::<Result<Vec<_>>>()
         })
         .transpose()?;
-    let connect_peer = matches.values_of("connect")
+    let connect_peer = matches
+        .values_of("connect")
         .map(|v| {
             v.map(|s| {
-                s.parse::<MultiaddrWithPeerId>().map_err(anyhow::Error::from)
+                s.parse::<MultiaddrWithPeerId>()
+                    .map_err(anyhow::Error::from)
             })
             .collect::<Result<Vec<_>>>()
         })
@@ -86,7 +89,8 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     }
 
     let mut gossip_channel = Box::pin({
-        profile.client()
+        profile
+            .client()
             .pubsub_subscribe("distrox".to_string())
             .await
             .map(|stream| {
@@ -104,12 +108,13 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 
     ctrlc::set_handler(move || {
         r.store(false, Ordering::SeqCst);
-    }).context("Error setting Ctrl-C handler")?;
+    })
+    .context("Error setting Ctrl-C handler")?;
 
     log::info!("Serving...");
     while running.load(Ordering::SeqCst) {
-        use futures::stream::StreamExt;
         use distrox_lib::gossip::GossipMessage;
+        use futures::stream::StreamExt;
 
         tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
 
@@ -131,10 +136,12 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 async fn profile_post(matches: &ArgMatches) -> Result<()> {
     let text = match matches.value_of("text") {
         Some(text) => String::from(text),
-        None => if matches.is_present("editor") {
-            editor_input::input_from_editor("")?
-        } else {
-            unreachable!()
+        None => {
+            if matches.is_present("editor") {
+                editor_input::input_from_editor("")?
+            } else {
+                unreachable!()
+            }
         }
     };
 
@@ -173,22 +180,17 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
             .then(|node| async {
                 match node {
                     Err(e) => Err(e),
-                    Ok(node) => {
-                        profile.client()
-                            .get_payload(node.payload())
-                            .await
-                    }
+                    Ok(node) => profile.client().get_payload(node.payload()).await,
                 }
             })
             .then(|payload| async {
                 match payload {
                     Err(e) => Err(e),
-                    Ok(payload) => {
-                        profile.client()
-                            .get_content_text(payload.content())
-                            .await
-                            .map(|text| (payload, text))
-                    }
+                    Ok(payload) => profile
+                        .client()
+                        .get_content_text(payload.content())
+                        .await
+                        .map(|text| (payload, text)),
                 }
             })
             .then(|res| async {
@@ -202,13 +204,16 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
                     Ok((payload, text)) => {
                         let out = std::io::stdout();
                         let mut lock = out.lock();
-                        writeln!(lock, "{time} - {cid}",
+                        writeln!(
+                            lock,
+                            "{time} - {cid}",
                             time = payload.timestamp().inner(),
-                            cid = payload.content())?;
+                            cid = payload.content()
+                        )?;
 
                         writeln!(lock, "{text}", text = text)?;
                         writeln!(lock, "")?;
-                    },
+                    }
                 }
                 Ok(())
             })

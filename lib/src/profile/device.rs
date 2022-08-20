@@ -1,6 +1,6 @@
+use anyhow::Result;
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use anyhow::Result;
 
 #[derive(Clone, Debug)]
 pub struct Device {
@@ -16,7 +16,9 @@ impl TryFrom<Device> for DeviceSaveable {
     type Error = anyhow::Error;
 
     fn try_from(device: Device) -> Result<Self> {
-        Ok(DeviceSaveable { device_id: device.device_id.encode().to_vec() })
+        Ok(DeviceSaveable {
+            device_id: device.device_id.encode().to_vec(),
+        })
     }
 }
 

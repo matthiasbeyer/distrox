@@ -1,6 +1,6 @@
-use std::path::PathBuf;
 use std::convert::TryFrom;
 use std::convert::TryInto;
+use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -70,7 +70,11 @@ impl ProfileState {
 
 impl std::fmt::Debug for ProfileState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ProfileState {{ name = {}, head = {:?} }}", self.profile_name, self.profile_head)
+        write!(
+            f,
+            "ProfileState {{ name = {}, head = {:?} }}",
+            self.profile_name, self.profile_head
+        )
     }
 }
 
@@ -79,7 +83,7 @@ pub(super) struct ProfileStateSaveable {
     profile_head: Option<Vec<u8>>,
     profile_name: String,
     keypair: Vec<u8>,
-    other_devices: Vec<DeviceSaveable>
+    other_devices: Vec<DeviceSaveable>,
 }
 
 impl ProfileStateSaveable {
@@ -119,7 +123,10 @@ impl ProfileStateSaveable {
     }
 
     pub async fn load_from_disk(state_dir_path: &StateDir) -> Result<Self> {
-        log::trace!("Loading from disk: {:?}", state_dir_path.profile_state().display());
+        log::trace!(
+            "Loading from disk: {:?}",
+            state_dir_path.profile_state().display()
+        );
         let reader = tokio::fs::OpenOptions::new()
             .read(true)
             .open(&state_dir_path.profile_state())
@@ -133,7 +140,6 @@ impl ProfileStateSaveable {
             .context("Parsing state file")
             .map_err(anyhow::Error::from)
     }
-
 }
 
 impl TryInto<ProfileState> for ProfileStateSaveable {
@@ -141,7 +147,10 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
 
     fn try_into(mut self) -> Result<ProfileState> {
         Ok(ProfileState {
-            profile_head: self.profile_head.map(|h| cid::Cid::try_from(h)).transpose()?,
+            profile_head: self
+                .profile_head
+                .map(|h| cid::Cid::try_from(h))
+                .transpose()?,
             profile_name: self.profile_name,
             keypair: {
                 let kp = libp2p::identity::ed25519::Keypair::decode(&mut self.keypair)?;
@@ -156,5 +165,3 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
         })
     }
 }
-
-

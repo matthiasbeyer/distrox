@@ -1,6 +1,6 @@
-use std::convert::TryFrom;
 use anyhow::Error;
 use anyhow::Result;
+use std::convert::TryFrom;
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(transparent)]
@@ -26,7 +26,6 @@ impl TryFrom<ipfs::Ipld> for DateTime {
     }
 }
 
-
 impl From<chrono::DateTime<chrono::Utc>> for DateTime {
     fn from(dt: chrono::DateTime<chrono::Utc>) -> Self {
         DateTime(dt)
@@ -38,4 +37,3 @@ impl DateTime {
         &self.0
     }
 }
-

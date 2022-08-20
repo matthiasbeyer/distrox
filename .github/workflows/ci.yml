@@ -1,70 +1,23 @@
-on: [push, pull_request]
+name: "Check distrox"
 
-name: CI
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check
+  checks:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - 1.57.0
-          - stable
-          - beta
-
     steps:
-      - name: Install dependencies
-        run: sudo apt-get install -y openssl pkg-config zlib1g protobuf-compiler
-
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v2.4.0
+      - uses: cachix/install-nix-action@v16
         with:
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: cachix/cachix-action@v10
         with:
-          command: check
-
-  test:
-    needs: [check]
-    name: Test Suite
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - 1.57.0
-          - stable
-          - beta
-    steps:
-      - name: Install dependencies
-        run: sudo apt-get install -y openssl pkg-config zlib1g protobuf-compiler
-
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Cache Setup
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all --all-features
+          name: distrox
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix --extra-experimental-features "nix-command flakes" flake check

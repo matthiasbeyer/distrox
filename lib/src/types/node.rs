@@ -19,7 +19,10 @@ impl Into<ipfs::Ipld> for Node {
     fn into(self) -> ipfs::Ipld {
         let mut map = std::collections::BTreeMap::new();
         map.insert(String::from("version"), ipfs::Ipld::String(self.version));
-        map.insert(String::from("parents"), ipfs::Ipld::List(self.parents.into_iter().map(ipfs::Ipld::Link).collect()));
+        map.insert(
+            String::from("parents"),
+            ipfs::Ipld::List(self.parents.into_iter().map(ipfs::Ipld::Link).collect()),
+        );
         map.insert(String::from("payload"), ipfs::Ipld::Link(self.payload));
         ipfs::Ipld::Map(map)
     }
@@ -30,41 +33,44 @@ impl TryFrom<ipfs::Ipld> for Node {
 
     fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
         let missing_field = |name: &'static str| move || anyhow::anyhow!("Missing field {}", name);
-        let field_wrong_type = |name: &str, expty: &str| anyhow::bail!("Field {} has wrong type, expected {}", name, expty);
+        let field_wrong_type = |name: &str, expty: &str| {
+            anyhow::bail!("Field {} has wrong type, expected {}", name, expty)
+        };
         match ipld {
             ipfs::Ipld::Map(map) => {
                 let version = match map.get("version").ok_or_else(missing_field("version"))? {
                     ipfs::Ipld::String(s) => s.to_string(),
-                    _ => return field_wrong_type("version", "String")
+                    _ => return field_wrong_type("version", "String"),
                 };
 
                 let parents = match map.get("parents").ok_or_else(missing_field("parents"))? {
-                    ipfs::Ipld::List(s) => {
-                        s.into_iter()
-                            .map(|parent| -> Result<ipfs::Cid> {
-                                match parent {
-                                    ipfs::Ipld::Link(cid) => Ok(cid.clone()),
-                                    _ => anyhow::bail!("Field in parents has wrong type, expected Link"),
+                    ipfs::Ipld::List(s) => s
+                        .into_iter()
+                        .map(|parent| -> Result<ipfs::Cid> {
+                            match parent {
+                                ipfs::Ipld::Link(cid) => Ok(cid.clone()),
+                                _ => {
+                                    anyhow::bail!("Field in parents has wrong type, expected Link")
                                 }
-                            })
-                            .collect::<Result<Vec<ipfs::Cid>>>()?
-                    },
-                    _ => return field_wrong_type("parents", "Vec<Link>")
+                            }
+                        })
+                        .collect::<Result<Vec<ipfs::Cid>>>()?,
+                    _ => return field_wrong_type("parents", "Vec<Link>"),
                 };
 
                 let payload = match map.get("payload").ok_or_else(missing_field("payload"))? {
                     ipfs::Ipld::Link(cid) => cid.clone(),
-                    _ => return field_wrong_type("payload", "Link")
+                    _ => return field_wrong_type("payload", "Link"),
                 };
 
                 Ok(Node {
                     version,
                     parents,
-                    payload
+                    payload,
                 })
             }
 
-            _ => anyhow::bail!("Unexpected type, expected map")
+            _ => anyhow::bail!("Unexpected type, expected map"),
         }
     }
 }

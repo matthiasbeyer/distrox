@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use std::collections::BTreeMap;
+use std::collections::HashSet;
 
 use anyhow::Result;
 use futures::StreamExt;
@@ -10,8 +10,8 @@ use crate::app::Message;
 use crate::post::Post;
 use distrox_lib::client::Client;
 use distrox_lib::stream::NodeStreamBuilder;
-use distrox_lib::types::Payload;
 use distrox_lib::types::DateTime;
+use distrox_lib::types::Payload;
 
 #[derive(Debug)]
 pub struct Timeline {
@@ -31,7 +31,8 @@ impl Timeline {
 
     pub fn push(&mut self, payload: Payload, content: String) {
         if self.post_ids.insert(payload.content()) {
-            self.posts.insert(payload.timestamp().clone(), Post::new(payload, content));
+            self.posts
+                .insert(payload.timestamp().clone(), Post::new(payload, content));
         }
     }
 
@@ -41,9 +42,7 @@ impl Timeline {
             .spacing(20)
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
-            .on_scroll(move |offset| {
-                Message::TimelineScrolled(offset)
-            });
+            .on_scroll(move |offset| Message::TimelineScrolled(offset));
 
         self.posts
             .iter()
@@ -78,8 +77,10 @@ where
         self.head.to_bytes().hash(state);
     }
 
-    fn stream(self: Box<Self>, _input: futures::stream::BoxStream<'static, I>) -> futures::stream::BoxStream<'static, Self::Output>
-    {
+    fn stream(
+        self: Box<Self>,
+        _input: futures::stream::BoxStream<'static, I>,
+    ) -> futures::stream::BoxStream<'static, Self::Output> {
         log::debug!("Streaming posts starting at HEAD = {:?}", self.head);
         Box::pin({
             NodeStreamBuilder::starting_from(self.head.clone())
