@@ -213,10 +213,7 @@ impl Application for Distrox {
                 ..
             } => match gossip_subscription_recv.try_write() {
                 Err(_) => None,
-                Ok(mut sub) => sub
-                    .try_recv()
-                    .ok()
-                    .map(iced::Subscription::from_recipe),
+                Ok(mut sub) => sub.try_recv().ok().map(iced::Subscription::from_recipe),
             },
             _ => None,
         };
