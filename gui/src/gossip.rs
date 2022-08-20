@@ -3,7 +3,6 @@ use std::sync::Arc;
 use futures::StreamExt;
 use tokio::sync::RwLock;
 
-use distrox_lib::client::Client;
 use distrox_lib::gossip::GossipDeserializer;
 use distrox_lib::gossip::LogStrategy;
 use distrox_lib::profile::Profile;

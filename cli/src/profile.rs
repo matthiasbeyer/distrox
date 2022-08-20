@@ -7,7 +7,6 @@ use anyhow::Result;
 use clap::ArgMatches;
 
 use distrox_lib::profile::Profile;
-use distrox_lib::types::Payload;
 
 pub async fn profile(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
