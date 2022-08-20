@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use anyhow::Result;
 use futures::Stream;
 use futures::StreamExt;
 
