@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::convert::TryInto;
+use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -37,9 +37,8 @@ impl Profile {
         };
 
         let keypair = options.keypair.clone();
-        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(options)
-            .start()
-            .await?;
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) =
+            ipfs::UninitializedIpfs::<_>::new(options).start().await?;
         tokio::task::spawn(fut);
         Self::new(ipfs, name.to_string(), keypair).await
     }
@@ -48,12 +47,19 @@ impl Profile {
         let mut opts = ipfs::IpfsOptions::inmemory_with_generated_keys();
         opts.mdns = true;
         let keypair = opts.keypair.clone();
-        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(opts).start().await.unwrap();
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(opts)
+            .start()
+            .await
+            .unwrap();
         tokio::task::spawn(fut);
         Self::new(ipfs, format!("inmemory-{}", name), keypair).await
     }
 
-    async fn new(ipfs: IpfsClient, profile_name: String, keypair: libp2p::identity::Keypair) -> Result<Self> {
+    async fn new(
+        ipfs: IpfsClient,
+        profile_name: String,
+        keypair: libp2p::identity::Keypair,
+    ) -> Result<Self> {
         let client = Client::new(ipfs);
         let state = ProfileState::new(profile_name, keypair);
         Ok(Profile { state, client })
@@ -72,7 +78,8 @@ impl Profile {
     }
 
     pub async fn post_text(&mut self, text: String) -> Result<cid::Cid> {
-        let parent = self.state
+        let parent = self
+            .state
             .profile_head()
             .as_ref()
             .map(cid::Cid::clone)
@@ -99,8 +106,7 @@ impl Profile {
             .map_err(anyhow::Error::from)
             .and_then(|dirs| {
                 let name = Self::config_path(name);
-                dirs.place_config_file(name)
-                    .map_err(anyhow::Error::from)
+                dirs.place_config_file(name).map_err(anyhow::Error::from)
             })
     }
 
@@ -112,7 +118,9 @@ impl Profile {
             .and_then(|dirs| {
                 dirs.create_state_directory(name)
                     .map(StateDir::from)
-                    .with_context(|| format!("Creating 'distrox' XDG state directory for '{}'", name))
+                    .with_context(|| {
+                        format!("Creating 'distrox' XDG state directory for '{}'", name)
+                    })
                     .map_err(anyhow::Error::from)
             })
     }
@@ -153,9 +161,8 @@ impl Profile {
         };
 
         log::debug!("Starting IPFS backend");
-        let (ipfs, fut): (ipfs::Ipfs<_>, _) = ipfs::UninitializedIpfs::<_>::new(options)
-            .start()
-            .await?;
+        let (ipfs, fut): (ipfs::Ipfs<_>, _) =
+            ipfs::UninitializedIpfs::<_>::new(options).start().await?;
         tokio::task::spawn(fut);
 
         log::debug!("Profile loading finished");
@@ -169,36 +176,29 @@ impl Profile {
         self.client.exit().await
     }
 
-
     pub fn add_device(&mut self, d: Device) -> Result<()> {
         self.state.add_device(d)
     }
 
     pub async fn gossip_own_state(&self, topic: String) -> Result<()> {
-        let cid = self.state
+        let cid = self
+            .state
             .profile_head()
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("Profile has no HEAD yet"))?
             .to_bytes();
 
-        let peer_id = self.client
-            .own_id()
-            .await?
-            .to_bytes();
+        let peer_id = self.client.own_id().await?.to_bytes();
 
         self.client
             .ipfs
             .pubsub_publish(topic, {
-                crate::gossip::GossipMessage::CurrentProfileState {
-                    peer_id,
-                    cid,
-                }.into_bytes()?
+                crate::gossip::GossipMessage::CurrentProfileState { peer_id, cid }.into_bytes()?
             })
             .await
             .map_err(anyhow::Error::from)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,5 +222,4 @@ mod tests {
         let profile = profile.unwrap();
         assert!(profile.head().is_none());
     }
-
 }

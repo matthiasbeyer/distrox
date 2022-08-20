@@ -12,17 +12,15 @@ async fn main() -> Result<()> {
         Some(("profile", matches)) => crate::profile::profile(matches).await,
         Some(("gui", _)) => {
             unimplemented!()
-        },
+        }
         Some((other, _)) => {
             log::error!("No subcommand {} implemented", other);
             Ok(())
-        },
+        }
 
         _ => {
             log::error!("Don't know what to do");
             Ok(())
-        },
+        }
     }
 }
-
-

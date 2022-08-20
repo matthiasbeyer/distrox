@@ -7,13 +7,15 @@ use futures::StreamExt;
 use crate::gossip::GossipMessage;
 
 pub struct GossipDeserializer<ErrStrategy = LogStrategy>
-    where ErrStrategy: GossipDeserializerErrorStrategy
+where
+    ErrStrategy: GossipDeserializerErrorStrategy,
 {
     strategy: std::marker::PhantomData<ErrStrategy>,
 }
 
 impl<ErrStrategy> GossipDeserializer<ErrStrategy>
-    where ErrStrategy: GossipDeserializerErrorStrategy
+where
+    ErrStrategy: GossipDeserializerErrorStrategy,
 {
     pub fn new() -> Self {
         Self {
@@ -22,7 +24,8 @@ impl<ErrStrategy> GossipDeserializer<ErrStrategy>
     }
 
     pub fn run<S>(self, input: S) -> impl Stream<Item = (ipfs::PeerId, GossipMessage)>
-        where S: Stream<Item = Arc<ipfs::PubsubMessage>>
+    where
+        S: Stream<Item = Arc<ipfs::PubsubMessage>>,
     {
         input.filter_map(|message| async move {
             log::trace!("Received gossip message");

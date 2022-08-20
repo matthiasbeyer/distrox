@@ -31,16 +31,11 @@ impl Post {
                         iced::Column::new()
                             .width(iced::Length::Fill)
                             .align_items(iced::Alignment::End)
-                            .push({
-                                iced::Text::new(self.payload.content().to_string())
-                                    .size(10)
-                            })
+                            .push({ iced::Text::new(self.payload.content().to_string()).size(10) })
                     })
             })
             .push(iced::rule::Rule::horizontal(10))
-            .push({
-                iced::Text::new(self.content.clone()).size(12)
-            })
+            .push({ iced::Text::new(self.content.clone()).size(12) })
             .push(iced::rule::Rule::horizontal(10))
             .into()
     }

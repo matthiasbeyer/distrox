@@ -2,10 +2,7 @@ use anyhow::Result;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum GossipMessage {
-    CurrentProfileState {
-        peer_id: Vec<u8>,
-        cid: Vec<u8>,
-    },
+    CurrentProfileState { peer_id: Vec<u8>, cid: Vec<u8> },
 }
 
 impl GossipMessage {

@@ -32,29 +32,32 @@ impl TryFrom<ipfs::Ipld> for Payload {
 
     fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
         let missing_field = |name: &'static str| move || anyhow::anyhow!("Missing field {}", name);
-        let field_wrong_type = |name: &str, expty: &str| anyhow::bail!("Field {} has wrong type, expected {}", name, expty);
+        let field_wrong_type = |name: &str, expty: &str| {
+            anyhow::bail!("Field {} has wrong type, expected {}", name, expty)
+        };
         match ipld {
             ipfs::Ipld::Map(map) => {
                 let mime = match map.get("mime").ok_or_else(missing_field("mime"))? {
                     ipfs::Ipld::String(s) => s.to_owned(),
-                    _ => return field_wrong_type("mime", "String")
+                    _ => return field_wrong_type("mime", "String"),
                 };
 
-                let timestamp = map.get("timestamp")
+                let timestamp = map
+                    .get("timestamp")
                     .ok_or_else(missing_field("timestamp"))?;
                 let timestamp = DateTime::try_from(timestamp.clone())?; // TODO dont clone
 
                 let content = match map.get("content").ok_or_else(missing_field("content"))? {
                     ipfs::Ipld::Link(cid) => cid.clone(),
-                    _ => return field_wrong_type("content", "Link")
+                    _ => return field_wrong_type("content", "Link"),
                 };
 
                 Ok(Payload {
                     mime,
                     timestamp,
-                    content
+                    content,
                 })
-            },
+            }
 
             _ => anyhow::bail!("Unexpected type, expected map"),
         }
@@ -63,7 +66,11 @@ impl TryFrom<ipfs::Ipld> for Payload {
 
 impl Payload {
     pub fn new(mime: String, timestamp: DateTime, content: ipfs::Cid) -> Self {
-        Self { mime, timestamp, content: content.into() }
+        Self {
+            mime,
+            timestamp,
+            content: content.into(),
+        }
     }
 
     pub fn content(&self) -> ipfs::Cid {

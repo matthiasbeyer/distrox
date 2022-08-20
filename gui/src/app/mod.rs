@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use distrox_lib::profile::Profile;
+use iced::scrollable;
+use iced::text_input;
 use iced::Application;
 use iced::Column;
 use iced::Container;
@@ -8,19 +11,15 @@ use iced::Length;
 use iced::Row;
 use iced::Scrollable;
 use iced::TextInput;
-use iced::scrollable;
-use iced::text_input;
-use distrox_lib::profile::Profile;
 use tokio::sync::RwLock;
 
-use crate::timeline::Timeline;
 use crate::timeline::PostLoadingRecipe;
+use crate::timeline::Timeline;
 
 mod message;
 pub use message::Message;
 
 mod handler;
-
 
 use crate::gossip::GossipRecipe;
 
@@ -50,37 +49,44 @@ impl Application for Distrox {
     type Flags = String;
 
     fn new(name: String) -> (Self, iced::Command<Self::Message>) {
-        let (gossip_subscription_sender, gossip_subscription_recv) = tokio::sync::oneshot::channel();
+        let (gossip_subscription_sender, gossip_subscription_recv) =
+            tokio::sync::oneshot::channel();
         (
             Distrox::Loading {
                 gossip_subscription_recv: RwLock::new(gossip_subscription_recv),
             },
+            iced::Command::perform(
+                async move {
+                    let profile = match Profile::load(&name).await {
+                        Err(e) => return Message::FailedToLoad(e.to_string()),
+                        Ok(instance) => Arc::new(RwLock::new(instance)),
+                    };
 
-            iced::Command::perform(async move {
-                let profile = match Profile::load(&name).await {
-                    Err(e) => return Message::FailedToLoad(e.to_string()),
-                    Ok(instance) => Arc::new(RwLock::new(instance)),
-                };
+                    if let Err(e) = profile
+                        .read()
+                        .await
+                        .client()
+                        .pubsub_subscribe("distrox".to_string())
+                        .await
+                        .map_err(anyhow::Error::from)
+                        .map(|stream| {
+                            log::trace!("Subscription to 'distrox' pubsub channel worked");
+                            GossipRecipe::new(profile.clone(), stream)
+                        })
+                        .and_then(|s| {
+                            gossip_subscription_sender.send(s).map_err(|_| {
+                                anyhow::anyhow!("Failed to initialize gossipping module")
+                            })
+                        })
+                    {
+                        log::error!("Failed to load gossip recipe");
+                        return Message::FailedToLoad(e.to_string());
+                    }
 
-                if let Err(e) = profile
-                    .read()
-                    .await
-                    .client()
-                    .pubsub_subscribe("distrox".to_string())
-                    .await
-                    .map_err(anyhow::Error::from)
-                    .map(|stream| {
-                        log::trace!("Subscription to 'distrox' pubsub channel worked");
-                        GossipRecipe::new(profile.clone(), stream)
-                    })
-                    .and_then(|s| gossip_subscription_sender.send(s).map_err(|_| anyhow::anyhow!("Failed to initialize gossipping module")))
-                {
-                    log::error!("Failed to load gossip recipe");
-                    return Message::FailedToLoad(e.to_string())
-                }
-
-                Message::Loaded(profile)
-            }, |m: Message| -> Message { m })
+                    Message::Loaded(profile)
+                },
+                |m: Message| -> Message { m },
+            ),
         )
     }
 
@@ -97,9 +103,7 @@ impl Application for Distrox {
             Distrox::Loading { .. } => {
                 let text = iced::Text::new("Loading");
 
-                let content = Column::new()
-                    .spacing(20)
-                    .push(text);
+                let content = Column::new().spacing(20).push(text);
 
                 Container::new(content)
                     .width(Length::Fill)
@@ -109,9 +113,16 @@ impl Application for Distrox {
                     .into()
             }
 
-            Distrox::Loaded { input, input_value, timeline, scroll, log_visible, log, .. } => {
-                let left_column = Column::new()
-                    .into();
+            Distrox::Loaded {
+                input,
+                input_value,
+                timeline,
+                scroll,
+                log_visible,
+                log,
+                ..
+            } => {
+                let left_column = Column::new().into();
 
                 let mid_column = Column::new()
                     .push({
@@ -134,14 +145,9 @@ impl Application for Distrox {
                     })
                     .into();
 
-                let right_column = Column::new()
-                    .into();
+                let right_column = Column::new().into();
 
-                let content = Row::with_children(vec![
-                        left_column,
-                        mid_column,
-                        right_column
-                    ])
+                let content = Row::with_children(vec![left_column, mid_column, right_column])
                     .spacing(20)
                     .height(Length::Fill)
                     .width(Length::Fill);
@@ -162,7 +168,8 @@ impl Application for Distrox {
                     content.push(log)
                 } else {
                     content
-                }.into()
+                }
+                .into()
             }
 
             Distrox::FailedToStart => {
@@ -181,11 +188,9 @@ impl Application for Distrox {
 
                 match profile.head() {
                     None => iced::Subscription::none(),
-                    Some(head) => {
-                        iced::Subscription::from_recipe({
-                            PostLoadingRecipe::new(profile.client().clone(), head.clone())
-                        })
-                    }
+                    Some(head) => iced::Subscription::from_recipe({
+                        PostLoadingRecipe::new(profile.client().clone(), head.clone())
+                    }),
                 }
             }
             _ => iced::Subscription::none(),
@@ -194,28 +199,28 @@ impl Application for Distrox {
         let keyboard_subs = {
             use iced_native::event::Event;
 
-            iced_native::subscription::events_with(|event, _| {
-                match event {
-                    Event::Keyboard(iced_native::keyboard::Event::KeyPressed { key_code, .. }) => {
-                        if key_code == iced_native::keyboard::KeyCode::F11 {
-                            Some(Message::ToggleLog)
-                        } else {
-                            None
-                        }
-                    },
-                    _ => None,
+            iced_native::subscription::events_with(|event, _| match event {
+                Event::Keyboard(iced_native::keyboard::Event::KeyPressed { key_code, .. }) => {
+                    if key_code == iced_native::keyboard::KeyCode::F11 {
+                        Some(Message::ToggleLog)
+                    } else {
+                        None
+                    }
                 }
+                _ => None,
             })
         };
 
         let gossip_sub = match self {
-            Distrox::Loaded { gossip_subscription_recv, .. }  => {
-                match gossip_subscription_recv.try_write() {
-                    Err(_) => None,
-                    Ok(mut sub) => sub.try_recv()
-                        .ok()
-                        .map(|sub| iced::Subscription::from_recipe(sub)),
-                }
+            Distrox::Loaded {
+                gossip_subscription_recv,
+                ..
+            } => match gossip_subscription_recv.try_write() {
+                Err(_) => None,
+                Ok(mut sub) => sub
+                    .try_recv()
+                    .ok()
+                    .map(|sub| iced::Subscription::from_recipe(sub)),
             },
             _ => None,
         };
@@ -225,11 +230,7 @@ impl Application for Distrox {
                 .map(|_| Message::PublishGossipAboutMe)
         };
 
-        let mut subscriptions = vec![
-            post_loading_subs,
-            keyboard_subs,
-            gossip_sending_sub,
-        ];
+        let mut subscriptions = vec![post_loading_subs, keyboard_subs, gossip_sending_sub];
 
         if let Some(gossip_sub) = gossip_sub {
             subscriptions.push(gossip_sub);
@@ -237,7 +238,6 @@ impl Application for Distrox {
 
         iced::Subscription::batch(subscriptions)
     }
-
 }
 
 pub fn run(name: String) -> Result<()> {
@@ -256,4 +256,3 @@ pub fn run(name: String) -> Result<()> {
 
     Distrox::run(settings).map_err(anyhow::Error::from)
 }
-
