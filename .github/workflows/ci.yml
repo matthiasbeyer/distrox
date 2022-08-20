@@ -21,3 +21,17 @@ jobs:
           name: distrox
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix --extra-experimental-features "nix-command flakes" flake check
+
+  dco-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4.0.0
+        with:
+          python-version: '3.x'
+      - name: Install gitlint
+        run: pip install gitlint
+      - run: gitlint --commits $(git merge-base origin/master HEAD)..
