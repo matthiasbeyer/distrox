@@ -60,6 +60,6 @@ impl GossipDeserializerErrorStrategy for LogStrategy {
 pub struct IgnoreStrategy;
 impl GossipDeserializerErrorStrategy for IgnoreStrategy {
     fn handle_error(_: anyhow::Error) {
-        ()
+        // nothing
     }
 }
