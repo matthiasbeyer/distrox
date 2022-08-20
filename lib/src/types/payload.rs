@@ -69,7 +69,7 @@ impl Payload {
         Self {
             mime,
             timestamp,
-            content: content.into(),
+            content,
         }
     }
 
