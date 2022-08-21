@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use anyhow::Result;
 use futures::Stream;
 use futures::StreamExt;
 
@@ -13,16 +12,21 @@ where
     strategy: std::marker::PhantomData<ErrStrategy>,
 }
 
-impl<ErrStrategy> GossipDeserializer<ErrStrategy>
+impl<ErrStrategy> Default for GossipDeserializer<ErrStrategy>
 where
     ErrStrategy: GossipDeserializerErrorStrategy,
 {
-    pub fn new() -> Self {
+    fn default() -> Self {
         Self {
             strategy: std::marker::PhantomData,
         }
     }
+}
 
+impl<ErrStrategy> GossipDeserializer<ErrStrategy>
+where
+    ErrStrategy: GossipDeserializerErrorStrategy,
+{
     pub fn run<S>(self, input: S) -> impl Stream<Item = (ipfs::PeerId, GossipMessage)>
     where
         S: Stream<Item = Arc<ipfs::PubsubMessage>>,
@@ -55,6 +59,6 @@ impl GossipDeserializerErrorStrategy for LogStrategy {
 pub struct IgnoreStrategy;
 impl GossipDeserializerErrorStrategy for IgnoreStrategy {
     fn handle_error(_: anyhow::Error) {
-        ()
+        // nothing
     }
 }

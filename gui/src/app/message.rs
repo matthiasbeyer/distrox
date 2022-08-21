@@ -7,8 +7,6 @@ use distrox_lib::gossip::GossipMessage;
 use distrox_lib::profile::Profile;
 use distrox_lib::types::Payload;
 
-use crate::gossip::GossipRecipe;
-
 #[derive(Clone, Debug)]
 pub enum Message {
     Loaded(Arc<RwLock<Profile>>),
@@ -19,7 +17,6 @@ pub enum Message {
     ToggleLog,
 
     GossipMessage(ipfs::PeerId, GossipMessage),
-    GossipSubscriptionFailed(String),
     GossipHandled(GossipMessage),
 
     PublishGossipAboutMe,
@@ -49,7 +46,6 @@ impl Message {
             Message::ToggleLog => "ToggleLog",
 
             Message::GossipMessage(_, _) => "GossipMessage",
-            Message::GossipSubscriptionFailed(_) => "GossipSubscriptionFailed",
             Message::GossipHandled(_) => "GossipHandled",
 
             Message::PublishGossipAboutMe => "PublishGossipAboutMe",

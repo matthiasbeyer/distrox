@@ -103,21 +103,24 @@
           distrox-gui = packages.distrox-gui;
           distrox-lib = packages.distrox-lib;
 
-          # distrox-cli-clippy = craneLib.cargoClippy {
-          #   inherit src;
-          #   cargoArtifacts = packages.distrox-cli;
-          #   cargoClippyExtraArgs = "-- --deny warnings";
-          # };
-          # distrox-gui-clippy = craneLib.cargoClippy {
-          #   inherit src;
-          #   cargoArtifacts = packages.distrox-gui;
-          #   cargoclippyExtraArgs = "-- --deny warnings";
-          # };
-          # distrox-lib-clippy = craneLib.cargoClippy {
-          #   inherit src;
-          #   cargoArtifacts = packages.distrox-lib;
-          #   cargoclippyExtraArgs = "-- --deny warnings";
-          # };
+          distrox-cli-clippy = craneLib.cargoClippy {
+            src = ./.;
+            cargoExtraArgs = "--package distrox-cli";
+            cargoArtifacts = distrox-cli-deps;
+            cargoClippyExtraArgs = "-- --deny warnings";
+          };
+          distrox-gui-clippy = craneLib.cargoClippy {
+            src = ./.;
+            cargoExtraArgs = "--package distrox-gui";
+            cargoArtifacts = distrox-gui-deps;
+            cargoclippyExtraArgs = "-- --deny warnings";
+          };
+          distrox-lib-clippy = craneLib.cargoClippy {
+            src = ./.;
+            cargoExtraArgs = "--package distrox-lib";
+            cargoArtifacts = distrox-lib-deps;
+            cargoclippyExtraArgs = "-- --deny warnings";
+          };
 
           distrox-cli-fmt = craneLib.cargoFmt {
             src = ./.;

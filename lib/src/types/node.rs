@@ -15,15 +15,15 @@ pub struct Node {
     payload: ipfs::Cid,
 }
 
-impl Into<ipfs::Ipld> for Node {
-    fn into(self) -> ipfs::Ipld {
+impl From<Node> for ipfs::Ipld {
+    fn from(node: Node) -> ipfs::Ipld {
         let mut map = std::collections::BTreeMap::new();
-        map.insert(String::from("version"), ipfs::Ipld::String(self.version));
+        map.insert(String::from("version"), ipfs::Ipld::String(node.version));
         map.insert(
             String::from("parents"),
-            ipfs::Ipld::List(self.parents.into_iter().map(ipfs::Ipld::Link).collect()),
+            ipfs::Ipld::List(node.parents.into_iter().map(ipfs::Ipld::Link).collect()),
         );
-        map.insert(String::from("payload"), ipfs::Ipld::Link(self.payload));
+        map.insert(String::from("payload"), ipfs::Ipld::Link(node.payload));
         ipfs::Ipld::Map(map)
     }
 }
@@ -45,7 +45,7 @@ impl TryFrom<ipfs::Ipld> for Node {
 
                 let parents = match map.get("parents").ok_or_else(missing_field("parents"))? {
                     ipfs::Ipld::List(s) => s
-                        .into_iter()
+                        .iter()
                         .map(|parent| -> Result<ipfs::Cid> {
                             match parent {
                                 ipfs::Ipld::Link(cid) => Ok(cid.clone()),

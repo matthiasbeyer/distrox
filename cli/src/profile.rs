@@ -7,7 +7,6 @@ use anyhow::Result;
 use clap::ArgMatches;
 
 use distrox_lib::profile::Profile;
-use distrox_lib::types::Payload;
 
 pub async fn profile(matches: &ArgMatches) -> Result<()> {
     match matches.subcommand() {
@@ -97,7 +96,7 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
                 use distrox_lib::gossip::GossipDeserializer;
                 use distrox_lib::gossip::LogStrategy;
 
-                GossipDeserializer::<LogStrategy>::new().run(stream)
+                GossipDeserializer::<LogStrategy>::default().run(stream)
             })?
     });
 
@@ -113,7 +112,6 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
 
     log::info!("Serving...");
     while running.load(Ordering::SeqCst) {
-        use distrox_lib::gossip::GossipMessage;
         use futures::stream::StreamExt;
 
         tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
@@ -212,7 +210,7 @@ async fn profile_cat(matches: &ArgMatches) -> Result<()> {
                         )?;
 
                         writeln!(lock, "{text}", text = text)?;
-                        writeln!(lock, "")?;
+                        writeln!(lock)?;
                     }
                 }
                 Ok(())

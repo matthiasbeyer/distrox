@@ -24,6 +24,7 @@ mod handler;
 use crate::gossip::GossipRecipe;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum Distrox {
     Loading {
         gossip_subscription_recv: RwLock<tokio::sync::oneshot::Receiver<GossipRecipe>>,
@@ -40,7 +41,6 @@ pub(crate) enum Distrox {
         log_visible: bool,
         log: std::collections::VecDeque<String>,
     },
-    FailedToStart,
 }
 
 impl Application for Distrox {
@@ -171,10 +171,6 @@ impl Application for Distrox {
                 }
                 .into()
             }
-
-            Distrox::FailedToStart => {
-                unimplemented!()
-            }
         }
     }
 
@@ -217,10 +213,7 @@ impl Application for Distrox {
                 ..
             } => match gossip_subscription_recv.try_write() {
                 Err(_) => None,
-                Ok(mut sub) => sub
-                    .try_recv()
-                    .ok()
-                    .map(|sub| iced::Subscription::from_recipe(sub)),
+                Ok(mut sub) => sub.try_recv().ok().map(iced::Subscription::from_recipe),
             },
             _ => None,
         };

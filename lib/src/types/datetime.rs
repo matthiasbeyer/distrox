@@ -6,9 +6,9 @@ use std::convert::TryFrom;
 #[serde(transparent)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
-impl Into<ipfs::Ipld> for DateTime {
-    fn into(self) -> ipfs::Ipld {
-        ipfs::Ipld::String(self.0.to_rfc3339())
+impl From<DateTime> for ipfs::Ipld {
+    fn from(dt: DateTime) -> ipfs::Ipld {
+        ipfs::Ipld::String(dt.0.to_rfc3339())
     }
 }
 

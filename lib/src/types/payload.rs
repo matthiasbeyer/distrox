@@ -17,12 +17,12 @@ pub struct Payload {
     content: ipfs::Cid,
 }
 
-impl Into<ipfs::Ipld> for Payload {
-    fn into(self) -> ipfs::Ipld {
+impl From<Payload> for ipfs::Ipld {
+    fn from(pl: Payload) -> Self {
         let mut map = std::collections::BTreeMap::new();
-        map.insert(String::from("mime"), ipfs::Ipld::String(self.mime));
-        map.insert(String::from("timestamp"), self.timestamp.into());
-        map.insert(String::from("content"), ipfs::Ipld::Link(self.content));
+        map.insert(String::from("mime"), ipfs::Ipld::String(pl.mime));
+        map.insert(String::from("timestamp"), pl.timestamp.into());
+        map.insert(String::from("content"), ipfs::Ipld::Link(pl.content));
         ipfs::Ipld::Map(map)
     }
 }
@@ -69,7 +69,7 @@ impl Payload {
         Self {
             mime,
             timestamp,
-            content: content.into(),
+            content,
         }
     }
 

@@ -147,10 +147,7 @@ impl TryInto<ProfileState> for ProfileStateSaveable {
 
     fn try_into(mut self) -> Result<ProfileState> {
         Ok(ProfileState {
-            profile_head: self
-                .profile_head
-                .map(|h| cid::Cid::try_from(h))
-                .transpose()?,
+            profile_head: self.profile_head.map(cid::Cid::try_from).transpose()?,
             profile_name: self.profile_name,
             keypair: {
                 let kp = libp2p::identity::ed25519::Keypair::decode(&mut self.keypair)?;

@@ -3,7 +3,6 @@ use std::sync::Arc;
 use futures::StreamExt;
 use tokio::sync::RwLock;
 
-use distrox_lib::client::Client;
 use distrox_lib::gossip::GossipDeserializer;
 use distrox_lib::gossip::LogStrategy;
 use distrox_lib::profile::Profile;
@@ -12,14 +11,12 @@ use crate::app::Message;
 
 #[derive(Clone, Debug)]
 pub struct GossipRecipe {
-    profile: Arc<RwLock<Profile>>,
     subscription: Arc<ipfs::SubscriptionStream>,
 }
 
 impl GossipRecipe {
-    pub fn new(profile: Arc<RwLock<Profile>>, subscription: ipfs::SubscriptionStream) -> Self {
+    pub fn new(_profile: Arc<RwLock<Profile>>, subscription: ipfs::SubscriptionStream) -> Self {
         Self {
-            profile,
             subscription: Arc::new(subscription),
         }
     }
@@ -46,7 +43,7 @@ where
         let stream = Arc::try_unwrap(self.subscription).unwrap();
 
         Box::pin({
-            GossipDeserializer::<LogStrategy>::new()
+            GossipDeserializer::<LogStrategy>::default()
                 .run(stream)
                 .map(|(source, msg)| Message::GossipMessage(source, msg))
         })

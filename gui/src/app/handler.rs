@@ -187,9 +187,5 @@ pub(super) fn handle_message(app: &mut Distrox, message: Message) -> iced::Comma
             log::warn!("Unhandled message: {:?}", msg);
             iced::Command::none()
         }
-
-        (Distrox::FailedToStart, _) => {
-            unimplemented!()
-        }
     }
 }

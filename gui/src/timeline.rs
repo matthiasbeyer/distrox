@@ -42,7 +42,7 @@ impl Timeline {
             .spacing(20)
             .width(iced::Length::Fill)
             .height(iced::Length::Fill)
-            .on_scroll(move |offset| Message::TimelineScrolled(offset));
+            .on_scroll(Message::TimelineScrolled);
 
         self.posts
             .iter()
