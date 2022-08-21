@@ -13,7 +13,7 @@ pub fn app<'a>() -> App<'a> {
             App::new("profile")
                 .author(crate_authors!())
                 .version(crate_version!())
-                .about("Profile actions")
+                .help("Profile actions")
                 .subcommand(
                     App::new("create")
                         .author(crate_authors!())
@@ -25,7 +25,7 @@ pub fn app<'a>() -> App<'a> {
                                 .required(true)
                                 .takes_value(true)
                                 .value_name("NAME")
-                                .about("Name of the profile"),
+                                .help("Name of the profile"),
                         ),
                 )
                 .subcommand(
@@ -39,7 +39,7 @@ pub fn app<'a>() -> App<'a> {
                                 .required(true)
                                 .takes_value(true)
                                 .value_name("NAME")
-                                .about("Name of the profile"),
+                                .help("Name of the profile"),
                         )
                         .arg(
                             Arg::new("connect")
@@ -48,7 +48,7 @@ pub fn app<'a>() -> App<'a> {
                                 .takes_value(true)
                                 .multiple(true)
                                 .value_name("MULTIADDR")
-                                .about("Connect to MULTIADDR as well"),
+                                .help("Connect to MULTIADDR as well"),
                         )
                         .arg(
                             Arg::new("listen")
@@ -57,7 +57,7 @@ pub fn app<'a>() -> App<'a> {
                                 .takes_value(true)
                                 .multiple(true)
                                 .value_name("MULTIADDR")
-                                .about("Listen on MULTIADDR, e.g. '/ip4/127.0.0.1/tcp/10000'"),
+                                .help("Listen on MULTIADDR, e.g. '/ip4/127.0.0.1/tcp/10000'"),
                         ),
                 )
                 .subcommand(
@@ -71,7 +71,7 @@ pub fn app<'a>() -> App<'a> {
                                 .required(true)
                                 .takes_value(true)
                                 .value_name("NAME")
-                                .about("Name of the profile"),
+                                .help("Name of the profile"),
                         ),
                 )
                 .subcommand(
@@ -85,7 +85,7 @@ pub fn app<'a>() -> App<'a> {
                                 .required(true)
                                 .takes_value(true)
                                 .value_name("NAME")
-                                .about("Name of the profile to post to"),
+                                .help("Name of the profile to post to"),
                         )
                         .arg(
                             Arg::new("editor")
@@ -93,7 +93,7 @@ pub fn app<'a>() -> App<'a> {
                                 .short('e')
                                 .required(false)
                                 .takes_value(false)
-                                .about("Launch the editor for the text to be posted")
+                                .help("Launch the editor for the text to be posted")
                                 .conflicts_with("text"),
                         )
                         .arg(
@@ -102,7 +102,7 @@ pub fn app<'a>() -> App<'a> {
                                 .required(true)
                                 .takes_value(true)
                                 .value_name("TEXT")
-                                .about("The text to be posted")
+                                .help("The text to be posted")
                                 .conflicts_with("editor"),
                         )
                         .group(
