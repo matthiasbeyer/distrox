@@ -113,6 +113,30 @@ pub fn app<'a>() -> App<'a> {
                 ),
         )
         .subcommand(
+            App::new("watch")
+                .author(crate_authors!())
+                .version(crate_version!())
+                .about("Watch events")
+                .arg(
+                    Arg::new("state_dir")
+                        .index(1)
+                        .required(true)
+                        .takes_value(true)
+                        .multiple_occurrences(false)
+                        .value_name("STATE_DIR")
+                        .help("State dir for IPFS"),
+                )
+                .arg(
+                    Arg::new("connect")
+                        .long("connect")
+                        .required(false)
+                        .takes_value(true)
+                        .multiple_occurrences(true)
+                        .value_name("ADDR")
+                        .help("Connect to this addr"),
+                ),
+        )
+        .subcommand(
             App::new("gui")
                 .author(crate_authors!())
                 .version(crate_version!())

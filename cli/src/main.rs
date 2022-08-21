@@ -2,6 +2,7 @@ use anyhow::Result;
 
 mod cli;
 mod profile;
+mod watch;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -10,6 +11,7 @@ async fn main() -> Result<()> {
 
     match matches.subcommand() {
         Some(("profile", matches)) => crate::profile::profile(matches).await,
+        Some(("watch", matches)) => crate::watch::watch(matches).await,
         Some(("gui", _)) => {
             unimplemented!()
         }
