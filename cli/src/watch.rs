@@ -74,7 +74,15 @@ pub async fn watch(args: &ArgMatches) -> Result<()> {
             break;
         }
 
-        let next = gossip_channel.next().await;
+        let next = match tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            gossip_channel.next(),
+        )
+        .await
+        {
+            Ok(next) => next,
+            Err(_elapsed) => continue,
+        };
         let gossip_myself = next
             .as_ref()
             .map(|(source, _)| *source == own_peer_id)
