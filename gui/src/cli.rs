@@ -13,6 +13,6 @@ pub fn app<'a>() -> App<'a> {
                 .index(1)
                 .takes_value(true)
                 .value_name("NAME")
-                .about("Profile to load the GUI for"),
+                .help("Profile to load the GUI for"),
         )
 }
