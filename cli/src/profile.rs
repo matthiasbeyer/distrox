@@ -114,10 +114,11 @@ async fn profile_serve(matches: &ArgMatches) -> Result<()> {
     while running.load(Ordering::SeqCst) {
         use futures::stream::StreamExt;
 
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await; // sleep not so busy
-
         tokio::select! {
-            own = profile.gossip_own_state("distrox".to_string()) => own?,
+            _timeout = tokio::time::sleep(std::time::Duration::from_millis(500)) => {
+                log::info!("Gossipping own state...");
+                profile.gossip_own_state("distrox".to_string()).await?;
+            },
             other = gossip_channel.next() => {
                 let gossip_myself = other.as_ref().map(|(source, _)| *source == own_peer_id).unwrap_or(false);
 
