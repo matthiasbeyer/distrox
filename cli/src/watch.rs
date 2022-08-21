@@ -32,6 +32,15 @@ pub async fn watch(args: &ArgMatches) -> Result<()> {
             .join(", ")
     );
 
+    let listen_addrs = args
+        .values_of("listen")
+        .map(|v| {
+            v.map(|s| s.parse::<ipfs::Multiaddr>().map_err(anyhow::Error::from))
+                .collect::<Result<Vec<_>>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
+
     let connect_addrs = args
         .values_of("connect")
         .map(|vals| {
@@ -40,6 +49,11 @@ pub async fn watch(args: &ArgMatches) -> Result<()> {
         })
         .transpose()?
         .unwrap_or_default();
+
+    for addr in listen_addrs {
+        log::info!("Listening on {:?}", addr);
+        client.listen_on(addr).await?
+    }
 
     for addr in connect_addrs {
         log::info!("Connecting to {}", addr);

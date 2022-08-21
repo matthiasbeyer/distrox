@@ -134,6 +134,15 @@ pub fn app<'a>() -> App<'a> {
                         .multiple_occurrences(true)
                         .value_name("ADDR")
                         .help("Connect to this addr"),
+                )
+                .arg(
+                    Arg::new("listen")
+                        .long("listen")
+                        .required(false)
+                        .takes_value(true)
+                        .multiple_occurrences(true)
+                        .value_name("MULTIADDR")
+                        .help("Listen on MULTIADDR, e.g. '/ip4/127.0.0.1/tcp/10000'"),
                 ),
         )
         .subcommand(
