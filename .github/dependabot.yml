@@ -1,11 +1,26 @@
 version: 2
 updates:
 - package-ecosystem: cargo
-  directory: "/"
+  directory: "/cli"
   schedule:
     interval: daily
-  # Disable the pull request limit for dependabot
   open-pull-requests-limit: 0
+  commit-message:
+    prefix: "[cli]"
+- package-ecosystem: cargo
+  directory: "/lib"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 0
+  commit-message:
+    prefix: "[lib]"
+- package-ecosystem: cargo
+  directory: "/gui"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 0
+  commit-message:
+    prefix: "[gui]"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
