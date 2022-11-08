@@ -815,7 +815,7 @@ dependencies = [
 [[package]]
 name = "daglib"
 version = "0.1.0"
-source = "git+https://git.sr.ht/~matthiasbeyer/daglib?branch=master#7641388216802ba578a5f14c1ad50dae1b0ce5c2"
+source = "git+https://github.com/matthiasbeyer/daglib?branch=master#5cc96a7a9f8a48a13dca4dd6a48dacff27773f3b"
 dependencies = [
  "anyhow",
  "async-trait",
