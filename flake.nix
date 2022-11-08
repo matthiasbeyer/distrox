@@ -74,26 +74,30 @@
         ];
 
         xorgPkgs = with pkgs.xorg; [
-          libXcursor
-          libXfont2
-          # libXpm
-          # libXtst
-          # libxshmfence
-          # libXft
-          libXrandr
-          libXext
-          # libXinerama
-          # libXrender
-          # libXxf86misc
-          # libxcb
           libX11
-          # libXcomposite
+          libXcomposite
+          libXcursor
+          libXext
           libXfont
+          libXfont2
+          libXft
           libXi
-          # libXt
-          # libxkbfile
+          libXinerama
+          libXmu
+          libXpm
+          libXpresent
+          libXrandr
+          libXrender
+          libXt
+          libXtst
+          libXxf86misc
+          libXxf86vm
+          libxcb
+          libxkbfile
+          libxshmfence
 
           pkgs.libGL
+          pkgs.pkgconfig
         ];
 
       in
