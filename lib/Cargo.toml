@@ -37,27 +37,12 @@ getset        = "0.1"
 xdg           = "2.4"
 tracing       = "0.1"
 ctrlc         = "3.2"
+libp2p = "0.50"
 
-[dependencies.libp2p]
-version          = "0.39.1"
-default-features = false
-features         = [
-    "dns-tokio",
-    "floodsub",
-    "gossipsub",
-    "identify",
-    "kad",
-    "mdns",
-    "mplex",
-    "noise",
-    "ping",
-    "tcp-tokio",
-    "yamux"
-]
-
-[dependencies.ipfs]
-git = "https://github.com/rs-ipfs/rust-ipfs/"
-rev = "ad3ab49b4d9236363969b0f74f14aabc7c906b3b"
+[dependencies.iroh_rpc_client]
+git = "https://github.com/n0-computer/iroh"
+package = "iroh-rpc-client"
+rev = "54b0830423d2d9e7ce9439915380401dc206954a"
 
 [dev-dependencies]
 multibase = "0.8"
