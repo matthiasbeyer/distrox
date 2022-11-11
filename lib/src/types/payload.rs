@@ -1,7 +1,6 @@
-use std::convert::TryFrom;
-
-use anyhow::Result;
-
+use crate::error::Error;
+use crate::types::IntoIPLD;
+use crate::types::FromIPLD;
 use crate::types::DateTime;
 
 #[derive(Clone, Debug, Eq, PartialEq, getset::Getters)]
@@ -14,42 +13,42 @@ pub struct Payload {
     #[getset(get = "pub")]
     timestamp: DateTime,
 
-    content: ipfs::Cid,
+    content: libipld::Cid,
 }
 
-impl From<Payload> for ipfs::Ipld {
-    fn from(pl: Payload) -> Self {
+impl IntoIPLD for Payload {
+    fn into_ipld(self) -> libipld::Ipld {
         let mut map = std::collections::BTreeMap::new();
-        map.insert(String::from("mime"), ipfs::Ipld::String(pl.mime));
-        map.insert(String::from("timestamp"), pl.timestamp.into());
-        map.insert(String::from("content"), ipfs::Ipld::Link(pl.content));
-        ipfs::Ipld::Map(map)
+        map.insert(String::from("mime"), libipld::Ipld::String(self.mime));
+        map.insert(String::from("timestamp"), self.timestamp.into_ipld());
+        map.insert(String::from("content"), libipld::Ipld::Link(self.content));
+        libipld::Ipld::Map(map)
     }
 }
 
-impl TryFrom<ipfs::Ipld> for Payload {
-    type Error = anyhow::Error;
-
-    fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
-        let missing_field = |name: &'static str| move || anyhow::anyhow!("Missing field {}", name);
+impl FromIPLD for Payload {
+    fn from_ipld(ipld: &libipld::Ipld) -> Result<Self, Error> {
+        let missing_field = |name: &'static str| move || Error::MissingField(name.to_string());
         let field_wrong_type = |name: &str, expty: &str| {
-            anyhow::bail!("Field {} has wrong type, expected {}", name, expty)
+            Error::WrongFieldType(name.to_string(), expty.to_string())
         };
+
         match ipld {
-            ipfs::Ipld::Map(map) => {
+            libipld::Ipld::Map(map) => {
                 let mime = match map.get("mime").ok_or_else(missing_field("mime"))? {
-                    ipfs::Ipld::String(s) => s.to_owned(),
-                    _ => return field_wrong_type("mime", "String"),
+                    libipld::Ipld::String(s) => s.to_owned(),
+                    _ => return Err(field_wrong_type("mime", "String")),
                 };
 
                 let timestamp = map
                     .get("timestamp")
                     .ok_or_else(missing_field("timestamp"))?;
-                let timestamp = DateTime::try_from(timestamp.clone())?; // TODO dont clone
+
+                let timestamp = DateTime::from_ipld(&timestamp)?;
 
                 let content = match map.get("content").ok_or_else(missing_field("content"))? {
-                    ipfs::Ipld::Link(cid) => cid.clone(),
-                    _ => return field_wrong_type("content", "Link"),
+                    libipld::Ipld::Link(cid) => cid.clone(),
+                    _ => return Err(field_wrong_type("content", "Link")),
                 };
 
                 Ok(Payload {
@@ -59,13 +58,13 @@ impl TryFrom<ipfs::Ipld> for Payload {
                 })
             }
 
-            _ => anyhow::bail!("Unexpected type, expected map"),
+            _ => Err(Error::UnexpectedType("Map".to_string())),
         }
     }
 }
 
 impl Payload {
-    pub fn new(mime: String, timestamp: DateTime, content: ipfs::Cid) -> Self {
+    pub fn new(mime: String, timestamp: DateTime, content: libipld::Cid) -> Self {
         Self {
             mime,
             timestamp,
@@ -73,7 +72,7 @@ impl Payload {
         }
     }
 
-    pub fn content(&self) -> ipfs::Cid {
+    pub fn content(&self) -> libipld::Cid {
         self.content.clone()
     }
 }

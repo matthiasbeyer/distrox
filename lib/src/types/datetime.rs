@@ -1,27 +1,24 @@
-use anyhow::Error;
-use anyhow::Result;
-use std::convert::TryFrom;
+use crate::error::Error;
 
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
-#[serde(transparent)]
+use crate::types::{IntoIPLD, FromIPLD};
+
+#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
-impl From<DateTime> for ipfs::Ipld {
-    fn from(dt: DateTime) -> ipfs::Ipld {
-        ipfs::Ipld::String(dt.0.to_rfc3339())
+impl IntoIPLD for DateTime  {
+    fn into_ipld(self) -> libipld::Ipld {
+        libipld::Ipld::String(self.0.to_rfc3339())
     }
 }
 
-impl TryFrom<ipfs::Ipld> for DateTime {
-    type Error = Error;
-
-    fn try_from(ipld: ipfs::Ipld) -> Result<DateTime> {
+impl FromIPLD for DateTime {
+    fn from_ipld(ipld: &libipld::Ipld) -> Result<DateTime, Error> {
         match ipld {
-            ipfs::Ipld::String(s) => chrono::DateTime::parse_from_rfc3339(&s)
+            libipld::Ipld::String(ref s) => chrono::DateTime::parse_from_rfc3339(&s)
                 .map(|dt| dt.with_timezone(&chrono::Utc))
                 .map(DateTime)
                 .map_err(Error::from),
-            _ => anyhow::bail!("Expected string for timestamp"),
+            _ => Err(Error::ExpectedStringForTimestamp),
         }
     }
 }
