@@ -35,7 +35,7 @@ git = "https://github.com/rs-ipfs/rust-ipfs/"
 rev = "ad3ab49b4d9236363969b0f74f14aabc7c906b3b"
 
 [dependencies.iced]
-version          = "0.4.2"
+version          = "0.5.2"
 default-features = false
 features         = ["glow", "tokio", "debug"]
 
