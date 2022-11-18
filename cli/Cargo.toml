@@ -19,7 +19,7 @@ edition       = "2018"
 anyhow        = "1"
 async-trait   = "0.1"
 chrono        = { version = "0.4", features = ["serde"] }
-cid           = "0.5"
+cid           = "0.9"
 clap          = { version = "3", features = ["cargo"] }
 daglib        = { git = "https://github.com/matthiasbeyer/daglib", branch = "master" }
 env_logger    = "0.8"
