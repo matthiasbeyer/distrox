@@ -1,5 +1,4 @@
 status = [
-    "checks",
-    "dco-check"
+    "CI",
 ]
 update_base_for_deletes = true
