@@ -50,21 +50,24 @@
 
         guiBuildInputs = (with pkgs; [
           alejandra
-          dprint
-          nodejs-16_x
-          treefmt
-          pkg-config
-          glib
-          dbus
-          cairo
+          appimagekit
           atk
-          openssl
-          libsoup
-          pango
+          cairo
+          dbus.lib
+          dprint
           gdk-pixbuf
+          glib.out
           gtk3
           harfbuzz
+          libsoup
+          nodejs-16_x
+          openssl.out
+          pango
+          pkg-config
+          treefmt
+          webkitgtk
           zlib
+        pkg-config
         ]) ++ (with pkgs.xorg; [
           libX11
           libXcomposite
