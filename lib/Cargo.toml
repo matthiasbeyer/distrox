@@ -16,9 +16,20 @@ homepage      = "http://github.com/matthiasbeyer/distrox"
 edition       = "2018"
 
 [dependencies]
+anyhow = "1" # only required because error handling in iroh is not implemented yet :-(
 chrono = "0.4"
 getset = "0.1"
 libipld = "0.14"
 libp2p = "0.49"
 thiserror = "1"
 tracing = "0.1"
+
+[dependencies.iroh-rpc-client]
+git = "https://github.com/n0-computer/iroh/"
+rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
+package = "iroh-rpc-client"
+
+[dependencies.iroh-rpc-types]
+git = "https://github.com/n0-computer/iroh/"
+rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
+package = "iroh-rpc-types"

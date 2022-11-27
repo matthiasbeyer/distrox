@@ -1,6 +1,9 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
+    GenericIrohError(#[from] anyhow::Error),
+
+    #[error(transparent)]
     Chrono(#[from] chrono::ParseError),
 
     #[error("Expected IPLD String for timestamp")]
