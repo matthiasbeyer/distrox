@@ -60,4 +60,4 @@ git = "https://github.com/rs-ipfs/rust-ipfs/"
 rev = "ad3ab49b4d9236363969b0f74f14aabc7c906b3b"
 
 [dev-dependencies]
-multibase = "0.8"
+multibase = "0.9"
