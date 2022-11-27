@@ -1,6 +1,6 @@
 use crate::error::Error;
-use crate::types::IntoIPLD;
 use crate::types::FromIPLD;
+use crate::types::IntoIPLD;
 
 #[derive(Debug, Eq, PartialEq, getset::Getters)]
 pub struct Node {
@@ -31,9 +31,8 @@ impl IntoIPLD for Node {
 impl FromIPLD for Node {
     fn from_ipld(ipld: &libipld::Ipld) -> Result<Self, Error> {
         let missing_field = |name: &'static str| move || Error::MissingField(name.to_string());
-        let field_wrong_type = |name: &str, expty: &str| {
-            Error::WrongFieldType(name.to_string(), expty.to_string())
-        };
+        let field_wrong_type =
+            |name: &str, expty: &str| Error::WrongFieldType(name.to_string(), expty.to_string());
 
         match ipld {
             libipld::Ipld::Map(map) => {

@@ -1,4 +1,4 @@
-use yew::{Html, Context, html};
+use yew::{html, Context, Html};
 
 use crate::{app::App, message::Message};
 
