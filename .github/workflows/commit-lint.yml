@@ -5,6 +5,7 @@ name: Pull Request Checks
 
 jobs:
   commit-lint:
+    name: commit-lint
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
