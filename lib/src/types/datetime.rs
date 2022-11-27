@@ -1,11 +1,11 @@
 use crate::error::Error;
 
-use crate::types::{IntoIPLD, FromIPLD};
+use crate::types::{FromIPLD, IntoIPLD};
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
-impl IntoIPLD for DateTime  {
+impl IntoIPLD for DateTime {
     fn into_ipld(self) -> libipld::Ipld {
         libipld::Ipld::String(self.0.to_rfc3339())
     }
