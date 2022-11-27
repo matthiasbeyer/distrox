@@ -1,0 +1,19 @@
+[package]
+name          = "distrox-gui-frontend"
+version       = "0.1.0"
+authors       = ["Matthias Beyer <mail@beyermatthias.de>"]
+
+description   = "Distributed network build on IPFS"
+
+keywords      = ["social", "network", "ipfs", "distributed"]
+readme        = "README.md"
+license       = "GPL-2.0"
+
+documentation = "https://docs.rs/distrox"
+repository    = "https://github.com/matthiasbeyer/distrox"
+homepage      = "http://github.com/matthiasbeyer/distrox"
+
+edition       = "2018"
+
+[dependencies]
+yew = { version = "0.20.0", features = ["csr"] }
