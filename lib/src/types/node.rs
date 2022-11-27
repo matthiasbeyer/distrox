@@ -1,6 +1,6 @@
-use anyhow::Result;
-
-use std::convert::TryFrom;
+use crate::error::Error;
+use crate::types::IntoIPLD;
+use crate::types::FromIPLD;
 
 #[derive(Debug, Eq, PartialEq, getset::Getters)]
 pub struct Node {
@@ -9,58 +9,55 @@ pub struct Node {
     version: String,
 
     /// Parent Nodes, identified by cid
-    parents: Vec<ipfs::Cid>,
+    parents: Vec<libipld::Cid>,
 
     /// The actual payload of the node, which is stored in another document identified by this cid
-    payload: ipfs::Cid,
+    payload: libipld::Cid,
 }
 
-impl From<Node> for ipfs::Ipld {
-    fn from(node: Node) -> ipfs::Ipld {
+impl IntoIPLD for Node {
+    fn into_ipld(self) -> libipld::Ipld {
         let mut map = std::collections::BTreeMap::new();
-        map.insert(String::from("version"), ipfs::Ipld::String(node.version));
+        map.insert(String::from("version"), libipld::Ipld::String(self.version));
         map.insert(
             String::from("parents"),
-            ipfs::Ipld::List(node.parents.into_iter().map(ipfs::Ipld::Link).collect()),
+            libipld::Ipld::List(self.parents.into_iter().map(libipld::Ipld::Link).collect()),
         );
-        map.insert(String::from("payload"), ipfs::Ipld::Link(node.payload));
-        ipfs::Ipld::Map(map)
+        map.insert(String::from("payload"), libipld::Ipld::Link(self.payload));
+        libipld::Ipld::Map(map)
     }
 }
 
-impl TryFrom<ipfs::Ipld> for Node {
-    type Error = anyhow::Error;
-
-    fn try_from(ipld: ipfs::Ipld) -> Result<Self> {
-        let missing_field = |name: &'static str| move || anyhow::anyhow!("Missing field {}", name);
+impl FromIPLD for Node {
+    fn from_ipld(ipld: &libipld::Ipld) -> Result<Self, Error> {
+        let missing_field = |name: &'static str| move || Error::MissingField(name.to_string());
         let field_wrong_type = |name: &str, expty: &str| {
-            anyhow::bail!("Field {} has wrong type, expected {}", name, expty)
+            Error::WrongFieldType(name.to_string(), expty.to_string())
         };
+
         match ipld {
-            ipfs::Ipld::Map(map) => {
+            libipld::Ipld::Map(map) => {
                 let version = match map.get("version").ok_or_else(missing_field("version"))? {
-                    ipfs::Ipld::String(s) => s.to_string(),
-                    _ => return field_wrong_type("version", "String"),
+                    libipld::Ipld::String(s) => s.to_string(),
+                    _ => return Err(field_wrong_type("version", "String")),
                 };
 
                 let parents = match map.get("parents").ok_or_else(missing_field("parents"))? {
-                    ipfs::Ipld::List(s) => s
+                    libipld::Ipld::List(s) => s
                         .iter()
-                        .map(|parent| -> Result<ipfs::Cid> {
+                        .map(|parent| -> Result<libipld::Cid, Error> {
                             match parent {
-                                ipfs::Ipld::Link(cid) => Ok(cid.clone()),
-                                _ => {
-                                    anyhow::bail!("Field in parents has wrong type, expected Link")
-                                }
+                                libipld::Ipld::Link(cid) => Ok(cid.clone()),
+                                _ => Err(field_wrong_type("parents", "Link")),
                             }
                         })
-                        .collect::<Result<Vec<ipfs::Cid>>>()?,
-                    _ => return field_wrong_type("parents", "Vec<Link>"),
+                        .collect::<Result<Vec<libipld::Cid>, Error>>()?,
+                    _ => return Err(field_wrong_type("parents", "Vec<Link>")),
                 };
 
                 let payload = match map.get("payload").ok_or_else(missing_field("payload"))? {
-                    ipfs::Ipld::Link(cid) => cid.clone(),
-                    _ => return field_wrong_type("payload", "Link"),
+                    libipld::Ipld::Link(cid) => cid.clone(),
+                    _ => return Err(field_wrong_type("payload", "Link")),
                 };
 
                 Ok(Node {
@@ -70,13 +67,13 @@ impl TryFrom<ipfs::Ipld> for Node {
                 })
             }
 
-            _ => anyhow::bail!("Unexpected type, expected map"),
+            _ => Err(Error::UnexpectedType("Map".to_string())),
         }
     }
 }
 
 impl Node {
-    pub fn new(version: String, parents: Vec<ipfs::Cid>, payload: ipfs::Cid) -> Self {
+    pub fn new(version: String, parents: Vec<libipld::Cid>, payload: libipld::Cid) -> Self {
         Self {
             version,
             parents,
@@ -84,11 +81,11 @@ impl Node {
         }
     }
 
-    pub fn parents(&self) -> Vec<ipfs::Cid> {
+    pub fn parents(&self) -> Vec<libipld::Cid> {
         self.parents.clone()
     }
 
-    pub fn payload(&self) -> ipfs::Cid {
+    pub fn payload(&self) -> libipld::Cid {
         self.payload.clone()
     }
 }

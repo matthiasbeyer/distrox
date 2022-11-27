@@ -1,7 +1,4 @@
 pub mod client;
-pub mod consts;
-pub mod gossip;
-pub mod ipfs_client;
-pub mod profile;
-pub mod stream;
+pub mod error;
+pub mod low_level_client;
 pub mod types;
