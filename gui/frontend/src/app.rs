@@ -1,6 +1,6 @@
-use yew::{Context, Component, Html};
+use yew::{Component, Context, Html};
 
-use crate::{message::Message, login::login_screen};
+use crate::{login::login_screen, message::Message};
 
 pub enum App {
     Login,
