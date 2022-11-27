@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "gui/frontend",
     "gui/src-tauri",
+    "gui/types",
     "lib",
 ]
 

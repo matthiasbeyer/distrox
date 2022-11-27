@@ -1,3 +1,6 @@
+#[derive(Debug)]
 pub enum Message {
-    Login,
+    StartLoggingIn,
+    LoginSuccess(String),
+    LoginFailed(String),
 }
