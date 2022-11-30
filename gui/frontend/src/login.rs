@@ -5,7 +5,10 @@ pub struct Login;
 #[derive(Properties, PartialEq)]
 pub struct LoginProbs {
     pub input_ref: NodeRef,
-    pub onclick: Callback<()>,
+    pub onclick_login: Callback<()>,
+    pub onclick_create: Callback<()>,
+
+    pub error: Option<String>,
 }
 
 impl Component for Login {
@@ -22,8 +25,13 @@ impl Component for Login {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let cb = ctx.props().onclick.clone();
-        let onclick = move |_| {
+        let cb = ctx.props().onclick_login.clone();
+        let onclick_login = move |_| {
+            cb.emit(());
+        };
+
+        let cb = ctx.props().onclick_create.clone();
+        let onclick_create = move |_| {
             cb.emit(());
         };
 
@@ -49,14 +57,39 @@ impl Component for Login {
                           <div class="field-body">
                             <div class="field">
                               <div class="control">
-                                <button class="button is-primary" onclick={onclick}>
+                                <button class="button is-primary" onclick={onclick_login}>
                                   { "Login" }
                                 </button>
                               </div>
                             </div>
                           </div>
                         </div>
+
+                        <div class="field is-horizontal">
+                          <div class="field-label"> </div>
+                          <div class="field-body">
+                            <div class="field">
+                              <div class="control">
+                                <button class="button is-primary" onclick={onclick_create}>
+                                  { "Create" }
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     </div>
+
+                    if let Some(err) = ctx.props().error.as_ref() {
+                        <article class="message is-danger">
+                          <div class="message-header">
+                            <p>{ "Error" }</p>
+                            <button class="delete" aria-label="delete"></button>
+                          </div>
+                          <div class="message-body">
+                            { err }
+                          </div>
+                        </article>
+                    }
                 </div>
             </div>
         }
