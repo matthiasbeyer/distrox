@@ -12,6 +12,6 @@ if (typeof(window.__TAURI__) !== 'undefined') {
 
 
 export async function invokeLogin(name) {
-    return await fn_login("login", {name: name});
+    return await fn_login(name);
 }
 
