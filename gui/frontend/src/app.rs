@@ -6,6 +6,7 @@ use crate::{login::Login, message::Message};
 #[derive(Debug)]
 pub enum App {
     Login { input_ref: NodeRef },
+    CreateAccountFailed { err: String },
     LoggedIn { name: String },
     LoginFailed { err: String },
 }
@@ -24,6 +25,40 @@ impl Component for App {
         log::debug!("App::update(): {self:?}, msg => {msg:?}");
 
         match msg {
+            Message::CreateAccount => match self {
+                App::Login { input_ref } => {
+                    log::debug!("Login view, logging in now...");
+                    if let Some(input) = input_ref.cast::<HtmlInputElement>() {
+                        let val = input.value();
+                        log::info!("Creating new account: {}", val);
+
+                        ctx.link().send_future(async move {
+                            log::debug!("Calling create_account({val})");
+                            match crate::tauri::call_create_account(val).await {
+                                Ok(handle) => {
+                                    log::error!("create_account() success: '{}'", handle.name());
+                                    // When creating a new account, we immediately logging it in
+                                    Message::LoginSuccess(handle.name().to_string())
+                                }
+                                Err(err) => {
+                                    log::error!(
+                                        "Error deserializing reply from create_account(): '{}'",
+                                        err
+                                    );
+                                    Message::CreateAccountFailed(err.to_string())
+                                }
+                            }
+                        });
+                    } else {
+                        log::error!("Cannot cast {input_ref:?} to HtmlInputElement");
+                    }
+                    true
+                }
+                _ => {
+                    log::error!("Not in Login view");
+                    true
+                }
+            },
             Message::StartLoggingIn => match self {
                 App::Login { input_ref } => {
                     log::debug!("Login view, logging in now...");
@@ -58,6 +93,12 @@ impl Component for App {
                 }
             },
 
+            Message::CreateAccountFailed(err) => {
+                log::info!("CreateAccount: failed: {err}");
+                *self = App::CreateAccountFailed { err };
+                true
+            }
+
             Message::LoginSuccess(name) => {
                 log::info!("Login: Success!");
                 *self = App::LoggedIn { name };
@@ -79,13 +120,24 @@ impl Component for App {
             App::Login { input_ref } => {
                 log::info!("view(): Login");
 
-                let onclick = ctx.link().callback(move |_| {
+                let onclick_login = ctx.link().callback(move |_| {
                     web_sys::console::log_1(&"Login clicked".into());
                     Message::StartLoggingIn
                 });
 
+                let onclick_create = ctx.link().callback(move |_| {
+                    web_sys::console::log_1(&"Create account clicked".into());
+                    Message::CreateAccount
+                });
+
                 html! {
-                    <Login {input_ref} {onclick}/>
+                    <Login {input_ref} {onclick_create} {onclick_login}/>
+                }
+            }
+
+            App::CreateAccountFailed { err } => {
+                html! {
+                    <p> { "Creating account failed" } {err}</p>
                 }
             }
 
