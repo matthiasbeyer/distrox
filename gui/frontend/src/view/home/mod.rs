@@ -29,9 +29,18 @@ impl Component for Home {
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <>
-                <Menu />
-                <Sidebar />
-                <Posts />
+                <div class="container">
+                    <Menu />
+
+                    <div class="columns">
+                        <div class="column is-3">
+                            <Sidebar />
+                        </div>
+                        <div class="column is-9">
+                            <Posts />
+                        </div>
+                    </div>
+                </div>
             </>
         }
     }
