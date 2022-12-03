@@ -1,5 +1,7 @@
 use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
 
+use crate::view::home::post::Post;
+
 pub struct Posts;
 
 #[derive(Properties, PartialEq)]
@@ -20,7 +22,9 @@ impl Component for Posts {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
-            <p> { "Posts" } </p>
+            <>
+                <Post />
+            </>
         }
     }
 }

@@ -1,6 +1,7 @@
 use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
 
 mod menu;
+mod post;
 mod posts;
 mod sidebar;
 
