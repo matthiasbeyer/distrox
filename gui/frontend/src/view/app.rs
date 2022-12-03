@@ -1,7 +1,8 @@
 use web_sys::HtmlInputElement;
 use yew::{html, Component, Context, Html, NodeRef};
 
-use crate::{login::Login, message::Message};
+use crate::view::home::Home;
+use crate::{message::Message, view::login::Login};
 
 #[derive(Debug)]
 pub enum App {
@@ -143,7 +144,7 @@ impl Component for App {
 
             App::LoggedIn { name } => {
                 html! {
-                    <p> { "Welcome " } {name} </p>
+                    <Home />
                 }
             }
 
