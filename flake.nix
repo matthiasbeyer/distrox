@@ -107,6 +107,7 @@
 
             nativeBuildInputs = nativeBuildPkgs ++ [
               rustTarget
+              unstable.cargo-tauri
 
               pkgs.cargo-msrv
               pkgs.cargo-deny
