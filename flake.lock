@@ -90,7 +90,7 @@
         "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs",
         "rust-overlay": "rust-overlay_2",
-        "unstable": "unstable"
+        "unstable-nixpkgs": "unstable-nixpkgs"
       }
     },
     "rust-overlay": {
@@ -141,7 +141,7 @@
         "type": "github"
       }
     },
-    "unstable": {
+    "unstable-nixpkgs": {
       "locked": {
         "lastModified": 1670064435,
         "narHash": "sha256-+ELoY30UN+Pl3Yn7RWRPabykwebsVK/kYE9JsIsUMxQ=",
