@@ -35,3 +35,12 @@ package = "iroh-rpc-client"
 git = "https://github.com/n0-computer/iroh/"
 rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
 package = "iroh-rpc-types"
+
+[dependencies.ipfs-api]
+version = "0.16"
+optional = true
+
+[features]
+default = ["backend-ipfs-api"]
+backend-ipfs-api = [ "ipfs-api" ]
+

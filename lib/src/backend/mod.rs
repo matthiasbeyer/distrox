@@ -8,3 +8,6 @@ pub trait Backend {
     async fn put(&self, dag: Ipld) -> Result<(), Self::Error>;
     async fn get(&self, cid: Cid) -> Result<Ipld, Self::Error>;
 }
+
+#[cfg(feature = "backend-ipfs-api")]
+mod ipfs_api;
