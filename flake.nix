@@ -107,6 +107,19 @@
             PROTOC          = "${pkgs.protobuf}/bin/protoc";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath guiBuildInputs;
 
+            XDG_DATA_DIRS = let
+              base = pkgs.lib.concatMapStringsSep ":" (x: "${x}/share") [
+                pkgs.gnome.adwaita-icon-theme
+                pkgs.shared-mime-info
+              ];
+
+              gsettings_schema = pkgs.lib.concatMapStringsSep ":" (x: "${x}/share/gsettings-schemas/${x.name}") [
+                pkgs.glib
+                pkgs.gsettings-desktop-schemas
+                pkgs.gtk3
+              ];
+            in "${base}:${gsettings_schema}";
+
             buildInputs = nativeBuildPkgs ++ guiBuildInputs;
 
             nativeBuildInputs = nativeBuildPkgs ++ [
@@ -124,16 +137,6 @@
 
               pkgs.gitlint
             ];
-
-            # Ugly as fuck, but I have debugged the issue of the devtools not
-            # working for almost 10 hours and I did not find what needs to be in
-            # XDG_DATA_DIRS for it to work. /run/current-system/sw/share makes
-            # it work (on nixos only of course).
-            # I know this makes the shell impure, but that's all I've got.
-            # If someone knows how to do better, please submit a fix for this.
-            shellHook = ''
-              export XDG_DATA_DIRS="$XDG_DATA_DIRS:/run/current-system/sw/share"
-            '';
           };
 
           default = devShells.distrox;
