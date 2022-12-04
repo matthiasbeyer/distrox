@@ -17,11 +17,11 @@ edition       = "2018"
 
 [dependencies]
 anyhow = "1" # only required because error handling in iroh is not implemented yet :-(
-chrono = "0.4"
 getset = "0.1"
 libipld = "0.15"
 libp2p = "0.50"
 thiserror = "1"
+time = { version = "0.3", features = ["parsing", "serde-human-readable"] }
 tracing = "0.1"
 
 [dependencies.iroh-rpc-client]

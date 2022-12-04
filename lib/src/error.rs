@@ -4,7 +4,7 @@ pub enum Error {
     GenericIrohError(#[from] anyhow::Error),
 
     #[error(transparent)]
-    Chrono(#[from] chrono::ParseError),
+    Time(#[from] time::error::Parse),
 
     #[error("Expected IPLD String for timestamp")]
     ExpectedStringForTimestamp,
