@@ -113,6 +113,7 @@
               pkgs.cargo-bloat
               pkgs.cargo-fuzz
               pkgs.cargo-outdated
+              pkgs.trunk
 
               pkgs.gitlint
             ];
