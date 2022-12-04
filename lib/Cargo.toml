@@ -19,11 +19,13 @@ edition       = "2018"
 anyhow = "1" # only required because error handling in iroh is not implemented yet :-(
 async-trait = "0.1"
 cid = "0.9"
+futures = "0.3"
 getset = "0.1"
 libipld = "0.15"
 libp2p = "0.50"
 thiserror = "1"
 time = { version = "0.3", features = ["parsing", "serde-human-readable"] }
+tokio = { version = "1", features = ["sync"] }
 tracing = "0.1"
 
 [dependencies.iroh-rpc-client]
@@ -38,12 +40,30 @@ rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
 package = "iroh-rpc-types"
 optional = true
 
-[dependencies.ipfs-api]
-version = "0.16"
+[dependencies.ipfs-api-prelude]
+version = "0.5"
+features = [ "with-send-sync" ]
+optional = true
+
+[dependencies.ipfs-api-backend-hyper]
+version = "0.5"
+features = [ "with-send-sync" ]
+optional = true
+
+[dependencies.hyper]
+version = "0.14"
+optional = true
+
+[dependencies.http]
+version = "0.2"
+optional = true
+
+[dependencies.libipld-cbor]
+version = "0.15"
 optional = true
 
 [features]
 default = ["backend-ipfs-api"]
-backend-ipfs-api = [ "ipfs-api" ]
+backend-ipfs-api = [ "ipfs-api-prelude", "ipfs-api-backend-hyper", "hyper", "http", "libipld-cbor" ]
 backend-iroh = ["iroh-rpc-client", "iroh-rpc-types"]
 

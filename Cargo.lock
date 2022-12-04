@@ -1052,14 +1052,20 @@ dependencies = [
  "anyhow",
  "async-trait",
  "cid",
+ "futures",
  "getset",
- "ipfs-api",
+ "http",
+ "hyper",
+ "ipfs-api-backend-hyper",
+ "ipfs-api-prelude",
  "iroh-rpc-client",
  "iroh-rpc-types",
  "libipld",
+ "libipld-cbor",
  "libp2p",
  "thiserror",
  "time",
+ "tokio",
  "tracing",
 ]
 
@@ -2129,15 +2135,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ipfs-api"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d4854b5cde0a7e935ee4246c5b6c67fbf4961e303963537f10e184a4830bd17"
-dependencies = [
- "ipfs-api-backend-hyper",
-]
-
-[[package]]
 name = "ipfs-api-backend-hyper"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2175,7 +2172,6 @@ dependencies = [
  "tokio",
  "tokio-util 0.6.10",
  "tracing",
- "typed-builder",
  "walkdir",
 ]
 
@@ -5218,17 +5214,6 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
-
-[[package]]
-name = "typed-builder"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89851716b67b937e393b3daa8423e67ddfc4bbbf1654bcf05488e95e0828db0c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "typenum"
