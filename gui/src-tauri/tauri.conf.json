@@ -6,7 +6,7 @@
     "distDir": "../frontend/dist"
   },
   "package": {
-    "productName": "distrox",
+    "productName": "distrox-gui",
     "version": "0.1.0"
   },
   "tauri": {

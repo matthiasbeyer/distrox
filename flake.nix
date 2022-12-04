@@ -116,6 +116,16 @@
 
               pkgs.gitlint
             ];
+
+            # Ugly as fuck, but I have debugged the issue of the devtools not
+            # working for almost 10 hours and I did not find what needs to be in
+            # XDG_DATA_DIRS for it to work. /run/current-system/sw/share makes
+            # it work (on nixos only of course).
+            # I know this makes the shell impure, but that's all I've got.
+            # If someone knows how to do better, please submit a fix for this.
+            shellHook = ''
+              export XDG_DATA_DIRS="$XDG_DATA_DIRS:/run/current-system/sw/share"
+            '';
           };
 
           default = devShells.distrox;
