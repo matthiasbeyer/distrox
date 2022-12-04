@@ -1014,6 +1014,8 @@ name = "distrox-lib"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "cid",
  "getset",
  "iroh-rpc-client",
  "iroh-rpc-types",

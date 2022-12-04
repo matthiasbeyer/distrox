@@ -17,6 +17,8 @@ edition       = "2018"
 
 [dependencies]
 anyhow = "1" # only required because error handling in iroh is not implemented yet :-(
+async-trait = "0.1"
+cid = "0.9"
 getset = "0.1"
 libipld = "0.15"
 libp2p = "0.50"
