@@ -2,6 +2,7 @@
   description = "distrox";
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-22.05";
+    unstable.url = "nixpkgs/nixos-unstable";
     flake-utils = {
       url = "github:numtide/flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,7 +20,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, unstable, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -106,6 +107,7 @@
 
             nativeBuildInputs = nativeBuildPkgs ++ [
               rustTarget
+              unstable.cargo-tauri
 
               pkgs.cargo-msrv
               pkgs.cargo-deny
@@ -113,6 +115,7 @@
               pkgs.cargo-bloat
               pkgs.cargo-fuzz
               pkgs.cargo-outdated
+              pkgs.trunk
 
               pkgs.gitlint
             ];
