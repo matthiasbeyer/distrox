@@ -109,6 +109,7 @@
               rustTarget
               unstable.cargo-tauri
 
+              pkgs.wasm-bindgen-cli
               pkgs.cargo-msrv
               pkgs.cargo-deny
               pkgs.cargo-expand
