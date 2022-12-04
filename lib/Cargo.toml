@@ -30,11 +30,13 @@ tracing = "0.1"
 git = "https://github.com/n0-computer/iroh/"
 rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
 package = "iroh-rpc-client"
+optional = true
 
 [dependencies.iroh-rpc-types]
 git = "https://github.com/n0-computer/iroh/"
 rev = "35955d6b9b505d2c35f99e4c618293c70bcca1a7"
 package = "iroh-rpc-types"
+optional = true
 
 [dependencies.ipfs-api]
 version = "0.16"
@@ -43,4 +45,5 @@ optional = true
 [features]
 default = ["backend-ipfs-api"]
 backend-ipfs-api = [ "ipfs-api" ]
+backend-iroh = ["iroh-rpc-client", "iroh-rpc-types"]
 
