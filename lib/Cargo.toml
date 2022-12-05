@@ -71,3 +71,8 @@ default = ["backend-ipfs-api"]
 backend-ipfs-api = [ "ipfs-api-prelude", "ipfs-api-backend-hyper", "hyper", "http", "libipld-cbor" ]
 backend-iroh = ["iroh-rpc-client", "iroh-rpc-types"]
 
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros"] }
+test-context = "0.1"
+
