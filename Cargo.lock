@@ -1065,6 +1065,7 @@ dependencies = [
  "libipld",
  "libipld-cbor",
  "libp2p",
+ "mime",
  "serde",
  "thiserror",
  "time",

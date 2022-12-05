@@ -73,4 +73,46 @@ impl Profile {
             }
         })
     }
+
+    pub async fn safe(&self) -> Result<(), Error> {
+        let state_str = toml::to_string_pretty(&self.state)?;
+        tokio::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .create_new(true)
+            .open(&self.state_file_path)
+            .await?
+            .write_all(state_str.as_bytes())
+            .await
+            .map_err(Error::from)
+    }
+
+    pub async fn post_text(&mut self, text: String) -> Result<(), Error> {
+        self.post_text_with_timestamp(text, time::OffsetDateTime::now_utc())
+            .await
+    }
+
+    async fn post_text_with_timestamp(
+        &mut self,
+        text: String,
+        timestamp: time::OffsetDateTime,
+    ) -> Result<(), Error> {
+        let text_cid = self.client.put_text(text).await?;
+        let payload_cid = {
+            let mime = mime::TEXT.to_string();
+            let payload =
+                crate::types::Payload::new(mime, crate::types::DateTime::from(timestamp), text_cid);
+            self.client.put_payload(payload).await?
+        };
+
+        let node_cid = {
+            let version = crate::API_VERSION.to_string();
+            let parents = self.state.latest_node.into_iter().collect();
+            let node = crate::types::Node::new(version, parents, payload_cid);
+            self.client.put_node(node).await?
+        };
+
+        self.state.latest_node = Some(node_cid);
+        Ok(())
+    }
 }
