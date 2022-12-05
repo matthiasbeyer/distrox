@@ -10,6 +10,8 @@ pub trait Backend {
 
     async fn put(&self, dag: Ipld) -> Result<cid::Cid, Self::Error>;
     async fn get(&self, cid: Cid) -> Result<Ipld, Self::Error>;
+
+    async fn pin(&self, cid: Cid) -> Result<(), Self::Error>;
 }
 
 pub trait Key

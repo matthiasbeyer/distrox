@@ -112,4 +112,14 @@ impl super::Backend for Client {
                 libipld::Ipld::decode(libipld_cbor::DagCborCodec, &mut cursor).map_err(Error::from)
             })
     }
+
+    async fn pin(&self, cid: cid::Cid) -> Result<(), Self::Error> {
+        self.client
+            .lock()
+            .await
+            .pin_add(&cid.to_string(), true)
+            .await
+            .map(|_res| ())
+            .map_err(Error::from)
+    }
 }
