@@ -73,4 +73,29 @@ impl Profile {
             }
         })
     }
+
+    pub async fn post_text(&mut self, text: String) -> Result<(), Error> {
+        let text_cid = self.client.put_text(text).await?;
+        let payload_cid = {
+            let mime = mime::TEXT.to_string();
+            let now = now();
+            let payload = crate::types::Payload::new(mime, now, text_cid);
+            self.client.put_payload(payload).await?
+        };
+
+        let node_cid = {
+            let version = crate::API_VERSION.to_string();
+            let parents = self.state.latest_node.into_iter().collect();
+            let node = crate::types::Node::new(version, parents, payload_cid);
+            self.client.put_node(node).await?
+        };
+
+        self.state.latest_node = Some(node_cid);
+        Ok(())
+    }
+}
+
+fn now() -> crate::types::DateTime {
+    let now = time::OffsetDateTime::now_utc();
+    crate::types::DateTime::from(now)
 }
