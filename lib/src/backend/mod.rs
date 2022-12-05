@@ -33,4 +33,8 @@ where
 mod ipfs_api;
 
 #[cfg(feature = "backend-ipfs-api")]
-pub use ipfs_api::Client;
+pub mod implementation {
+    pub use super::ipfs_api::Client;
+    pub use super::ipfs_api::Error;
+    pub use super::ipfs_api::Key;
+}
