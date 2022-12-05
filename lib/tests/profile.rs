@@ -59,3 +59,35 @@ async fn test_profile_create() {
         .await
         .unwrap();
 }
+
+#[test_context(ProfileStateContext)]
+#[tokio::test]
+async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
+    let test_state_path = ctx.get_state_file_path("test_profile_post_text.toml");
+
+    let mut profile = Profile::create(
+        ctx.ipfs_host_addr,
+        "test_profile_post_text".to_string(),
+        test_state_path.clone(),
+    )
+    .await
+    .unwrap();
+
+    check_state_file_after_create(&test_state_path, "test_profile_post_text", false)
+        .await
+        .unwrap();
+
+    let text = "testtext";
+    profile.post_text(text.to_string()).await.unwrap();
+
+    // After posting, the state isn't updated yet
+    check_state_file_after_create(&test_state_path, "test_profile_post_text", false)
+        .await
+        .unwrap();
+
+    // ... we need to save the profile for that.
+    profile.safe().await.unwrap();
+    check_state_file_after_create(&test_state_path, "test_profile_post_text", true)
+        .await
+        .unwrap();
+}
