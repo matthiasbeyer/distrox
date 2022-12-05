@@ -21,7 +21,7 @@ pub struct Client {
 }
 
 impl Client {
-    fn new(addr: std::net::SocketAddr) -> Result<Self, Error> {
+    pub fn new(addr: std::net::SocketAddr) -> Result<Self, Error> {
         let backend = crate::backend::implementation::Client::new(addr)?;
 
         Ok({
