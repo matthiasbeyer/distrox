@@ -35,6 +35,22 @@ async fn check_state_file_after_create(
     Ok(())
 }
 
+async fn get_state_cid(test_state_path: &PathBuf) -> Result<String, anyhow::Error> {
+    let file = tokio::fs::read_to_string(test_state_path).await?;
+    let toml = toml::from_str(&file)?;
+    if let toml::Value::Table(ref tab) = toml {
+        Ok({
+            tab.get("latest_node")
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string()
+        })
+    } else {
+        panic!("Not a table: {:?}", toml);
+    }
+}
+
 #[tokio::test]
 async fn test_profile_create() {
     let _ = env_logger::try_init();
@@ -90,4 +106,56 @@ async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
     check_state_file_after_create(&test_state_path, "test_profile_post_text", true)
         .await
         .unwrap();
+}
+
+#[test_context(ProfileStateContext)]
+#[tokio::test]
+async fn test_profile_post_two_texts(ctx: &mut ProfileStateContext) {
+    let test_state_path = ctx.get_state_file_path("test_profile_post_two_texts.toml");
+
+    let mut profile = Profile::create(
+        ctx.ipfs_host_addr,
+        "test_profile_post_two_texts".to_string(),
+        test_state_path.clone(),
+    )
+    .await
+    .unwrap();
+
+    check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", false)
+        .await
+        .unwrap();
+
+    {
+        let text = "testtext1";
+        profile.post_text(text.to_string()).await.unwrap();
+
+        check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", false)
+            .await
+            .unwrap();
+
+        profile.safe().await.unwrap();
+        check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", true)
+            .await
+            .unwrap();
+    }
+
+    let first_cid = get_state_cid(&test_state_path).await.unwrap();
+
+    {
+        let text = "testtext2";
+        profile.post_text(text.to_string()).await.unwrap();
+
+        check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", true)
+            .await
+            .unwrap();
+
+        profile.safe().await.unwrap();
+        check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", true)
+            .await
+            .unwrap();
+    }
+
+    let second_cid = get_state_cid(&test_state_path).await.unwrap();
+
+    assert_ne!(first_cid, second_cid);
 }
