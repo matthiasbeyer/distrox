@@ -46,6 +46,7 @@ jobs:
         with:
           command: check
 
+
   check-flake:
     name: check-flake
     runs-on: ubuntu-latest
@@ -62,6 +63,48 @@ jobs:
       - run: nix --extra-experimental-features "nix-command flakes" flake check
 
 
+  test-lib:
+    # depend on check-flake, because its faster than "check", so this job starts
+    # sooner this way.
+    needs: [check-flake]
+    name: Test lib
+    runs-on: ubuntu-latest
+    services:
+      ipfs:
+        image: ipfs/kubo
+        ports:
+          - 5001:5001
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3.1.0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.65.0
+          override: true
+
+      - uses: swatinem/rust-cache@v2
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-4.0
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
+      - name: Run cargo test -p distrox-lib
+        env:
+          IPFS_HOST_ADDR: "127.0.0.1:5001"
+          TEST_STATE_DIR: ${{ runner.temp }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -p distrox-lib
+
+
   # We need some "accummulation" job here because bors fails (timeouts) to
   # listen on matrix builds.
   # Hence, we have some kind of dummy here that bors can listen on
@@ -72,6 +115,7 @@ jobs:
     needs:
       - check
       - check-flake
+      - test-lib
     steps:
       - name: CI succeeded
         run: exit 0
