@@ -88,11 +88,20 @@ impl Profile {
     }
 
     pub async fn post_text(&mut self, text: String) -> Result<(), Error> {
+        self.post_text_with_timestamp(text, time::OffsetDateTime::now_utc())
+            .await
+    }
+
+    async fn post_text_with_timestamp(
+        &mut self,
+        text: String,
+        timestamp: time::OffsetDateTime,
+    ) -> Result<(), Error> {
         let text_cid = self.client.put_text(text).await?;
         let payload_cid = {
             let mime = mime::TEXT.to_string();
-            let now = now();
-            let payload = crate::types::Payload::new(mime, now, text_cid);
+            let payload =
+                crate::types::Payload::new(mime, crate::types::DateTime::from(timestamp), text_cid);
             self.client.put_payload(payload).await?
         };
 
@@ -106,9 +115,4 @@ impl Profile {
         self.state.latest_node = Some(node_cid);
         Ok(())
     }
-}
-
-fn now() -> crate::types::DateTime {
-    let now = time::OffsetDateTime::now_utc();
-    crate::types::DateTime::from(now)
 }
