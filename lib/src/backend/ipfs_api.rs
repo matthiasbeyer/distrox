@@ -122,4 +122,15 @@ impl super::Backend for Client {
             .map(|_res| ())
             .map_err(Error::from)
     }
+
+    async fn put_binary(&self, data: Vec<u8>) -> Result<cid::Cid, Self::Error>
+    {
+        self.client
+            .lock()
+            .await
+            .add(std::io::Cursor::new(data))
+            .await
+            .map_err(Error::from)
+            .and_then(|res| cid::Cid::from_str(&res.hash).map_err(Error::from))
+    }
 }

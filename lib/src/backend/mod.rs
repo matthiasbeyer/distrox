@@ -12,6 +12,9 @@ pub trait Backend {
     async fn get(&self, cid: Cid) -> Result<Ipld, Self::Error>;
 
     async fn pin(&self, cid: Cid) -> Result<(), Self::Error>;
+
+    async fn put_binary(&self, data: Vec<u8>) -> Result<cid::Cid, Self::Error>;
+
 }
 
 pub trait Key
