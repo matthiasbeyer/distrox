@@ -467,6 +467,7 @@ dependencies = [
  "multibase",
  "multihash 0.17.0",
  "serde",
+ "serde_bytes",
  "unsigned-varint 0.7.1",
 ]
 
@@ -1068,6 +1069,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "toml",
  "tracing",
 ]
 
@@ -2859,6 +2861,8 @@ dependencies = [
  "core2",
  "digest 0.10.6",
  "multihash-derive 0.8.1",
+ "serde",
+ "serde-big-array",
  "sha2 0.10.6",
  "sha3",
  "unsigned-varint 0.7.1",
@@ -4134,6 +4138,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-big-array"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd31f59f6fe2b0c055371bb2f16d7f0aa7d8881676c04a55b1596d1a17cd10a4"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde-wasm-bindgen"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4154,6 +4167,15 @@ dependencies = [
  "js-sys",
  "serde",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfc50e8183eeeb6178dcb167ae34a8051d63535023ae38b5d8d12beae193d37b"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

@@ -4,10 +4,19 @@ pub enum Error {
     Backend(#[from] crate::backend::implementation::Error),
 
     #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
     GenericIrohError(#[from] anyhow::Error),
 
     #[error(transparent)]
     Time(#[from] time::error::Parse),
+
+    #[error(transparent)]
+    TomlDe(#[from] toml::de::Error),
+
+    #[error(transparent)]
+    TomlSer(#[from] toml::ser::Error),
 
     #[error(transparent)]
     Utf8(#[from] std::string::FromUtf8Error),

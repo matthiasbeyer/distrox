@@ -19,7 +19,7 @@ edition       = "2018"
 anyhow = "1" # only required because error handling in iroh is not implemented yet :-(
 async-trait = "0.1"
 bytes = "1.3"
-cid = "0.9"
+cid = { version = "0.9", features = ["serde-codec"] }
 futures = "0.3"
 getset = "0.1"
 libipld = "0.15"
@@ -27,7 +27,8 @@ libp2p = "0.50"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"
 time = { version = "0.3", features = ["parsing", "serde-human-readable"] }
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "fs"] }
+toml = "0.5"
 tracing = "0.1"
 
 [dependencies.iroh-rpc-client]
