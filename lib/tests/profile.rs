@@ -8,7 +8,7 @@ use distrox_lib::profile::Profile;
 
 async fn check_state_file_after_create(
     test_state_path: &PathBuf,
-    key_name: &'static str,
+    key_name: &str,
     expect_latest_id: bool,
 ) -> Result<(), anyhow::Error> {
     let file = tokio::fs::read_to_string(test_state_path).await?;
@@ -76,22 +76,32 @@ async fn test_profile_create() {
         .unwrap();
 }
 
-#[test_context(ProfileStateContext)]
-#[tokio::test]
-async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
-    let test_state_path = ctx.get_state_file_path("test_profile_post_text.toml");
+async fn create_profile(
+    ctx: &mut ProfileStateContext,
+    key_name: &'static str,
+) -> Result<(PathBuf, Profile), anyhow::Error> {
+    let test_state_path = ctx.get_state_file_path(&format!("{}.toml", key_name));
 
-    let mut profile = Profile::create(
+    let profile = Profile::create(
         ctx.ipfs_host_addr,
-        "test_profile_post_text".to_string(),
+        key_name.to_string(),
         test_state_path.clone(),
     )
     .await
     .unwrap();
 
-    check_state_file_after_create(&test_state_path, "test_profile_post_text", false)
+    check_state_file_after_create(&test_state_path, &key_name.to_string(), false)
         .await
         .unwrap();
+
+    Ok((test_state_path, profile))
+}
+
+#[test_context(ProfileStateContext)]
+#[tokio::test]
+async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
+    let (test_state_path, mut profile) =
+        create_profile(ctx, "test_profile_post_text").await.unwrap();
 
     let text = "testtext";
     profile.post_text(text.to_string()).await.unwrap();
@@ -111,17 +121,7 @@ async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
 #[test_context(ProfileStateContext)]
 #[tokio::test]
 async fn test_profile_post_two_texts(ctx: &mut ProfileStateContext) {
-    let test_state_path = ctx.get_state_file_path("test_profile_post_two_texts.toml");
-
-    let mut profile = Profile::create(
-        ctx.ipfs_host_addr,
-        "test_profile_post_two_texts".to_string(),
-        test_state_path.clone(),
-    )
-    .await
-    .unwrap();
-
-    check_state_file_after_create(&test_state_path, "test_profile_post_two_texts", false)
+    let (test_state_path, mut profile) = create_profile(ctx, "test_profile_post_two_texts")
         .await
         .unwrap();
 
