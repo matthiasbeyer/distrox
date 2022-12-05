@@ -124,8 +124,7 @@ impl super::Backend for Client {
             .map_err(Error::from)
     }
 
-    async fn put_binary(&self, data: Vec<u8>) -> Result<cid::Cid, Self::Error>
-    {
+    async fn put_binary(&self, data: Vec<u8>) -> Result<cid::Cid, Self::Error> {
         self.client
             .lock()
             .await

@@ -18,7 +18,10 @@ pub trait Backend {
     async fn get_binary(
         &self,
         cid: cid::Cid,
-    ) -> Result<Box<dyn futures::Stream<Item = Result<bytes::Bytes, Self::Error>> + Unpin>, Self::Error>;
+    ) -> Result<
+        Box<dyn futures::Stream<Item = Result<bytes::Bytes, Self::Error>> + Unpin>,
+        Self::Error,
+    >;
 }
 
 pub trait Key
