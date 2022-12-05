@@ -74,6 +74,19 @@ impl Profile {
         })
     }
 
+    pub async fn safe(&self) -> Result<(), Error> {
+        let state_str = toml::to_string_pretty(&self.state)?;
+        tokio::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .create_new(true)
+            .open(&self.state_file_path)
+            .await?
+            .write_all(state_str.as_bytes())
+            .await
+            .map_err(Error::from)
+    }
+
     pub async fn post_text(&mut self, text: String) -> Result<(), Error> {
         let text_cid = self.client.put_text(text).await?;
         let payload_cid = {
