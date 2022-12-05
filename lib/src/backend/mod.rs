@@ -23,7 +23,7 @@ pub trait Backend {
 
 pub trait Key
 where
-    Self: Clone + std::fmt::Debug,
+    Self: std::fmt::Debug,
 {
     fn name(&self) -> &str;
     fn id(&self) -> &str;
