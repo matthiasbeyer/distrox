@@ -4,6 +4,9 @@ pub enum Error {
     Backend(#[from] crate::backend::implementation::Error),
 
     #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
     GenericIrohError(#[from] anyhow::Error),
 
     #[error(transparent)]
