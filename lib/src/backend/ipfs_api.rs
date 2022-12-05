@@ -51,9 +51,39 @@ impl Client {
     }
 }
 
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct Key {
+    name: String,
+    id: String,
+}
+
+impl super::Key for Key {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn id(&self) -> &str {
+        &self.id
+    }
+}
+
 #[async_trait::async_trait]
 impl super::Backend for Client {
     type Error = Error;
+    type Key = Key;
+
+    async fn generate_key(&self, name: String) -> Result<Self::Key, Self::Error> {
+        self.client
+            .lock()
+            .await
+            .key_gen(&name, ipfs_api_backend_hyper::KeyType::Ed25519, 64) // TODO: is 64 ok?
+            .await
+            .map(|kres| Key {
+                name: kres.name,
+                id: kres.id,
+            })
+            .map_err(Error::from)
+    }
 
     async fn put(&self, dag: libipld::Ipld) -> Result<cid::Cid, Self::Error> {
         let mut buf = Vec::new();

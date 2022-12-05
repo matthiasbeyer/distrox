@@ -1063,6 +1063,7 @@ dependencies = [
  "libipld",
  "libipld-cbor",
  "libp2p",
+ "serde",
  "thiserror",
  "time",
  "tokio",
