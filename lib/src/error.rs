@@ -1,10 +1,16 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
+    Backend(#[from] crate::backend::implementation::Error),
+
+    #[error(transparent)]
     GenericIrohError(#[from] anyhow::Error),
 
     #[error(transparent)]
     Time(#[from] time::error::Parse),
+
+    #[error(transparent)]
+    Utf8(#[from] std::string::FromUtf8Error),
 
     #[error("Expected IPLD String for timestamp")]
     ExpectedStringForTimestamp,
