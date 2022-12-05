@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::str::FromStr;
 
+use futures::StreamExt;
 use futures::TryStreamExt;
 use ipfs_api_backend_hyper::IpfsApi;
 use ipfs_api_backend_hyper::TryFromUri;
@@ -132,5 +133,22 @@ impl super::Backend for Client {
             .await
             .map_err(Error::from)
             .and_then(|res| cid::Cid::from_str(&res.hash).map_err(Error::from))
+    }
+
+    async fn get_binary(
+        &self,
+        cid: cid::Cid,
+    ) -> Result<
+        Box<dyn futures::Stream<Item = Result<bytes::Bytes, Self::Error>> + Unpin>,
+        Self::Error,
+    > {
+        let s = self
+            .client
+            .lock()
+            .await
+            .cat(&cid.to_string())
+            .map(|chunkres| chunkres.map_err(Error::from).map(bytes::Bytes::from));
+
+        Ok(Box::new(s))
     }
 }

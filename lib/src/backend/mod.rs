@@ -15,6 +15,10 @@ pub trait Backend {
 
     async fn put_binary(&self, data: Vec<u8>) -> Result<cid::Cid, Self::Error>;
 
+    async fn get_binary(
+        &self,
+        cid: cid::Cid,
+    ) -> Result<Box<dyn futures::Stream<Item = Result<bytes::Bytes, Self::Error>> + Unpin>, Self::Error>;
 }
 
 pub trait Key
