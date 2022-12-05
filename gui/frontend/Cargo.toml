@@ -13,7 +13,7 @@ documentation = "https://docs.rs/distrox"
 repository    = "https://github.com/matthiasbeyer/distrox"
 homepage      = "http://github.com/matthiasbeyer/distrox"
 
-edition       = "2018"
+edition       = "2021"
 
 [dependencies]
 yew = { version = "0.20.0", features = ["csr"] }
