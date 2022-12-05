@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use futures::Stream;
+use futures::StreamExt;
 use futures::TryStreamExt;
 
 use crate::backend::Backend;
@@ -6,8 +10,9 @@ use crate::error::Error;
 use crate::types::FromIPLD;
 use crate::types::IntoIPLD;
 
+#[derive(Clone)]
 pub struct Client {
-    backend: Box<
+    backend: Arc<
         dyn Backend<
             Error = crate::backend::implementation::Error,
             Key = crate::backend::implementation::Key,
@@ -21,7 +26,7 @@ impl Client {
 
         Ok({
             Self {
-                backend: Box::new(backend),
+                backend: Arc::new(backend),
             }
         })
     }
@@ -90,5 +95,47 @@ impl Client {
             .await
             .map_err(Error::from)
             .and_then(|ipld| crate::types::Node::from_ipld(&ipld))
+    }
+
+    pub async fn read_node_chain(
+        &self,
+        head: cid::Cid,
+    ) -> impl Stream<Item = Result<crate::types::Node, Error>> + '_ {
+        futures::stream::unfold(
+            (self.clone(), vec![head]),
+            |(this, mut state): (Client, Vec<cid::CidGeneric<64>>)| async move {
+                let this: Client = this.clone();
+                let next_cid = state.pop()?;
+                let next_node = match this.get_node(next_cid).await {
+                    Ok(node) => node,
+                    Err(e) => return Some((Err(e), (this, state))),
+                };
+                state.extend(next_node.parents());
+                Some((Ok(next_node), (this, state)))
+            },
+        )
+    }
+
+    pub async fn read_payload_chain(
+        &self,
+        node_head: cid::Cid,
+    ) -> impl Stream<Item = Result<(crate::types::Node, crate::types::Payload), Error>> + '_ {
+        self.read_node_chain(node_head)
+            .await
+            .scan(self.clone(), |this, node_res| {
+                let this: Client = this.clone(); // Arc::clone(), cheap
+
+                async move {
+                    match node_res {
+                        Ok(node) => this
+                            .get_payload(node.payload())
+                            .await
+                            .map(|pl| (node, pl))
+                            .map(Some)
+                            .transpose(),
+                        Err(e) => Some(Err(e)),
+                    }
+                }
+            })
     }
 }
