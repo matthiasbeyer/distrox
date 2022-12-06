@@ -41,7 +41,7 @@ jobs:
         run: mkdir gui/frontend/dist
 
       - name: Run cargo check
-        run: cargo check
+        run: cargo check --all-features
 
 
   check-flake:
