@@ -15,12 +15,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@1.65.0
         with:
-          toolchain: 1.65.0
-      - run: rustup component add rustfmt
-      - name: cargo-fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check
+          components: rustfmt
+      - run: cargo fmt -- --check
