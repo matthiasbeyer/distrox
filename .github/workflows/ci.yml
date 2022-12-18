@@ -35,7 +35,7 @@ jobs:
           sudo apt-get install -y webkit2gtk-4.0
 
       - name: Install Protoc
-        run: apt install -y protoc
+        run: sudo apt install -y protoc
 
       - name: Create dist dir
         run: mkdir gui/frontend/dist
@@ -93,7 +93,7 @@ jobs:
           sudo apt-get install -y webkit2gtk-4.0
 
       - name: Install Protoc
-        run: apt install -y protoc
+        run: sudo apt install -y protoc
 
       - name: Run cargo test -p distrox-lib
         env:
