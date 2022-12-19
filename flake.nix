@@ -76,7 +76,6 @@
           treefmt
           webkitgtk
           zlib
-        pkg-config
         ]) ++ (with pkgs.xorg; [
           libX11
           libXcomposite
