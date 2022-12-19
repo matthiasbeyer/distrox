@@ -40,7 +40,7 @@
 
         tomlInfo = craneLib.crateNameFromCargoToml { cargoToml = ./Cargo.toml; };
 
-        nativeBuildPkgs = with pkgs; [
+        nativeBuildInputs = with pkgs; [
           curl
           gcc
           openssl
@@ -120,9 +120,9 @@
               ];
             in "${base}:${gsettings_schema}";
 
-            buildInputs = nativeBuildPkgs ++ guiBuildInputs;
+            buildInputs = nativeBuildInputs ++ guiBuildInputs;
 
-            nativeBuildInputs = nativeBuildPkgs ++ [
+            nativeBuildInputs = nativeBuildInputs ++ [
               rustTarget
               unstable.cargo-tauri
 
