@@ -46,14 +46,14 @@ impl FromIPLD for Payload {
                 let timestamp = DateTime::from_ipld(&timestamp)?;
 
                 let content = match map.get("content").ok_or_else(missing_field("content"))? {
-                    libipld::Ipld::Link(cid) => cid.clone(),
+                    libipld::Ipld::Link(cid) => cid,
                     _ => return Err(field_wrong_type("content", "Link")),
                 };
 
                 Ok(Payload {
                     mime,
                     timestamp,
-                    content,
+                    content: *content,
                 })
             }
 
@@ -72,6 +72,6 @@ impl Payload {
     }
 
     pub fn content(&self) -> libipld::Cid {
-        self.content.clone()
+        self.content
     }
 }
