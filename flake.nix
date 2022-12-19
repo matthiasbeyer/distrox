@@ -176,6 +176,11 @@
             inherit nativeBuildInputs;
             buildInputs = guiBuildInputs;
 
+            preBuild = ''
+              mkdir -p gui/frontend/dist
+              ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
+            '';
+
             cargoArtifacts = distroxGuiArtifacts;
             cargoExtraArgs = "-p distrox-gui --all-features";
             cargoClippyExtraArgs = "-- --deny warnings";
