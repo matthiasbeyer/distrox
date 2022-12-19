@@ -3,7 +3,6 @@ status = [
 ]
 pr_status = [
     "commit-lint",
-    "check-format"
 ]
 update_base_for_deletes = true
 cut_body_after = "<details>"
