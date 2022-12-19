@@ -53,7 +53,7 @@
           protobuf
         ];
 
-        guiBuildInputs = (with pkgs; [
+        buildInputs = (with pkgs; [
           alejandra
           appimagekit
           atk
@@ -76,7 +76,9 @@
           treefmt
           webkitgtk
           zlib
-        ]) ++ (with pkgs.xorg; [
+        ]);
+
+        guiBuildInputs = buildInputs ++ (with pkgs.xorg; [
           libX11
           libXcomposite
           libXcursor
