@@ -177,7 +177,8 @@
             buildInputs = guiBuildInputs;
 
             cargoArtifacts = distroxGuiArtifacts;
-            cargoClippyExtraArgs = "-p distrox-gui --all-features --tests -- --deny warnings";
+            cargoExtraArgs = "-p distrox-gui --all-features";
+            cargoClippyExtraArgs = "-- --deny warnings";
           };
 
           distrox-fmt = craneLib.cargoFmt {
