@@ -1,8 +1,8 @@
-use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
 pub struct Sidebar;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct SidebarProbs {}
 
 impl Component for Sidebar {
@@ -18,7 +18,7 @@ impl Component for Sidebar {
         true
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <p> { "Sidebar" } </p>
         }

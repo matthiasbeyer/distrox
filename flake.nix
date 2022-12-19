@@ -32,7 +32,7 @@
           inherit system;
         };
 
-        rustTarget = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain;
+        rustTarget = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         unstableRustTarget = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "miri" ];
         });
@@ -40,7 +40,7 @@
 
         tomlInfo = craneLib.crateNameFromCargoToml { cargoToml = ./Cargo.toml; };
 
-        nativeBuildPkgs = with pkgs; [
+        nativeBuildInputs = with pkgs; [
           curl
           gcc
           openssl
@@ -58,12 +58,16 @@
           appimagekit
           atk
           cairo
+          dbus
           dbus.lib
           dprint
           gdk-pixbuf
           glib.out
+          gobject-introspection
           gtk3
           harfbuzz
+          libayatana-appindicator-gtk3
+          libffi
           libsoup
           nodejs-16_x
           openssl.out
@@ -72,7 +76,6 @@
           treefmt
           webkitgtk
           zlib
-        pkg-config
         ]) ++ (with pkgs.xorg; [
           libX11
           libXcomposite
@@ -99,8 +102,112 @@
           pkgs.libGL
           pkgs.pkgconfig
         ]);
+
+        src =
+          let
+            markdownFilter = path: _type: pkgs.lib.hasSuffix ".md" path;
+            filterPath = path: type: builtins.any (f: f path type) [
+              markdownFilter
+              craneLib.filterCargoSources
+              pkgs.lib.cleanSourceFilter
+            ];
+          in
+          pkgs.lib.cleanSourceWith {
+            src = ./.;
+            filter = filterPath;
+          };
+
+        distroxGuiFrontendArtifacts = craneLib.buildDepsOnly {
+          pname = "distrox-gui-frontend";
+          inherit src;
+
+          doCheck = false;
+          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
+        };
+
+        distroxGuiArtifacts = craneLib.buildDepsOnly {
+          inherit (tomlInfo) pname;
+          inherit src;
+          inherit nativeBuildInputs;
+          buildInputs = guiBuildInputs;
+          cargoExtraArgs = "-p distrox-gui --all-features";
+        };
+
+        distrox-gui-frontend = craneLib.buildPackage {
+          inherit (tomlInfo) version;
+          inherit src;
+          inherit nativeBuildInputs;
+          pname = "distrox-gui-frontend";
+
+          # Override crane's use of --workspace, which tries to build everything.
+          cargoCheckCommand = "cargo check --release";
+          cargoBuildCommand = "cargo build --release";
+          cargoTestCommand = "cargo test --profile release --lib";
+
+          doCheck = false;
+          cargoArtifacts = distroxGuiFrontendArtifacts;
+          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
+        };
+
+        distrox-gui = craneLib.buildPackage {
+          inherit (tomlInfo) pname version;
+          inherit src;
+          inherit nativeBuildInputs;
+
+          preBuild = ''
+            mkdir -p gui/frontend/dist
+            ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
+          '';
+
+          buildInputs = guiBuildInputs;
+          cargoExtraArgs = "-p distrox-gui --all-features";
+          cargoArtifacts = distroxGuiArtifacts;
+        };
       in
       rec {
+        checks = {
+          inherit distrox-gui;
+          inherit distrox-gui-frontend;
+          default = distrox-gui;
+
+          distrox-gui-clippy = craneLib.cargoClippy {
+            inherit (tomlInfo) pname;
+            inherit src;
+            inherit nativeBuildInputs;
+            buildInputs = guiBuildInputs;
+
+            preBuild = ''
+              mkdir -p gui/frontend/dist
+              ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
+            '';
+
+            cargoArtifacts = distroxGuiArtifacts;
+            cargoExtraArgs = "-p distrox-gui --all-features";
+            cargoClippyExtraArgs = "-- --deny warnings";
+          };
+
+          distrox-fmt = craneLib.cargoFmt {
+            inherit (tomlInfo) pname;
+            inherit src;
+            inherit nativeBuildInputs;
+            buildInputs = guiBuildInputs;
+          };
+        };
+
+        packages = {
+          inherit distrox-gui;
+          inherit distrox-gui-frontend;
+          default = packages.distrox-gui;
+        };
+
+        apps = {
+          distrox-gui = flake-utils.lib.mkApp {
+            name = "distrox-gui";
+            drv = distrox-gui;
+          };
+          default = apps.distrox-gui;
+        };
+
         devShells = {
           distrox = pkgs.mkShell {
             LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
@@ -120,9 +227,9 @@
               ];
             in "${base}:${gsettings_schema}";
 
-            buildInputs = nativeBuildPkgs ++ guiBuildInputs;
+            buildInputs = nativeBuildInputs ++ guiBuildInputs;
 
-            nativeBuildInputs = nativeBuildPkgs ++ [
+            nativeBuildInputs = nativeBuildInputs ++ [
               rustTarget
               unstable.cargo-tauri
 

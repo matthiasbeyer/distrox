@@ -142,7 +142,7 @@ impl Component for App {
                 }
             }
 
-            App::LoggedIn { name } => {
+            App::LoggedIn { .. } => {
                 html! {
                     <Home />
                 }

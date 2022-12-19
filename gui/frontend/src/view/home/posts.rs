@@ -1,10 +1,10 @@
-use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
 use crate::view::home::post::Post;
 
 pub struct Posts;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct PostsProbs {}
 
 impl Component for Posts {
@@ -20,7 +20,7 @@ impl Component for Posts {
         true
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
                 <Post />

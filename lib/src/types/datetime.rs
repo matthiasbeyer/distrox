@@ -19,7 +19,7 @@ impl FromIPLD for DateTime {
     fn from_ipld(ipld: &libipld::Ipld) -> Result<DateTime, Error> {
         match ipld {
             libipld::Ipld::String(ref s) => {
-                time::OffsetDateTime::parse(&s, &time::format_description::well_known::Rfc3339)
+                time::OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339)
                     .map(DateTime)
                     .map_err(Error::from)
             }

@@ -1,4 +1,4 @@
-use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
 mod menu;
 mod post;
@@ -11,7 +11,7 @@ use self::sidebar::Sidebar;
 
 pub struct Home;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct HomeProbs {}
 
 impl Component for Home {
@@ -27,7 +27,7 @@ impl Component for Home {
         true
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
                 <div class="container">

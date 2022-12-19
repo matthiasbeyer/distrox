@@ -1,8 +1,8 @@
-use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
 pub struct Menu;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct MenuProbs {}
 
 impl Component for Menu {
@@ -18,7 +18,7 @@ impl Component for Menu {
         true
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <nav class="navbar" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand">

@@ -1,8 +1,8 @@
-use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
+use yew::{html, Component, Context, Html, Properties};
 
 pub struct Post;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct PostProbs {}
 
 impl Component for Post {
@@ -18,7 +18,7 @@ impl Component for Post {
         true
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <div class="block">
                 <article class="message">

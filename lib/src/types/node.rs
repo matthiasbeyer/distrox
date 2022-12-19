@@ -46,7 +46,7 @@ impl FromIPLD for Node {
                         .iter()
                         .map(|parent| -> Result<libipld::Cid, Error> {
                             match parent {
-                                libipld::Ipld::Link(cid) => Ok(cid.clone()),
+                                libipld::Ipld::Link(cid) => Ok(*cid),
                                 _ => Err(field_wrong_type("parents", "Link")),
                             }
                         })
@@ -55,7 +55,7 @@ impl FromIPLD for Node {
                 };
 
                 let payload = match map.get("payload").ok_or_else(missing_field("payload"))? {
-                    libipld::Ipld::Link(cid) => cid.clone(),
+                    libipld::Ipld::Link(cid) => *cid,
                     _ => return Err(field_wrong_type("payload", "Link")),
                 };
 
@@ -85,6 +85,6 @@ impl Node {
     }
 
     pub fn payload(&self) -> libipld::Cid {
-        self.payload.clone()
+        self.payload
     }
 }

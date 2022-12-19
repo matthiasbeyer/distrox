@@ -3,7 +3,6 @@
     windows_subsystem = "windows"
 )]
 
-use tauri::Manager;
 use tauri_plugin_log::{LogTarget, LoggerBuilder};
 
 mod login;
@@ -19,7 +18,10 @@ fn main() {
                 .targets([LogTarget::Stdout])
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![crate::login::login])
+        .invoke_handler(tauri::generate_handler![
+            crate::login::login,
+            crate::login::create_account
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
