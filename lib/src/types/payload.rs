@@ -43,7 +43,7 @@ impl FromIPLD for Payload {
                     .get("timestamp")
                     .ok_or_else(missing_field("timestamp"))?;
 
-                let timestamp = DateTime::from_ipld(&timestamp)?;
+                let timestamp = DateTime::from_ipld(timestamp)?;
 
                 let content = match map.get("content").ok_or_else(missing_field("content"))? {
                     libipld::Ipld::Link(cid) => cid,
