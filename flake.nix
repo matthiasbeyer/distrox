@@ -32,7 +32,7 @@
           inherit system;
         };
 
-        rustTarget = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain;
+        rustTarget = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         unstableRustTarget = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
           extensions = [ "rust-src" "miri" ];
         });
