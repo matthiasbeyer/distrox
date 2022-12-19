@@ -53,7 +53,7 @@
           protobuf
         ];
 
-        guiBuildInputs = (with pkgs; [
+        buildInputs = (with pkgs; [
           alejandra
           appimagekit
           atk
@@ -76,7 +76,9 @@
           treefmt
           webkitgtk
           zlib
-        ]) ++ (with pkgs.xorg; [
+        ]);
+
+        guiBuildInputs = buildInputs ++ (with pkgs.xorg; [
           libX11
           libXcomposite
           libXcursor
@@ -117,6 +119,14 @@
             filter = filterPath;
           };
 
+        distroxLibArtifacts = craneLib.buildDepsOnly {
+          inherit (tomlInfo) pname;
+          inherit src;
+          inherit nativeBuildInputs;
+          inherit buildInputs;
+          cargoExtraArgs = "-p distrox-lib --all-features";
+        };
+
         distroxGuiFrontendArtifacts = craneLib.buildDepsOnly {
           pname = "distrox-gui-frontend";
           inherit src;
@@ -131,6 +141,15 @@
           inherit nativeBuildInputs;
           buildInputs = guiBuildInputs;
           cargoExtraArgs = "-p distrox-gui --all-features";
+        };
+
+        distrox-lib = craneLib.buildPackage {
+          inherit (tomlInfo) pname version;
+          inherit src;
+          inherit nativeBuildInputs;
+          inherit buildInputs;
+          cargoExtraArgs = "-p distrox-lib --all-features";
+          cargoArtifacts = distroxLibArtifacts;
         };
 
         distrox-gui-frontend = craneLib.buildPackage {
@@ -166,6 +185,7 @@
       in
       rec {
         checks = {
+          inherit distrox-lib;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = distrox-gui;
@@ -195,6 +215,7 @@
         };
 
         packages = {
+          inherit distrox-lib;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = packages.distrox-gui;
