@@ -58,12 +58,16 @@
           appimagekit
           atk
           cairo
+          dbus
           dbus.lib
           dprint
           gdk-pixbuf
           glib.out
+          gobject-introspection
           gtk3
           harfbuzz
+          libayatana-appindicator-gtk3
+          libffi
           libsoup
           nodejs-16_x
           openssl.out
