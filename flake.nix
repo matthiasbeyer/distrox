@@ -170,6 +170,16 @@
           inherit distrox-gui-frontend;
           default = distrox-gui;
 
+          distrox-gui-frontend-clippy = craneLib.cargoClippy {
+            inherit (tomlInfo) pname;
+            inherit src;
+            inherit nativeBuildInputs;
+            buildInputs = guiBuildInputs;
+
+            cargoArtifacts = distroxGuiFrontendArtifacts;
+            cargoClippyExtraArgs = "-p distrox-gui --all-features --tests -- --deny warnings";
+          };
+
           distrox-gui-clippy = craneLib.cargoClippy {
             inherit (tomlInfo) pname;
             inherit src;
