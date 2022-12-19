@@ -4,7 +4,7 @@ use crate::view::home::post::Post;
 
 pub struct Posts;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct PostsProbs {}
 
 impl Component for Posts {

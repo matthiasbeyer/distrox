@@ -2,7 +2,7 @@ use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
 
 pub struct Post;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct PostProbs {}
 
 impl Component for Post {

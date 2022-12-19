@@ -2,7 +2,7 @@ use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
 
 pub struct Menu;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct MenuProbs {}
 
 impl Component for Menu {

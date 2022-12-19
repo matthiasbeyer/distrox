@@ -11,7 +11,7 @@ use self::sidebar::Sidebar;
 
 pub struct Home;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct HomeProbs {}
 
 impl Component for Home {

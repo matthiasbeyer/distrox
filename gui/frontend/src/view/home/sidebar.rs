@@ -2,7 +2,7 @@ use yew::{html, Callback, Component, Context, Html, NodeRef, Properties};
 
 pub struct Sidebar;
 
-#[derive(Properties, PartialEq)]
+#[derive(Properties, PartialEq, Eq)]
 pub struct SidebarProbs {}
 
 impl Component for Sidebar {
