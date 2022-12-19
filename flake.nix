@@ -102,8 +102,106 @@
           pkgs.libGL
           pkgs.pkgconfig
         ]);
+
+        src =
+          let
+            markdownFilter = path: _type: pkgs.lib.hasSuffix ".md" path;
+            filterPath = path: type: builtins.any (f: f path type) [
+              markdownFilter
+              craneLib.filterCargoSources
+              pkgs.lib.cleanSourceFilter
+            ];
+          in
+          pkgs.lib.cleanSourceWith {
+            src = ./.;
+            filter = filterPath;
+          };
+
+        distroxGuiFrontendArtifacts = craneLib.buildDepsOnly {
+          pname = "distrox-gui-frontend";
+          inherit src;
+
+          doCheck = false;
+          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
+        };
+
+        distroxGuiArtifacts = craneLib.buildDepsOnly {
+          inherit (tomlInfo) pname;
+          inherit src;
+          inherit nativeBuildInputs;
+          buildInputs = guiBuildInputs;
+          cargoExtraArgs = "-p distrox-gui --all-features";
+        };
+
+        distrox-gui-frontend = craneLib.buildPackage {
+          inherit (tomlInfo) version;
+          inherit src;
+          inherit nativeBuildInputs;
+          pname = "distrox-gui-frontend";
+
+          # Override crane's use of --workspace, which tries to build everything.
+          cargoCheckCommand = "cargo check --release";
+          cargoBuildCommand = "cargo build --release";
+          cargoTestCommand = "cargo test --profile release --lib";
+
+          doCheck = false;
+          cargoArtifacts = distroxGuiFrontendArtifacts;
+          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
+        };
+
+        distrox-gui = craneLib.buildPackage {
+          inherit (tomlInfo) pname version;
+          inherit src;
+          inherit nativeBuildInputs;
+
+          preBuild = ''
+            mkdir -p gui/frontend/dist
+            ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
+          '';
+
+          buildInputs = guiBuildInputs;
+          cargoExtraArgs = "-p distrox-gui --all-features";
+          cargoArtifacts = distroxGuiArtifacts;
+        };
       in
       rec {
+        checks = {
+          inherit distrox-gui;
+          inherit distrox-gui-frontend;
+          default = distrox-gui;
+
+          distrox-clippy = craneLib.cargoClippy {
+            inherit (tomlInfo) pname;
+            inherit src;
+            inherit nativeBuildInputs;
+            buildInputs = guiBuildInputs;
+
+            cargoArtifacts = distroxGuiArtifacts;
+            cargoClippyExtraArgs = "--tests --all-features -- --deny warnings";
+          };
+
+          distrox-fmt = craneLib.cargoFmt {
+            inherit (tomlInfo) pname;
+            inherit src;
+            inherit nativeBuildInputs;
+            buildInputs = guiBuildInputs;
+          };
+        };
+
+        packages = {
+          inherit distrox-gui;
+          inherit distrox-gui-frontend;
+          default = packages.distrox-gui;
+        };
+
+        apps = {
+          distrox-gui = flake-utils.lib.mkApp {
+            name = "distrox-gui";
+            drv = distrox-gui;
+          };
+          default = apps.distrox-gui;
+        };
+
         devShells = {
           distrox = pkgs.mkShell {
             LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
