@@ -197,6 +197,10 @@
                 trap cleanup EXIT
 
                 $DOCKER start "''${docker_container}"
+                until [ "$($DOCKER inspect -f '{{.State.Running}}' "''${docker_container}")" == "true" ]; do
+                    echo ":: waiting for docker container"
+                    sleep 1
+                done;
 
                 echo ":: Running test IPFS_TEST_PORT=''${TEST_PORT} $BINARY"
                 IPFS_TEST_PORT="''${TEST_PORT}" ''${BINARY}
