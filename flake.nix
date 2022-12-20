@@ -189,9 +189,11 @@
                 BINARY="''${2}"
 
                 docker_container=$($DOCKER create -p "$TEST_PORT":5001 ipfs/kubo)
+                tempdir="$(mktemp)"
 
                 function cleanup() {
                   $DOCKER stop "''${docker_container}"
+                  rm -r "''${tempdir}"
                 }
 
                 trap cleanup EXIT
@@ -203,7 +205,7 @@
                 done;
 
                 echo ":: Running test IPFS_TEST_PORT=''${TEST_PORT} $BINARY"
-                IPFS_TEST_PORT="''${TEST_PORT}" ''${BINARY}
+                IPFS_HOST_ADDR="127.0.0.1:''${TEST_PORT}" TEST_STATE_DIR="''${tempdir}" ''${BINARY}
 
                 $DOCKER stop "''${docker_container}"
                 $DOCKER rm "''${docker_container}"
