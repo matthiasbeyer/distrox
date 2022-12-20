@@ -174,6 +174,44 @@
           '';
         };
 
+        distrox-lib-run-tests = pkgs.writeShellApplication {
+          name = "distrox-lib-run-tests";
+          text = ''
+            [[ $(type -P "docker") ]] && DOCKER=docker
+            [[ $(type -P "podman") ]] && DOCKER=podman
+            [[ -z "$DOCKER" ]] && { echo "You need either docker or podman installed"; exit 1; }
+
+            test_binaries="$(find ${distrox-lib-tests}/ -executable -type f)"
+            TEST_PORT="''${1:-5001}"
+
+            function run_test() {
+                TEST_PORT="''${1}"
+                BINARY="''${2}"
+
+                docker_container=$($DOCKER create -p "$TEST_PORT":5001 ipfs/kubo)
+
+                function cleanup() {
+                  $DOCKER stop "''${docker_container}"
+                }
+
+                trap cleanup EXIT
+
+                $DOCKER start "''${docker_container}"
+
+                echo ":: Running test IPFS_TEST_PORT=''${TEST_PORT} $BINARY"
+                IPFS_TEST_PORT="''${TEST_PORT}" ''${BINARY}
+
+                $DOCKER stop "''${docker_container}"
+                $DOCKER rm "''${docker_container}"
+            }
+
+            for binary in $test_binaries; do
+                TEST_PORT=$(( TEST_PORT + 1 ))
+                run_test "''${TEST_PORT}" "''${binary}"
+            done
+          '';
+        };
+
         distrox-gui-frontend = craneLib.buildPackage {
           inherit (tomlInfo) version;
           inherit src;
@@ -209,6 +247,7 @@
         checks = {
           inherit distrox-lib;
           inherit distrox-lib-tests;
+          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = distrox-gui;
@@ -240,6 +279,7 @@
         packages = {
           inherit distrox-lib;
           inherit distrox-lib-tests;
+          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = packages.distrox-gui;
