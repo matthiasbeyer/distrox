@@ -143,15 +143,16 @@
           cargoExtraArgs = "-p distrox-gui --all-features";
         };
 
-        distrox-lib = let
-          native = nativeBuildInputs ++ [ pkgs.docker ];
-        in craneLib.buildPackage {
+        distrox-lib = craneLib.buildPackage {
           inherit (tomlInfo) pname version;
           inherit src;
           inherit buildInputs;
-          nativeBuildInputs = native;
+          inherit nativeBuildInputs;
           cargoExtraArgs = "-p distrox-lib --all-features";
           cargoArtifacts = distroxLibArtifacts;
+
+          # we use distrox-lib-tests to run tests with testcontainers
+          doCheck = false;
         };
 
         distrox-lib-tests = let
