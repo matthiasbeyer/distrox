@@ -154,6 +154,39 @@
           cargoArtifacts = distroxLibArtifacts;
         };
 
+        distrox-lib-tests = let
+          testBuildInputs = buildInputs ++ [ pkgs.cmake pkgs.jq ];
+        in craneLib.buildPackage rec {
+          inherit (tomlInfo) pname;
+          inherit src;
+          inherit nativeBuildInputs;
+          buildInputs = testBuildInputs;
+
+          CARGO_PROFILE = "test";
+          cargoExtraArgs = "-p distrox-lib --tests";
+          doCheck = false;
+          installPhaseCommand = ''
+            TESTS=$(cargo test -p distrox-lib --no-run --message-format json-render-diagnostics | \
+              jq -r 'select(.reason == "compiler-artifact" and .profile.test == true) | .executable')
+
+            mkdir -p $out/bin/
+            for test in $TESTS; do
+              cp -v "$test" $out/bin/
+            done
+          '';
+        };
+
+        distrox-lib-run-tests = pkgs.writeShellApplication {
+          name = "distrox-lib-run-tests";
+          text = ''
+            test_binaries="$(find ${distrox-lib-tests}/ -executable -type f)"
+            for binary in $test_binaries; do
+                echo ":: Running test $binary"
+                ''${binary}
+            done
+          '';
+        };
+
         distrox-gui-frontend = craneLib.buildPackage {
           inherit (tomlInfo) version;
           inherit src;
@@ -188,6 +221,8 @@
       rec {
         checks = {
           inherit distrox-lib;
+          inherit distrox-lib-tests;
+          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = distrox-gui;
@@ -218,6 +253,8 @@
 
         packages = {
           inherit distrox-lib;
+          inherit distrox-lib-tests;
+          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = packages.distrox-gui;
