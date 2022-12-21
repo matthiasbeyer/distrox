@@ -71,6 +71,8 @@ backend-iroh = ["iroh-rpc-client", "iroh-rpc-types"]
 
 
 [dev-dependencies]
+env_logger = "0.10"
+tempdir = "0.3.7"
+testcontainers = "0.14"
 tokio = { version = "1", features = ["macros"] }
-test-context = "0.1"
 

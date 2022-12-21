@@ -2,8 +2,9 @@
 
 use std::path::PathBuf;
 
+mod images;
+
 use distrox_lib::profile::Profile;
-use test_context::{test_context, AsyncTestContext};
 
 async fn check_state_file_after_create(
     test_state_path: &PathBuf,
@@ -34,51 +35,20 @@ async fn check_state_file_after_create(
     Ok(())
 }
 
-struct ProfileStateContext {
-    ipfs_host_addr: std::net::SocketAddr,
-    test_state_dir: PathBuf,
-    state_file_name: Option<String>,
-}
-
-impl ProfileStateContext {
-    pub fn get_state_file_path(&mut self, filename: &'static str) -> PathBuf {
-        self.state_file_name = Some(filename.to_string());
-        self.test_state_dir.clone().join(filename)
-    }
-}
-
-#[async_trait::async_trait]
-impl AsyncTestContext for ProfileStateContext {
-    async fn setup() -> Self {
-        let ipfs_host_addr = std::env::var("IPFS_HOST_ADDR").unwrap().parse().unwrap();
-        let test_state_dir = PathBuf::from(std::env::var("TEST_STATE_DIR").unwrap());
-        ProfileStateContext {
-            ipfs_host_addr,
-            test_state_dir,
-            state_file_name: None,
-        }
-    }
-
-    async fn teardown(self) {
-        let filepath = self
-            .test_state_dir
-            .join(self.state_file_name.unwrap_or_default());
-
-        if filepath.exists() {
-            tokio::fs::remove_file(filepath).await.unwrap();
-        } else {
-            eprintln!("Does not exist: {}", filepath.display());
-        }
-    }
-}
-
-#[test_context(ProfileStateContext)]
 #[tokio::test]
-async fn test_profile_create(ctx: &mut ProfileStateContext) {
-    let test_state_path = ctx.get_state_file_path("test_profile_create.toml");
+async fn test_profile_create() {
+    let _ = env_logger::try_init();
+    let docker = testcontainers::clients::Cli::docker();
+    let container = docker.run(crate::images::ipfs::Ipfs);
+    let port = container.get_host_port_ipv4(5001);
+
+    let ipfs_host_addr = format!("127.0.0.1:{}", port).parse().unwrap();
+
+    let tempdir = tempdir::TempDir::new("test_profile_create").unwrap();
+    let test_state_path = tempdir.path().join("test_profile_create.toml");
 
     let _profile = Profile::create(
-        ctx.ipfs_host_addr,
+        ipfs_host_addr,
         "test_profile_create".to_string(),
         test_state_path.clone(),
     )
