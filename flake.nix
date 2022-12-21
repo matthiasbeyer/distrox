@@ -152,72 +152,6 @@
           cargoArtifacts = distroxLibArtifacts;
         };
 
-        distrox-lib-tests = let
-          testBuildInputs = buildInputs ++ [ pkgs.cmake pkgs.jq ];
-        in craneLib.buildPackage rec {
-          inherit (tomlInfo) pname;
-          inherit src;
-          inherit nativeBuildInputs;
-          buildInputs = testBuildInputs;
-
-          CARGO_PROFILE = "test";
-          cargoExtraArgs = "-p distrox-lib --tests";
-          doCheck = false;
-          installPhaseCommand = ''
-            TESTS=$(cargo test -p distrox-lib --no-run --message-format json-render-diagnostics | \
-              jq -r 'select(.reason == "compiler-artifact" and .profile.test == true) | .executable')
-
-            mkdir -p $out/bin/
-            for test in $TESTS; do
-              cp -v "$test" $out/bin/
-            done
-          '';
-        };
-
-        distrox-lib-run-tests = pkgs.writeShellApplication {
-          name = "distrox-lib-run-tests";
-          text = ''
-            [[ $(type -P "docker") ]] && DOCKER=docker
-            [[ $(type -P "podman") ]] && DOCKER=podman
-            [[ -z "$DOCKER" ]] && { echo "You need either docker or podman installed"; exit 1; }
-
-            test_binaries="$(find ${distrox-lib-tests}/ -executable -type f)"
-            TEST_PORT="''${1:-5001}"
-
-            function run_test() {
-                TEST_PORT="''${1}"
-                BINARY="''${2}"
-
-                docker_container=$($DOCKER create -p "$TEST_PORT":5001 ipfs/kubo)
-                tempdir="$(mktemp)"
-
-                function cleanup() {
-                  $DOCKER stop "''${docker_container}"
-                  rm -r "''${tempdir}"
-                }
-
-                trap cleanup EXIT
-
-                $DOCKER start "''${docker_container}"
-                until [ "$($DOCKER inspect -f '{{.State.Running}}' "''${docker_container}")" == "true" ]; do
-                    echo ":: waiting for docker container"
-                    sleep 1
-                done;
-
-                echo ":: Running test IPFS_TEST_PORT=''${TEST_PORT} $BINARY"
-                IPFS_HOST_ADDR="127.0.0.1:''${TEST_PORT}" TEST_STATE_DIR="''${tempdir}" ''${BINARY}
-
-                $DOCKER stop "''${docker_container}"
-                $DOCKER rm "''${docker_container}"
-            }
-
-            for binary in $test_binaries; do
-                TEST_PORT=$(( TEST_PORT + 1 ))
-                run_test "''${TEST_PORT}" "''${binary}"
-            done
-          '';
-        };
-
         distrox-gui-frontend = craneLib.buildPackage {
           inherit (tomlInfo) version;
           inherit src;
@@ -252,8 +186,6 @@
       rec {
         checks = {
           inherit distrox-lib;
-          inherit distrox-lib-tests;
-          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = distrox-gui;
@@ -284,8 +216,6 @@
 
         packages = {
           inherit distrox-lib;
-          inherit distrox-lib-tests;
-          inherit distrox-lib-run-tests;
           inherit distrox-gui;
           inherit distrox-gui-frontend;
           default = packages.distrox-gui;
