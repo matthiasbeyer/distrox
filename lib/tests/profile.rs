@@ -77,13 +77,14 @@ async fn test_profile_create() {
 }
 
 async fn create_profile(
-    ctx: &mut ProfileStateContext,
+    ipfs_host_addr: &std::net::SocketAddr,
+    tempdir: PathBuf,
     key_name: &'static str,
 ) -> Result<(PathBuf, Profile), anyhow::Error> {
-    let test_state_path = ctx.get_state_file_path(&format!("{}.toml", key_name));
+    let test_state_path = tempdir.join(&format!("{}.toml", key_name));
 
     let profile = Profile::create(
-        ctx.ipfs_host_addr,
+        *ipfs_host_addr,
         key_name.to_string(),
         test_state_path.clone(),
     )
@@ -97,11 +98,23 @@ async fn create_profile(
     Ok((test_state_path, profile))
 }
 
-#[test_context(ProfileStateContext)]
 #[tokio::test]
-async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
-    let (test_state_path, mut profile) =
-        create_profile(ctx, "test_profile_post_text").await.unwrap();
+async fn test_profile_post_text() {
+    let _ = env_logger::try_init();
+    let docker = testcontainers::clients::Cli::docker();
+    let container = docker.run(crate::images::ipfs::Ipfs);
+    let port = container.get_host_port_ipv4(5001);
+
+    let ipfs_host_addr = format!("127.0.0.1:{}", port).parse().unwrap();
+    let tempdir = tempdir::TempDir::new("test_profile_post_text").unwrap();
+
+    let (test_state_path, mut profile) = create_profile(
+        &ipfs_host_addr,
+        tempdir.path().to_path_buf(),
+        "test_profile_post_text",
+    )
+    .await
+    .unwrap();
 
     let text = "testtext";
     profile.post_text(text.to_string()).await.unwrap();
@@ -118,12 +131,22 @@ async fn test_profile_post_text(ctx: &mut ProfileStateContext) {
         .unwrap();
 }
 
-#[test_context(ProfileStateContext)]
 #[tokio::test]
-async fn test_profile_post_two_texts(ctx: &mut ProfileStateContext) {
-    let (test_state_path, mut profile) = create_profile(ctx, "test_profile_post_two_texts")
-        .await
-        .unwrap();
+async fn test_profile_post_two_texts() {
+    let _ = env_logger::try_init();
+    let docker = testcontainers::clients::Cli::docker();
+    let container = docker.run(crate::images::ipfs::Ipfs);
+    let port = container.get_host_port_ipv4(5001);
+
+    let ipfs_host_addr = format!("127.0.0.1:{}", port).parse().unwrap();
+    let tempdir = tempdir::TempDir::new("test_profile_post_text").unwrap();
+    let (test_state_path, mut profile) = create_profile(
+        &ipfs_host_addr,
+        tempdir.path().to_path_buf(),
+        "test_profile_post_two_texts",
+    )
+    .await
+    .unwrap();
 
     {
         let text = "testtext1";
