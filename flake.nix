@@ -271,7 +271,7 @@
 
         devShells = {
           distrox = pkgs.mkShell {
-            LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
+            LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang.lib}/lib";
             PROTOC          = "${pkgs.protobuf}/bin/protoc";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath guiBuildInputs;
 
