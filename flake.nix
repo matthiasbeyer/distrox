@@ -5,7 +5,6 @@
     unstable-nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils = {
       url = "github:numtide/flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     crane = {
       url = "github:ipetkov/crane";
@@ -271,7 +270,7 @@
 
         devShells = {
           distrox = pkgs.mkShell {
-            LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang}/lib";
+            LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang.lib}/lib";
             PROTOC          = "${pkgs.protobuf}/bin/protoc";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath guiBuildInputs;
 
