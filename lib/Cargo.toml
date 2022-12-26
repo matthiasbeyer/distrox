@@ -33,7 +33,7 @@ toml = "0.5"
 tracing = "0.1"
 
 [dependencies.iroh-rpc-client]
-version = "0.1.3"
+version = "0.2.0"
 package = "iroh-rpc-client"
 optional = true
 
