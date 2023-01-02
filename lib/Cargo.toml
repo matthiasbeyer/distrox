@@ -48,7 +48,7 @@ features = [ "with-send-sync" ]
 optional = true
 
 [dependencies.ipfs-api-backend-hyper]
-version = "0.5"
+version = "0.6"
 features = [ "with-send-sync" ]
 optional = true
 
