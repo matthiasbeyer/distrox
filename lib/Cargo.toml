@@ -29,7 +29,7 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "1"
 time = { version = "0.3", features = ["parsing", "serde-human-readable"] }
 tokio = { version = "1", features = ["sync", "fs"] }
-toml = "0.5"
+toml = "0.7"
 tracing = "0.1"
 
 [dependencies.iroh-rpc-client]
