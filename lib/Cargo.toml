@@ -23,7 +23,7 @@ cid = { version = "0.9", features = ["serde-codec"] }
 futures = "0.3"
 getset = "0.1"
 libipld = "0.15"
-libp2p = "0.50"
+libp2p = "0.51"
 mime = "0.3"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"
