@@ -1,5 +1,34 @@
 {
   "nodes": {
+    "cargo-changelog": {
+      "inputs": {
+        "crane": [
+          "crane"
+        ],
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ]
+      },
+      "locked": {
+        "lastModified": 1688844560,
+        "narHash": "sha256-oMSs+FKCoVxFzhHD7JVmwCzFDmN0Ck9LN/RmOWNPPAI=",
+        "owner": "matthiasbeyer",
+        "repo": "cargo-changelog",
+        "rev": "8ac6bc559caf80e9ca207595823ec7b52b15ea4f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "matthiasbeyer",
+        "repo": "cargo-changelog",
+        "type": "github"
+      }
+    },
     "crane": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -92,6 +121,7 @@
     },
     "root": {
       "inputs": {
+        "cargo-changelog": "cargo-changelog",
         "crane": "crane",
         "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs",
