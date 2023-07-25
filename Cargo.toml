@@ -2,12 +2,14 @@
 resolver = "2"
 
 members = [
-    "gui/frontend",
-    "gui/src-tauri",
-    "gui/types",
-    "lib",
+    "distrox-cli",
+    "distrox-gui",
+    "distrox-lib",
+    "distrox-types",
 ]
 
-[patch.crates-io]
-libp2p = { git = "https://github.com/dignifiedquire/rust-libp2p", branch = "iroh-0-50" }
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+license = "GPL-2.0-only"
 
