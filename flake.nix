@@ -43,66 +43,13 @@
           curl
           gcc
           openssl
-          pkgconfig
-          which
-          zlib
-
-          freetype
-          expat
-          protobuf
         ];
 
-        buildInputs = (with pkgs; [
-          alejandra
-          appimagekit
-          atk
-          cairo
-          dbus
-          dbus.lib
-          dprint
-          gdk-pixbuf
-          glib.out
-          gobject-introspection
-          gtk3
-          harfbuzz
-          libayatana-appindicator-gtk3
-          libffi
-          libsoup
-          nodejs-16_x
-          openssl.out
-          pango
-          pkg-config
-          treefmt
-          webkitgtk
-          zlib
-        ]);
+        buildInputs = with pkgs; [
+        ];
 
-        guiBuildInputs = buildInputs ++ (with pkgs.xorg; [
-          libX11
-          libXcomposite
-          libXcursor
-          libXext
-          libXfont
-          libXfont2
-          libXft
-          libXi
-          libXinerama
-          libXmu
-          libXpm
-          libXpresent
-          libXrandr
-          libXrender
-          libXt
-          libXtst
-          libXxf86misc
-          libXxf86vm
-          libxcb
-          libxkbfile
-          libxshmfence
-
-          pkgs.libGL
-          pkgs.pkgconfig
-        ]);
+        guiBuildInputs = with pkgs; [
+        ];
 
         src =
           let
@@ -119,31 +66,32 @@
           };
 
         distroxLibArtifacts = craneLib.buildDepsOnly {
-          inherit (tomlInfo) pname;
+          pname = "distrox-lib";
           inherit src;
           inherit nativeBuildInputs;
           inherit buildInputs;
           cargoExtraArgs = "-p distrox-lib --all-features";
         };
 
-        distroxGuiFrontendArtifacts = craneLib.buildDepsOnly {
-          pname = "distrox-gui-frontend";
-          inherit src;
-
-          doCheck = false;
-          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
-        };
-
         distroxGuiArtifacts = craneLib.buildDepsOnly {
-          inherit (tomlInfo) pname;
+          pname = "distrox-gui";
           inherit src;
           inherit nativeBuildInputs;
           buildInputs = guiBuildInputs;
           cargoExtraArgs = "-p distrox-gui --all-features";
         };
 
+        distroxCliArtifacts = craneLib.buildDepsOnly {
+          pname = "distrox-cli";
+          inherit src;
+          inherit nativeBuildInputs;
+          inherit buildInputs;
+          cargoExtraArgs = "-p distrox-cli --all-features";
+        };
+
         distrox-lib = craneLib.buildPackage {
-          inherit (tomlInfo) pname version;
+          inherit (tomlInfo) version;
+          pname = "distrox-lib";
           inherit src;
           inherit buildInputs;
           inherit nativeBuildInputs;
@@ -154,89 +102,42 @@
           doCheck = false;
         };
 
-        distrox-lib-tests = let
-          testBuildInputs = buildInputs ++ [ pkgs.cmake pkgs.jq ];
-        in craneLib.buildPackage rec {
-          inherit (tomlInfo) pname;
+        distrox-lib-tests = craneLib.cargoNextest {
           inherit src;
-          inherit nativeBuildInputs;
-          buildInputs = testBuildInputs;
-
-          CARGO_PROFILE = "test";
-          cargoExtraArgs = "-p distrox-lib --tests";
-          doCheck = false;
-          installPhaseCommand = ''
-            TESTS=$(cargo test -p distrox-lib --no-run --message-format json-render-diagnostics | \
-              jq -r 'select(.reason == "compiler-artifact" and .profile.test == true) | .executable')
-
-            mkdir -p $out/bin/
-            for test in $TESTS; do
-              cp -v "$test" $out/bin/
-            done
-          '';
-        };
-
-        distrox-lib-run-tests = pkgs.writeShellApplication {
-          name = "distrox-lib-run-tests";
-          text = ''
-            test_binaries="$(find ${distrox-lib-tests}/ -executable -type f)"
-            for binary in $test_binaries; do
-                echo ":: Running test $binary"
-                ''${binary}
-            done
-          '';
-        };
-
-        distrox-gui-frontend = craneLib.buildPackage {
-          inherit (tomlInfo) version;
-          inherit src;
-          inherit nativeBuildInputs;
-          pname = "distrox-gui-frontend";
-
-          # Override crane's use of --workspace, which tries to build everything.
-          cargoCheckCommand = "cargo check --release";
-          cargoBuildCommand = "cargo build --release";
-          cargoTestCommand = "cargo test --profile release --lib";
-
-          doCheck = false;
-          cargoArtifacts = distroxGuiFrontendArtifacts;
-          cargoExtraArgs = "--all-features -p distrox-gui-frontend --target wasm32-unknown-unknown";
+          cargoArtifacts = distroxLibArtifacts;
         };
 
         distrox-gui = craneLib.buildPackage {
-          inherit (tomlInfo) pname version;
+          pname = "distrox-gui";
+          inherit (tomlInfo) version;
           inherit src;
           inherit nativeBuildInputs;
-
-          preBuild = ''
-            mkdir -p gui/frontend/dist
-            ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
-          '';
-
-          buildInputs = guiBuildInputs;
           cargoExtraArgs = "-p distrox-gui --all-features";
           cargoArtifacts = distroxGuiArtifacts;
+        };
+
+        distrox-cli = craneLib.buildPackage {
+          pname = "distrox-cli";
+          inherit (tomlInfo) version;
+          inherit src;
+          inherit nativeBuildInputs;
+          cargoExtraArgs = "-p distrox-cli --all-features";
+          cargoArtifacts = distroxCliArtifacts;
         };
       in
       rec {
         checks = {
-          inherit distrox-lib;
-          inherit distrox-lib-tests;
-          inherit distrox-lib-run-tests;
-          inherit distrox-gui;
-          inherit distrox-gui-frontend;
           default = distrox-gui;
 
+          inherit distrox-lib;
+          inherit distrox-lib-tests;
+          inherit distrox-gui;
+
           distrox-gui-clippy = craneLib.cargoClippy {
-            inherit (tomlInfo) pname;
+            pname = "distrox-gui";
             inherit src;
             inherit nativeBuildInputs;
             buildInputs = guiBuildInputs;
-
-            preBuild = ''
-              mkdir -p gui/frontend/dist
-              ln -s ${distrox-gui-frontend}/bin/distrox-gui-frontend.wasm gui/frontend/dist/distrox-gui-frontend.wasm
-            '';
 
             cargoArtifacts = distroxGuiArtifacts;
             cargoExtraArgs = "-p distrox-gui --all-features";
@@ -244,7 +145,6 @@
           };
 
           distrox-fmt = craneLib.cargoFmt {
-            inherit (tomlInfo) pname;
             inherit src;
             inherit nativeBuildInputs;
             buildInputs = guiBuildInputs;
@@ -252,41 +152,30 @@
         };
 
         packages = {
+          default = packages.distrox-gui;
+
           inherit distrox-lib;
           inherit distrox-lib-tests;
-          inherit distrox-lib-run-tests;
           inherit distrox-gui;
-          inherit distrox-gui-frontend;
-          default = packages.distrox-gui;
         };
 
         apps = {
+          default = apps.distrox-gui;
+
           distrox-gui = flake-utils.lib.mkApp {
             name = "distrox-gui";
             drv = distrox-gui;
           };
-          default = apps.distrox-gui;
+
+          distrox-cli = flake-utils.lib.mkApp {
+            name = "distrox-cli";
+            drv = distrox-gui;
+          };
         };
 
         devShells = {
           distrox = pkgs.mkShell {
-            LIBCLANG_PATH   = "${pkgs.llvmPackages.libclang.lib}/lib";
-            PROTOC          = "${pkgs.protobuf}/bin/protoc";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath guiBuildInputs;
-
-            XDG_DATA_DIRS = let
-              base = pkgs.lib.concatMapStringsSep ":" (x: "${x}/share") [
-                pkgs.gnome.adwaita-icon-theme
-                pkgs.shared-mime-info
-              ];
-
-              gsettings_schema = pkgs.lib.concatMapStringsSep ":" (x: "${x}/share/gsettings-schemas/${x.name}") [
-                pkgs.glib
-                pkgs.gsettings-desktop-schemas
-                pkgs.gtk3
-              ];
-            in "${base}:${gsettings_schema}";
-
             buildInputs = nativeBuildInputs ++ guiBuildInputs;
 
             nativeBuildInputs = nativeBuildInputs ++ [
