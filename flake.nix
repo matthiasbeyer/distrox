@@ -69,6 +69,30 @@
       ];
 
       guiBuildInputs = with pkgs; [
+        xorg.libX11
+        xorg.libXcomposite
+        xorg.libXcursor
+        xorg.libXext
+        xorg.libXfont
+        xorg.libXfont2
+        xorg.libXft
+        xorg.libXi
+        xorg.libXinerama
+        xorg.libXmu
+        xorg.libXpm
+        xorg.libXpresent
+        xorg.libXrandr
+        xorg.libXrender
+        xorg.libXt
+        xorg.libXtst
+        xorg.libXxf86misc
+        xorg.libXxf86vm
+        xorg.libxcb
+        xorg.libxkbfile
+        xorg.libxshmfence
+
+        libGL
+        pkg-config
       ];
 
       src =
