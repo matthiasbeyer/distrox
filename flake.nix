@@ -91,8 +91,10 @@
         xorg.libxkbfile
         xorg.libxshmfence
 
+
         libGL
         pkg-config
+        fontconfig
       ];
 
       src =

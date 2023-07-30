@@ -1,17 +1,90 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, HorizontalBox } from "std-widgets.slint";
+
+import { MenuBar } from "menubar.slint";
+import { Input } from "input.slint";
 
 export component AppWindow inherits Window {
     in-out property<int> counter: 42;
     callback request-increase-value();
-    VerticalBox {
-        Text {
-            text: "Counter: \{root.counter}";
+
+    title: "distrox";
+    background: white;
+
+    preferred-width: 100%;
+    preferred-height: 100%;
+
+    VerticalLayout {
+        spacing: 5px;
+
+        MenuBar {
+            Text {
+                text: "distrox";
+            }
+
+            Button {
+                text: "Click!";
+                // does nothing
+            }
+
+            Button {
+                text: "Me!";
+                // does nothing
+            }
         }
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
+
+        HorizontalBox {
+            spacing: 5px;
+
+            Rectangle {
+                min-width: 10px;
+                max-width: 50px;
+                // spacing
+            }
+
+            VerticalLayout {
+                max-width: 100px;
+
+                Text { text: "#followforcats"; }
+                Text { text: "#awesometag"; }
+                Text { text: "@Alice"; }
+                Text { text: "@Bob"; }
+                Text { text: "#coolkittens"; }
+            }
+
+            VerticalLayout {
+                min-width: 100px;
+
+                Input {
+                    min-height: 50px;
+
+                    max-height: 200px;
+                }
+
+                Text { text: "Some Post"; }
+                Text { text: "Some other Post"; }
+                Text { text: "Some third Post"; }
+            }
+
+            VerticalLayout {
+                max-width: 100px;
+                Button {
+                    text: "My Profile";
+                }
+                Button {
+                    text: "Settings";
+                }
+
+                Button {
+                    text: "Support distrox";
+                }
+            }
+
+            Rectangle {
+                min-width: 10px;
+                max-width: 50px;
+                // spacing
             }
         }
     }
+
 }
