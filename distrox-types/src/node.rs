@@ -1,7 +1,10 @@
+use libipld::DagCbor;
+
 use crate::id::NodeId;
 use crate::id::PostId;
 use crate::protocol::ProtocolVersion;
 
+#[derive(Debug, DagCbor)]
 pub struct Node {
     pub protocol_version: ProtocolVersion,
 
