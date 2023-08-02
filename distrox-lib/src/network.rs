@@ -37,20 +37,59 @@ impl Network {
         Ok(Network { ipfs })
     }
 
-    pub async fn insert_node(&self, node: Node) -> Result<(), Error> {
-        // WHY???
-        let ipld = libipld::cbor::DagCborCodec.encode(&node)?;
-        let ipld: libipld::Ipld = libipld::cbor::DagCborCodec.decode(&ipld)?;
-        self.ipfs.put_dag(ipld).await?;
-        Ok(())
+    #[cfg(test)]
+    async fn inmemory(listening_addrs: ListeningAddrs) -> Result<Self, Error> {
+        let ipfs = rust_ipfs::UninitializedIpfs::<network_behaviour::Behaviour>::with_opt(
+            rust_ipfs::IpfsOptions {
+                ipfs_path: rust_ipfs::StoragePath::Memory,
+                ..Default::default()
+            },
+        )
+        .add_listening_addrs(listening_addrs.into())
+        .enable_mdns()
+        .enable_relay(true)
+        .enable_relay_server(None)
+        .enable_upnp()
+        .start()
+        .await?;
+
+        Ok(Network { ipfs })
     }
 
-    pub async fn insert_post(&self, node: Post) -> Result<(), Error> {
+    pub async fn addrs(&self) -> Result<Vec<(libp2p::PeerId, Vec<Multiaddr>)>, Error> {
+        self.ipfs.addrs().await.map_err(Error::from)
+    }
+
+    pub async fn add_peer(&self, peer_id: libp2p::PeerId, addr: Multiaddr) -> Result<(), Error> {
+        self.ipfs.add_peer(peer_id, addr).await.map_err(Error::from)
+    }
+
+    pub async fn connect(
+        &self,
+        peer_id: libp2p::PeerId,
+        addrs: Vec<Multiaddr>,
+    ) -> Result<(), Error> {
+        let opts = libp2p::swarm::dial_opts::DialOpts::peer_id(peer_id)
+            .condition(libp2p::swarm::dial_opts::PeerCondition::Disconnected)
+            .addresses(addrs)
+            .extend_addresses_through_behaviour()
+            .build();
+
+        self.ipfs.connect(opts).await.map_err(Error::from)
+    }
+
+    pub async fn insert_node(&self, node: Node) -> Result<cid::Cid, Error> {
         // WHY???
         let ipld = libipld::cbor::DagCborCodec.encode(&node)?;
         let ipld: libipld::Ipld = libipld::cbor::DagCborCodec.decode(&ipld)?;
-        self.ipfs.put_dag(ipld).await?;
-        Ok(())
+        self.ipfs.put_dag(ipld).await.map_err(Error::from)
+    }
+
+    pub async fn insert_post(&self, node: Post) -> Result<cid::Cid, Error> {
+        // WHY???
+        let ipld = libipld::cbor::DagCborCodec.encode(&node)?;
+        let ipld: libipld::Ipld = libipld::cbor::DagCborCodec.decode(&ipld)?;
+        self.ipfs.put_dag(ipld).await.map_err(Error::from)
     }
 
     pub async fn insert_blob(&self, blob: impl Stream<Item = u8> + Send) -> Result<(), Error> {
@@ -61,8 +100,36 @@ impl Network {
             .await?;
         Ok(())
     }
+
+    async fn fetch_dag(&self, cid: cid::Cid) -> Result<libipld::Ipld, Error> {
+        self.ipfs
+            .get_dag(rust_ipfs::path::IpfsPath::new(
+                rust_ipfs::path::PathRoot::Ipld(cid),
+            ))
+            .await
+            .map_err(Error::from)
+    }
+
+    pub async fn get_post(&self, cid: cid::Cid) -> Result<Post, Error> {
+        self.fetch_dag(cid).await.and_then(|ipld| {
+            let bytes = libipld::cbor::DagCborCodec.encode(&ipld)?;
+            libipld::cbor::DagCborCodec
+                .decode(&bytes)
+                .map_err(Error::from)
+        })
+    }
+
+    pub async fn get_node(&self, cid: cid::Cid) -> Result<Node, Error> {
+        self.fetch_dag(cid).await.and_then(|ipld| {
+            let bytes = libipld::cbor::DagCborCodec.encode(&ipld)?;
+            libipld::cbor::DagCborCodec
+                .decode(&bytes)
+                .map_err(Error::from)
+        })
+    }
 }
 
+#[derive(Debug, Clone)]
 pub struct BootstrapNodes(Vec<Multiaddr>);
 
 impl From<BootstrapNodes> for Vec<Multiaddr> {
@@ -71,6 +138,7 @@ impl From<BootstrapNodes> for Vec<Multiaddr> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ListeningAddrs(Vec<Multiaddr>);
 
 impl From<ListeningAddrs> for Vec<Multiaddr> {
@@ -172,5 +240,72 @@ mod network_behaviour {
         ) -> Poll<ToSwarm<Self::OutEvent, THandlerInEvent<Self>>> {
             Poll::Pending
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use tracing::debug;
+    use tracing::info;
+
+    #[tokio::test]
+    async fn test_single_node() {
+        let _ = env_logger::try_init();
+        info!("Starting test");
+        let listening_addr = ListeningAddrs(vec!["/ip4/0.0.0.0/tcp/0".parse().unwrap()]);
+        let node1 = Network::inmemory(listening_addr).await.unwrap();
+        info!("Node instantiated");
+
+        let node = Node {
+            protocol_version: distrox_types::protocol::ProtocolVersion(0),
+            parents: Vec::new(),
+            post: None,
+        };
+
+        let cid = node1.insert_node(node.clone()).await.unwrap();
+        info!(?cid, "Put object to node");
+        let received_node = node1.get_node(cid).await.unwrap();
+        info!(?received_node, "Received object from node");
+
+        assert_eq!(received_node, node);
+    }
+
+    #[tokio::test]
+    async fn test_connected_nodes() {
+        let _ = env_logger::try_init();
+        info!("Starting test");
+        let listening_addr = ListeningAddrs(vec!["/ip4/0.0.0.0/tcp/0".parse().unwrap()]);
+        let (node1, node2) = tokio::try_join!(
+            Network::inmemory(listening_addr.clone()),
+            Network::inmemory(listening_addr)
+        )
+        .unwrap();
+        info!("Nodes instantiated");
+
+        let node1_addrs = node1.listening_addresses().await.unwrap();
+        debug!("Node1 listens: {:?}", node1_addrs);
+
+        let node2_addrs = node2.listening_addresses().await.unwrap();
+        debug!("Node2 listens: {:?}", node2_addrs);
+
+        for addr in node1_addrs {
+            node2.connect_without_peer(addr).await.unwrap();
+        }
+        info!("Node1 connected to Node2");
+
+        let node = Node {
+            protocol_version: distrox_types::protocol::ProtocolVersion(0),
+            parents: Vec::new(),
+            post: None,
+        };
+
+        let cid = node1.insert_node(node.clone()).await.unwrap();
+        info!(?cid, "Put object to node1");
+        let received_node = node2.get_node(cid).await.unwrap();
+        info!(?received_node, "Received object from node2");
+
+        assert_eq!(received_node, node);
     }
 }

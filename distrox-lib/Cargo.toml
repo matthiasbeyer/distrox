@@ -11,12 +11,19 @@ thiserror.workspace = true
 
 distrox-types = { version = "0.1.0", path = "../distrox-types" }
 
+cid = "0.10"
 futures = "0.3.28"
 libipld = "0.16"
 rust-ipfs = "0.3.19"
 void = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "std"] }
 
 [dependencies.libp2p]
 version = "0.51.3"
 default-features = false
 features = [ "tokio", "identify", "ping", "floodsub", "gossipsub", "mdns", "kad" ]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util"] }
+env_logger = "0.10"
