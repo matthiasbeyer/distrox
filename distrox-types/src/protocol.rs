@@ -1,4 +1,4 @@
 use libipld::DagCbor;
 
-#[derive(Debug, DagCbor)]
-pub struct ProtocolVersion(u64);
+#[derive(Clone, Debug, Eq, PartialEq, DagCbor)]
+pub struct ProtocolVersion(pub u64);
