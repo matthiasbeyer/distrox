@@ -28,6 +28,11 @@ version = "0.51.3"
 default-features = false
 features = [ "tokio", "identify", "ping", "floodsub", "gossipsub", "mdns", "kad" ]
 
+[dependencies.libp2p-identity]
+version = "0.2.0"
+default-features = false
+features = [ "peerid" ]
+
 [dev-dependencies]
 tokio = { version = "1", features = ["test-util"] }
 env_logger = "0.10"
