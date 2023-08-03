@@ -146,7 +146,7 @@ impl Network {
 }
 
 #[derive(Debug, Clone)]
-pub struct BootstrapNodes(Vec<Multiaddr>);
+pub struct BootstrapNodes(pub Vec<Multiaddr>);
 
 impl From<BootstrapNodes> for Vec<Multiaddr> {
     fn from(value: BootstrapNodes) -> Self {
@@ -155,7 +155,7 @@ impl From<BootstrapNodes> for Vec<Multiaddr> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ListeningAddrs(Vec<Multiaddr>);
+pub struct ListeningAddrs(pub Vec<Multiaddr>);
 
 impl From<ListeningAddrs> for Vec<Multiaddr> {
     fn from(value: ListeningAddrs) -> Self {
