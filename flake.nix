@@ -123,6 +123,8 @@
       distrox-lib-tests = craneLib.cargoNextest {
         inherit src;
         cargoArtifacts = distroxLibArtifacts;
+        inherit nativeBuildInputs;
+        inherit buildInputs;
       };
 
       distrox-gui = craneLib.buildPackage {
