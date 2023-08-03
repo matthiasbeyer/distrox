@@ -61,6 +61,7 @@
         curl
         gcc
         openssl
+        zlib
       ];
 
       buildInputs = with pkgs; [
