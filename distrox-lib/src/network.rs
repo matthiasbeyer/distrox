@@ -56,6 +56,14 @@ impl Network {
         Ok(Network { ipfs })
     }
 
+    pub async fn listening_addresses(&self) -> Result<Vec<Multiaddr>, Error> {
+        self.ipfs.listening_addresses().await.map_err(Error::from)
+    }
+
+    pub async fn external_addresses(&self) -> Result<Vec<Multiaddr>, Error> {
+        self.ipfs.external_addresses().await.map_err(Error::from)
+    }
+
     pub async fn addrs(&self) -> Result<Vec<(libp2p::PeerId, Vec<Multiaddr>)>, Error> {
         self.ipfs.addrs().await.map_err(Error::from)
     }
@@ -73,6 +81,14 @@ impl Network {
             .condition(libp2p::swarm::dial_opts::PeerCondition::Disconnected)
             .addresses(addrs)
             .extend_addresses_through_behaviour()
+            .build();
+
+        self.ipfs.connect(opts).await.map_err(Error::from)
+    }
+
+    pub async fn connect_without_peer(&self, addr: Multiaddr) -> Result<(), Error> {
+        let opts = libp2p::swarm::dial_opts::DialOpts::unknown_peer_id()
+            .address(addr)
             .build();
 
         self.ipfs.connect(opts).await.map_err(Error::from)
