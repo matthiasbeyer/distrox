@@ -125,6 +125,8 @@
         cargoArtifacts = distroxLibArtifacts;
         inherit nativeBuildInputs;
         inherit buildInputs;
+
+        doNotLinkInheritedArtifacts = true;
       };
 
       distrox-gui = craneLib.buildPackage {
