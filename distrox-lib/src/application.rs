@@ -5,7 +5,6 @@ use distrox_types::{
     util::{Mime, OffsetDateTime},
 };
 use tokio::sync::Mutex;
-use tracing::debug;
 
 use crate::{
     command::CommandReceiver, configuration::Configuration, error::Error, network::Network,
