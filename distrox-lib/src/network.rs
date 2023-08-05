@@ -149,6 +149,7 @@ impl Network {
                 rust_ipfs::unixfs::UnixfsStatus::CompletedStatus { path, written, .. } => {
                     trace!("{written} been stored with path {path}");
                     for pe in path.iter() {
+                        trace!(element = ?pe, "Looking at path element");
                         match cid::Cid::from_str(pe).map_err(Error::from) {
                             Ok(cid) => return Ok(cid),
                             Err(e) => {
