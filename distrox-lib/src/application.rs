@@ -31,7 +31,7 @@ impl Application {
                 config
                     .network()
                     .bootstrap_nodes()
-                    .into_iter()
+                    .iter()
                     .cloned()
                     .map(|n| n.try_into())
                     .collect::<Result<Vec<_>, Error>>()?,
@@ -40,7 +40,7 @@ impl Application {
                 config
                     .network()
                     .listening_addrs()
-                    .into_iter()
+                    .iter()
                     .cloned()
                     .map(|n| n.try_into())
                     .collect::<Result<Vec<_>, Error>>()?,
