@@ -37,8 +37,8 @@ export component AppWindow inherits Window {
 
         HorizontalBox {
             spacing: 5px;
-            preferred-width: 100%;
-            preferred-height: 100%;
+            preferred-width: 1200px;
+            preferred-height: 800px;
 
             Rectangle {
                 min-width: 10px;
@@ -56,10 +56,28 @@ export component AppWindow inherits Window {
                 ];
             }
 
-            if(side-bar.current-item == 0) : MainPage {}
-            if(side-bar.current-item == 1) : MyProfilePage {}
-            if(side-bar.current-item == 2) : SettingsPage {}
-            if(side-bar.current-item == 3) : AboutPage {}
+            Rectangle {
+                clip: true;
+                main-page := MainPage {
+                    x: side-bar.current-item == 0 ? 0 : side-bar.current-item < 0 ? - self.width - 1px : parent.width + 1px;
+                    animate x { duration: 125ms; easing: ease; }
+                }
+
+                profile-page := MyProfilePage {
+                    x: side-bar.current-item == 1 ? 0 : side-bar.current-item < 1 ? - self.width - 1px : parent.width + 1px;
+                    animate x { duration: 125ms; easing: ease; }
+                }
+
+                settings-page := SettingsPage {
+                    x: side-bar.current-item == 2 ? 0 : side-bar.current-item < 2 ? - self.width - 1px : parent.width + 1px;
+                    animate x { duration: 125ms; easing: ease; }
+                }
+
+                about-page := AboutPage {
+                    x: side-bar.current-item == 3 ? 0 : side-bar.current-item < 3 ? - self.width - 1px : parent.width + 1px;
+                    animate x { duration: 125ms; easing: ease; }
+                }
+            }
         }
     }
 
