@@ -92,6 +92,7 @@ impl Application {
 }
 
 struct AppState {
+    #[allow(unused)]
     config: Configuration,
     state: State,
 }
