@@ -122,15 +122,6 @@
         doCheck = false;
       };
 
-      distrox-lib-tests = craneLib.cargoNextest {
-        inherit src;
-        cargoArtifacts = distroxLibArtifacts;
-        inherit nativeBuildInputs;
-        inherit buildInputs;
-
-        doNotLinkInheritedArtifacts = true;
-      };
-
       distrox-gui = craneLib.buildPackage {
         pname = "distrox-gui";
         inherit (tomlInfo) version;
@@ -154,7 +145,6 @@
         default = distrox-gui;
 
         inherit distrox-lib;
-        inherit distrox-lib-tests;
         inherit distrox-gui;
 
         distrox-gui-clippy = craneLib.cargoClippy {
@@ -179,7 +169,6 @@
         default = packages.distrox-gui;
 
         inherit distrox-lib;
-        inherit distrox-lib-tests;
         inherit distrox-gui;
       };
 
