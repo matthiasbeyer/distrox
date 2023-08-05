@@ -10,7 +10,9 @@ pub struct State {
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-struct StateInner {}
+struct StateInner {
+    latest_post: Option<Vec<u8>>,
+}
 
 impl State {
     pub async fn load_from_path(path: PathBuf) -> Result<Self, Error> {
@@ -41,5 +43,14 @@ impl State {
                 path: self.path.to_path_buf(),
                 source,
             })
+    }
+
+    pub fn latest_post(&self) -> Option<&[u8]> {
+        self.state_inner.latest_post.as_deref()
+    }
+
+    pub async fn store_latest_post(&mut self, post: Vec<u8>) -> Result<(), Error> {
+        self.state_inner.latest_post = Some(post);
+        self.save().await
     }
 }

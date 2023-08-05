@@ -40,4 +40,10 @@ pub enum Error {
         #[source]
         source: std::io::Error,
     },
+
+    #[error(transparent)]
+    Cid(#[from] cid::Error),
+
+    #[error("Unknown error while writing to blockstore")]
+    UnknownWritingToBlockstore,
 }

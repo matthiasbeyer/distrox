@@ -22,6 +22,8 @@ toml = "0.7"
 serde = "1"
 tokio = { version = "1", features = ["fs", "macros"] }
 xdg = "2.5"
+mime = "0.3"
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
 
 [dependencies.libp2p]
 version = "0.51.3"

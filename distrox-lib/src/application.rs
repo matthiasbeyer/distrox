@@ -1,3 +1,10 @@
+use std::io::Cursor;
+
+use distrox_types::{
+    post::{OriginalPost, Post},
+    util::{Mime, OffsetDateTime},
+};
+use tokio::sync::Mutex;
 use tracing::debug;
 
 use crate::{
@@ -6,7 +13,7 @@ use crate::{
 };
 
 pub struct Application {
-    app_state: AppState,
+    app_state: Mutex<AppState>,
 
     network: Network,
 }
@@ -42,7 +49,7 @@ impl Application {
             Network::load(storage_path, bootstrap, listening).await?
         };
 
-        let app_state = AppState { config, state };
+        let app_state = Mutex::new(AppState { config, state });
         Ok(Application { app_state, network })
     }
 
@@ -51,7 +58,32 @@ impl Application {
             match command {
                 crate::command::Command::QuitApp => return Ok(()),
                 crate::command::Command::PostText { text } => {
-                    debug!("Posting text: '{text}'");
+                    let latest_post = self.app_state.lock().await.get_latest_post()?;
+
+                    let content_id = self
+                        .network
+                        .insert_blob(futures::stream::iter(text.bytes()))
+                        .await?;
+
+                    let new_post = Post::Original({
+                        OriginalPost {
+                            content: content_id,
+                            content_mime: Mime(mime::TEXT_PLAIN_UTF_8),
+                            timestamp: OffsetDateTime(time::OffsetDateTime::now_utc()),
+                        }
+                    });
+
+                    let post_id = self.network.insert_post(new_post).await?;
+
+                    let new_node = distrox_types::node::Node {
+                        protocol_version: distrox_types::protocol::ProtocolVersion(0),
+                        parents: latest_post.into_iter().collect(),
+                        post: Some(post_id),
+                    };
+
+                    let node_id = self.network.insert_node(new_node).await?;
+
+                    self.app_state.lock().await.set_latest_post(node_id).await?;
                 }
             }
         }
@@ -63,4 +95,19 @@ impl Application {
 struct AppState {
     config: Configuration,
     state: State,
+}
+
+impl AppState {
+    fn get_latest_post(&self) -> Result<Option<cid::Cid>, Error> {
+        self.state
+            .latest_post()
+            .map(|bytes| cid::Cid::read_bytes(Cursor::new(bytes)))
+            .transpose()
+            .map_err(Error::from)
+    }
+
+    async fn set_latest_post(&mut self, post: cid::Cid) -> Result<(), Error> {
+        let bytes = post.to_bytes();
+        self.state.store_latest_post(bytes).await
+    }
 }
