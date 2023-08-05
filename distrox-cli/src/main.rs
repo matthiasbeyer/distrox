@@ -5,7 +5,7 @@ use crate::error::Error;
 use futures::FutureExt;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt::init();
     let xdg = xdg::BaseDirectories::with_prefix("distrox")?;
 

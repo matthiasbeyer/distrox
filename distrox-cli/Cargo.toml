@@ -12,6 +12,7 @@ distrox-lib = { path = "../distrox-lib" }
 
 thiserror.workspace = true
 
+anyhow = "1"
 futures = "0.3"
 tokio = { workspace = true, features = ["sync", "rt", "macros"] }
 tracing = "0.1"
