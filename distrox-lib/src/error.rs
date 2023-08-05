@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -21,4 +23,21 @@ pub enum Error {
 
     #[error("Failed to parse state")]
     ParsingState(#[source] toml::de::Error),
+
+    #[error("Failed to serialize state")]
+    SerializingState(#[source] toml::ser::Error),
+
+    #[error("Opening state file {}", .path.display())]
+    OpenStateFile {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Writing to state file {}", .path.display())]
+    WritingState {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
 }
