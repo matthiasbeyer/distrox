@@ -6,6 +6,8 @@ import { Page } from "../page.slint";
 export component MainPage inherits Page {
     title: "Main";
 
+    callback post_text_content <=> input.post_text_content;
+
     HorizontalBox {
         preferred-width: 100%;
         preferred-height: 100%;
@@ -16,7 +18,7 @@ export component MainPage inherits Page {
         VerticalLayout {
             min-width: 100px;
 
-            Input {
+            input := Input {
                 min-height: 50px;
 
                 max-height: 200px;
