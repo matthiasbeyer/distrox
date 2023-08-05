@@ -153,6 +153,7 @@
         inherit (tomlInfo) version;
         inherit src;
         inherit nativeBuildInputs;
+        buildInputs = guiBuildInputs;
         cargoExtraArgs = "-p distrox-gui --all-features";
         cargoArtifacts = distroxGuiArtifacts;
       };
