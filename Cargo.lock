@@ -1788,6 +1788,8 @@ dependencies = [
  "slint-build",
  "thiserror",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
