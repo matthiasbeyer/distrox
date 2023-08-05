@@ -1778,6 +1778,16 @@ dependencies = [
 [[package]]
 name = "distrox-cli"
 version = "0.1.0"
+dependencies = [
+ "distrox-gui",
+ "distrox-lib",
+ "futures",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "xdg",
+]
 
 [[package]]
 name = "distrox-gui"
