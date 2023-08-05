@@ -1783,9 +1783,11 @@ version = "0.1.0"
 name = "distrox-gui"
 version = "0.1.0"
 dependencies = [
+ "distrox-lib",
  "slint",
  "slint-build",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
