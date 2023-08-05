@@ -1,4 +1,9 @@
-use crate::{configuration::Configuration, error::Error, network::Network, state::State};
+use tracing::debug;
+
+use crate::{
+    command::CommandReceiver, configuration::Configuration, error::Error, network::Network,
+    state::State,
+};
 
 pub struct Application {
     app_state: AppState,
@@ -39,6 +44,19 @@ impl Application {
 
         let app_state = AppState { config, state };
         Ok(Application { app_state, network })
+    }
+
+    pub async fn run(&self, mut receiver: CommandReceiver) -> Result<(), Error> {
+        while let Some(command) = receiver.recv().await {
+            match command {
+                crate::command::Command::QuitApp => return Ok(()),
+                crate::command::Command::PostText { text } => {
+                    debug!("Posting text: '{text}'");
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
