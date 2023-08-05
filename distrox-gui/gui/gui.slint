@@ -1,7 +1,9 @@
 import { Button, HorizontalBox } from "std-widgets.slint";
 
 import { MenuBar } from "menubar.slint";
-import { Input } from "input.slint";
+import { SideBar } from "sidebar.slint";
+import { AboutPage } from "about.slint";
+import { MainPage } from "main.slint";
 
 export component AppWindow inherits Window {
     in-out property<int> counter: 42;
@@ -15,6 +17,8 @@ export component AppWindow inherits Window {
 
     VerticalLayout {
         spacing: 5px;
+        preferred-width: 100%;
+        preferred-height: 100%;
 
         MenuBar {
             Text {
@@ -34,6 +38,8 @@ export component AppWindow inherits Window {
 
         HorizontalBox {
             spacing: 5px;
+            preferred-width: 100%;
+            preferred-height: 100%;
 
             Rectangle {
                 min-width: 10px;
@@ -41,49 +47,16 @@ export component AppWindow inherits Window {
                 // spacing
             }
 
-            VerticalLayout {
-                max-width: 100px;
-
-                Text { text: "#followforcats"; }
-                Text { text: "#awesometag"; }
-                Text { text: "@Alice"; }
-                Text { text: "@Bob"; }
-                Text { text: "#coolkittens"; }
+            side-bar := SideBar {
+                title: @tr("");
+                model: [
+                    @tr("Menu" => "Main"),
+                    @tr("Menu" => "About")
+                ];
             }
 
-            VerticalLayout {
-                min-width: 100px;
-
-                Input {
-                    min-height: 50px;
-
-                    max-height: 200px;
-                }
-
-                Text { text: "Some Post"; }
-                Text { text: "Some other Post"; }
-                Text { text: "Some third Post"; }
-            }
-
-            VerticalLayout {
-                max-width: 100px;
-                Button {
-                    text: "My Profile";
-                }
-                Button {
-                    text: "Settings";
-                }
-
-                Button {
-                    text: "Support distrox";
-                }
-            }
-
-            Rectangle {
-                min-width: 10px;
-                max-width: 50px;
-                // spacing
-            }
+            if(side-bar.current-item == 0) : MainPage {}
+            if(side-bar.current-item == 4) : AboutPage {}
         }
     }
 

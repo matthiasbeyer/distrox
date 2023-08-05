@@ -1,0 +1,61 @@
+import { Button, HorizontalBox } from "std-widgets.slint";
+
+import { Input } from "input.slint";
+import { Page } from "page.slint";
+
+export component MainPage inherits Page {
+    title: "Main";
+
+    HorizontalBox {
+        preferred-width: 100%;
+        preferred-height: 100%;
+
+        min-width: 1024px;
+        min-height: 800px;
+
+        VerticalLayout {
+            max-width: 100px;
+
+            Text { text: "#followforcats"; }
+            Text { text: "#awesometag"; }
+            Text { text: "@Alice"; }
+            Text { text: "@Bob"; }
+            Text { text: "#coolkittens"; }
+        }
+
+        VerticalLayout {
+            min-width: 100px;
+
+            Input {
+                min-height: 50px;
+
+                max-height: 200px;
+            }
+
+            Text { text: "Some Post"; }
+            Text { text: "Some other Post"; }
+            Text { text: "Some third Post"; }
+        }
+
+        VerticalLayout {
+            max-width: 100px;
+            Button {
+                text: "My Profile";
+            }
+            Button {
+                text: "Settings";
+            }
+
+            Button {
+                text: "Support distrox";
+            }
+        }
+
+        Rectangle {
+            min-width: 10px;
+            max-width: 50px;
+            // spacing
+        }
+
+    }
+}
