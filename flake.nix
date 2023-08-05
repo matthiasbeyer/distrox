@@ -156,6 +156,7 @@
         buildInputs = guiBuildInputs;
         cargoExtraArgs = "-p distrox-gui --all-features";
         cargoArtifacts = distroxGuiArtifacts;
+        doNotLinkInheritedArtifacts = true;
       };
 
       distrox-cli = craneLib.buildPackage {
