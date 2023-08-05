@@ -3,7 +3,9 @@ import { TextEdit, Button } from "std-widgets.slint";
 component TextInput inherits VerticalLayout {
     spacing: 5px;
 
-    TextEdit {
+    callback post_text(string);
+
+    text_content := TextEdit {
         enabled: true;
         read-only: false;
     }
@@ -15,7 +17,19 @@ component TextInput inherits VerticalLayout {
             }
 
             Button {
+                text: "Cancel";
+
+                clicked => {
+                    text_content.text = "";
+                }
+            }
+
+            Button {
                 text: "Post";
+
+                clicked => {
+                    root.post_text(text_content.text)
+                }
             }
         }
     }
