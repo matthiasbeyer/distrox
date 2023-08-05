@@ -15,9 +15,9 @@ name = "distrox-gui"
 path = "src/main.rs"
 
 [dependencies]
-slint = "1.0"
+slint = "1.1"
 
 thiserror.workspace = true
 
 [build-dependencies]
-slint-build = "1.0"
+slint-build = "1.1"
