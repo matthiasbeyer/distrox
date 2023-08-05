@@ -18,6 +18,23 @@ pub enum Error {
     #[error("Failed to parse configuration")]
     ParsingConfig(#[source] toml::de::Error),
 
+    #[error("Failed to serialize config")]
+    SerializingConfig(#[source] toml::ser::Error),
+
+    #[error("Opening config file {}", .path.display())]
+    OpenConfigFile {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Writing to config file {}", .path.display())]
+    WritingConfig {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
     #[error("Failed to read state")]
     ReadingState(#[source] std::io::Error),
 
