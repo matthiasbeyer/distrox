@@ -1,0 +1,66 @@
+import { Button, HorizontalBox } from "std-widgets.slint";
+
+import { MenuBar } from "menubar.slint";
+import { SideBar } from "sidebar.slint";
+import { AboutPage } from "about.slint";
+import { MainPage } from "main.slint";
+import { MyProfilePage } from "my_profile.slint";
+import { SettingsPage } from "settings.slint";
+
+export component AppWindow inherits Window {
+    title: "distrox";
+    background: white;
+
+    preferred-width: 100%;
+    preferred-height: 100%;
+
+    VerticalLayout {
+        spacing: 5px;
+        preferred-width: 100%;
+        preferred-height: 100%;
+
+        MenuBar {
+            Text {
+                text: "distrox";
+            }
+
+            Button {
+                text: "Click!";
+                // does nothing
+            }
+
+            Button {
+                text: "Me!";
+                // does nothing
+            }
+        }
+
+        HorizontalBox {
+            spacing: 5px;
+            preferred-width: 100%;
+            preferred-height: 100%;
+
+            Rectangle {
+                min-width: 10px;
+                max-width: 50px;
+                // spacing
+            }
+
+            side-bar := SideBar {
+                title: "";
+                model: [
+                    "Main",
+                    "My Profile",
+                    "Settings",
+                    "About",
+                ];
+            }
+
+            if(side-bar.current-item == 0) : MainPage {}
+            if(side-bar.current-item == 1) : MyProfilePage {}
+            if(side-bar.current-item == 2) : SettingsPage {}
+            if(side-bar.current-item == 3) : AboutPage {}
+        }
+    }
+
+}
