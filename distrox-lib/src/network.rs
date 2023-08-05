@@ -1,8 +1,10 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use futures::Stream;
 use libipld::prelude::Codec;
 use rust_ipfs::Multiaddr;
+use tracing::trace;
 
 use distrox_types::node::Node;
 use distrox_types::post::Post;
@@ -108,13 +110,61 @@ impl Network {
         self.ipfs.put_dag(ipld).await.map_err(Error::from)
     }
 
-    pub async fn insert_blob(&self, blob: impl Stream<Item = u8> + Send) -> Result<(), Error> {
+    pub async fn insert_blob(
+        &self,
+        blob: impl Stream<Item = u8> + Send,
+    ) -> Result<cid::Cid, Error> {
         use futures::StreamExt;
 
-        self.ipfs
+        let mut stream = self
+            .ipfs
             .add_unixfs(blob.map(|byte| vec![byte]).map(Ok).boxed())
             .await?;
-        Ok(())
+
+        while let Some(status) = stream.next().await {
+            match status {
+                rust_ipfs::unixfs::UnixfsStatus::ProgressStatus {
+                    written,
+                    total_size,
+                } => match total_size {
+                    Some(size) => trace!("{written} out of {size} stored"),
+                    None => trace!("{written} been stored"),
+                },
+                rust_ipfs::unixfs::UnixfsStatus::FailedStatus {
+                    written,
+                    total_size,
+                    error,
+                } => {
+                    match total_size {
+                        Some(size) => trace!("failed with {written} out of {size} stored"),
+                        None => trace!("failed with {written} stored"),
+                    }
+
+                    if let Some(error) = error {
+                        return Err(Error::from(error));
+                    } else {
+                        return Err(Error::UnknownWritingToBlockstore);
+                    }
+                }
+                rust_ipfs::unixfs::UnixfsStatus::CompletedStatus { path, written, .. } => {
+                    trace!("{written} been stored with path {path}");
+                    for pe in path.iter() {
+                        trace!(element = ?pe, "Looking at path element");
+                        match cid::Cid::from_str(pe).map_err(Error::from) {
+                            Ok(cid) => return Ok(cid),
+                            Err(e) => {
+                                tracing::error!("Failed to parse cid from {pe}: {e}");
+                            }
+                        }
+                    }
+
+                    // TODO: Fixme
+                    panic!("No CID found");
+                }
+            }
+        }
+
+        unreachable!()
     }
 
     async fn fetch_dag(&self, cid: cid::Cid) -> Result<libipld::Ipld, Error> {
@@ -146,7 +196,7 @@ impl Network {
 }
 
 #[derive(Debug, Clone)]
-pub struct BootstrapNodes(Vec<Multiaddr>);
+pub struct BootstrapNodes(pub Vec<Multiaddr>);
 
 impl From<BootstrapNodes> for Vec<Multiaddr> {
     fn from(value: BootstrapNodes) -> Self {
@@ -155,7 +205,7 @@ impl From<BootstrapNodes> for Vec<Multiaddr> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ListeningAddrs(Vec<Multiaddr>);
+pub struct ListeningAddrs(pub Vec<Multiaddr>);
 
 impl From<ListeningAddrs> for Vec<Multiaddr> {
     fn from(value: ListeningAddrs) -> Self {

@@ -7,3 +7,14 @@ license.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+distrox-gui = { path = "../distrox-gui" }
+distrox-lib = { path = "../distrox-lib" }
+
+thiserror.workspace = true
+
+anyhow = "1"
+futures = "0.3"
+tokio = { workspace = true, features = ["sync", "rt", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "std"] }
+xdg = "2.5"

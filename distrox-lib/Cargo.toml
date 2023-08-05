@@ -18,12 +18,23 @@ rust-ipfs = "0.3.19"
 void = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "std"] }
+toml = "0.7"
+serde = "1"
+tokio = { version = "1", features = ["fs", "macros"] }
+xdg = "2.5"
+mime = "0.3"
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
 
 [dependencies.libp2p]
 version = "0.51.3"
 default-features = false
 features = [ "tokio", "identify", "ping", "floodsub", "gossipsub", "mdns", "kad" ]
 
+[dependencies.libp2p-identity]
+version = "0.2.0"
+default-features = false
+features = [ "peerid" ]
+
 [dev-dependencies]
-tokio = { version = "1", features = ["test-util"] }
+tokio = { workspace = true, features = ["test-util"] }
 env_logger = "0.10"

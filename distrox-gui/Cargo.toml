@@ -19,5 +19,10 @@ slint = "1.1"
 
 thiserror.workspace = true
 
+distrox-lib = { path = "../distrox-lib" }
+tokio = { workspace = true, features = ["sync"] }
+tracing-subscriber = { version = "0.3", features = [ "fmt", "std" ] }
+tracing = "0.1"
+
 [build-dependencies]
 slint-build = "1.1"
