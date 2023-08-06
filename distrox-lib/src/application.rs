@@ -6,6 +6,7 @@ use distrox_types::{
 };
 use libp2p::Multiaddr;
 use tokio::sync::Mutex;
+use tracing::info;
 
 use crate::{
     command::CommandReceiver, configuration::Configuration, error::Error, network::Network,
@@ -88,7 +89,9 @@ impl Application {
 
                 crate::command::Command::ConnectTo { uri } => {
                     let multiaddr: Multiaddr = uri.parse().unwrap();
-                    self.network.connect_without_peer(multiaddr).await?;
+                    info!(?uri, "Connecting");
+                    let result = self.network.connect_without_peer(multiaddr).await;
+                    info!(?uri, ?result, "Connecting finished");
                 }
             }
         }
