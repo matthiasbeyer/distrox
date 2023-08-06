@@ -63,4 +63,7 @@ pub enum Error {
 
     #[error("Unknown error while writing to blockstore")]
     UnknownWritingToBlockstore,
+
+    #[error("Unknown cid")]
+    UnknownCid,
 }
