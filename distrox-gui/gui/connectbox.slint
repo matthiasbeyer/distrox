@@ -5,27 +5,27 @@ component TextInput inherits VerticalLayout {
 
     callback start_connecting(string);
 
-    Rectangle {
-        VerticalLayout {
-            text_content := TextEdit {
-                enabled: true;
-                read-only: false;
+    HorizontalLayout {
+        text_content := TextEdit {
+            enabled: true;
+            read-only: false;
+
+            min-width: 100px;
+        }
+
+        Button {
+            text: "Cancel";
+
+            clicked => {
+                text_content.text = "";
             }
+        }
 
-            Button {
-                text: "Cancel";
+        Button {
+            text: "Connect";
 
-                clicked => {
-                    text_content.text = "";
-                }
-            }
-
-            Button {
-                text: "Connect";
-
-                clicked => {
-                    root.start_connecting(text_content.text)
-                }
+            clicked => {
+                root.start_connecting(text_content.text)
             }
         }
     }
