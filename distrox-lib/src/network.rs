@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::str::FromStr;
 
 use futures::Stream;
 use libipld::prelude::Codec;
@@ -114,57 +113,50 @@ impl Network {
         &self,
         blob: impl Stream<Item = u8> + Send,
     ) -> Result<cid::Cid, Error> {
-        use futures::StreamExt;
+        use futures::stream::StreamExt;
 
-        let mut stream = self
-            .ipfs
+        self.ipfs
             .add_unixfs(blob.map(|byte| vec![byte]).map(Ok).boxed())
-            .await?;
+            .await?
+            .filter_map(|status| async move {
+                match status {
+                    rust_ipfs::unixfs::UnixfsStatus::ProgressStatus {
+                        written,
+                        total_size,
+                    } => {
+                        match total_size {
+                            Some(size) => trace!("Progress: {written} out of {size} stored"),
+                            None => trace!("Progress: {written} been stored"),
+                        }
 
-        while let Some(status) = stream.next().await {
-            match status {
-                rust_ipfs::unixfs::UnixfsStatus::ProgressStatus {
-                    written,
-                    total_size,
-                } => match total_size {
-                    Some(size) => trace!("{written} out of {size} stored"),
-                    None => trace!("{written} been stored"),
-                },
-                rust_ipfs::unixfs::UnixfsStatus::FailedStatus {
-                    written,
-                    total_size,
-                    error,
-                } => {
-                    match total_size {
-                        Some(size) => trace!("failed with {written} out of {size} stored"),
-                        None => trace!("failed with {written} stored"),
+                        None
                     }
+                    rust_ipfs::unixfs::UnixfsStatus::FailedStatus {
+                        written,
+                        total_size,
+                        error,
+                    } => {
+                        match total_size {
+                            Some(size) => trace!("Failed with {written} out of {size} stored"),
+                            None => trace!("Failed with {written} stored"),
+                        }
 
-                    if let Some(error) = error {
-                        return Err(Error::from(error));
-                    } else {
-                        return Err(Error::UnknownWritingToBlockstore);
-                    }
-                }
-                rust_ipfs::unixfs::UnixfsStatus::CompletedStatus { path, written, .. } => {
-                    trace!("{written} been stored with path {path}");
-                    for pe in path.iter() {
-                        trace!(element = ?pe, "Looking at path element");
-                        match cid::Cid::from_str(pe).map_err(Error::from) {
-                            Ok(cid) => return Ok(cid),
-                            Err(e) => {
-                                tracing::error!("Failed to parse cid from {pe}: {e}");
-                            }
+                        if let Some(error) = error {
+                            Some(Err(Error::from(error)))
+                        } else {
+                            Some(Err(Error::UnknownWritingToBlockstore))
                         }
                     }
-
-                    // TODO: Fixme
-                    panic!("No CID found");
+                    rust_ipfs::unixfs::UnixfsStatus::CompletedStatus { path, .. } => {
+                        Some(path.root().cid().cloned().ok_or(Error::UnknownCid))
+                    }
                 }
-            }
-        }
-
-        unreachable!()
+            })
+            .collect::<Vec<Result<_, _>>>()
+            .await
+            .into_iter()
+            .next_back()
+            .unwrap()
     }
 
     async fn fetch_dag(&self, cid: cid::Cid) -> Result<libipld::Ipld, Error> {
