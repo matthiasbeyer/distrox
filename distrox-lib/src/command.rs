@@ -7,4 +7,6 @@ pub enum Command {
     QuitApp,
 
     PostText { text: String },
+
+    ConnectTo { uri: String },
 }

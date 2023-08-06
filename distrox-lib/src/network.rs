@@ -88,6 +88,7 @@ impl Network {
     }
 
     pub async fn connect_without_peer(&self, addr: Multiaddr) -> Result<(), Error> {
+        tracing::debug!(address = ?addr, "Connecting");
         let opts = libp2p::swarm::dial_opts::DialOpts::unknown_peer_id()
             .address(addr)
             .build();
