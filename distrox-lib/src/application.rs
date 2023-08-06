@@ -4,6 +4,7 @@ use distrox_types::{
     post::{OriginalPost, Post},
     util::{Mime, OffsetDateTime},
 };
+use libp2p::Multiaddr;
 use tokio::sync::Mutex;
 
 use crate::{
@@ -83,6 +84,11 @@ impl Application {
                     let node_id = self.network.insert_node(new_node).await?;
 
                     self.app_state.lock().await.set_latest_post(node_id).await?;
+                }
+
+                crate::command::Command::ConnectTo { uri } => {
+                    let multiaddr: Multiaddr = uri.parse().unwrap();
+                    self.network.connect_without_peer(multiaddr).await?;
                 }
             }
         }
